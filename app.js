@@ -5,7 +5,7 @@ const views = {
   calc: document.getElementById("view-calc"),
   layout: document.getElementById("view-layout"),
   ref: document.getElementById("view-ref"),
-  notes: document.getElementById("view-notes"),
+  steps: document.getElementById("view-steps"),
 };
 
 function setActiveView(key){
@@ -17,21 +17,28 @@ function setActiveView(key){
     btn.classList.toggle("isActive", btn.dataset.target === key);
   });
 
-  // persist last tab
   localStorage.setItem("cc_last_tab", key);
 }
 
 document.querySelectorAll(".tab").forEach(btn => {
   btn.addEventListener("click", () => setActiveView(btn.dataset.target));
 });
-
-// Restore last tab
 setActiveView(localStorage.getItem("cc_last_tab") || "calc");
+
+/* ---------------------------
+   STEPS PANEL (last operation)
+---------------------------- */
+const outSteps = document.getElementById("outSteps");
+
+function setSteps(title, lines){
+  const safeLines = Array.isArray(lines) ? lines : [];
+  outSteps.textContent = `${title}\n\n- ${safeLines.join("\n- ")}`;
+}
 
 /* ---------------------------
    FRACTIONS / TAPE TOOLS
    - supports: "a/b" and "1 a/b"
-   - decimal -> nearest 1/16
+   - ALWAYS shows nearest 1/16 breakdown
 ---------------------------- */
 const inpFraction = document.getElementById("inpFraction");
 const inpDecimal  = document.getElementById("inpDecimal");
@@ -60,28 +67,21 @@ function reduceFrac(n, d){
   return { n: n/g, d: d/g };
 }
 
-// parse strings like "3/16" or "1 1/2" into a rational {n,d}
 function parseFraction(input){
   const s = normalizeSpaces(input);
   if(!s) throw new Error("Enter a fraction.");
 
-  // allow leading +/-
   const sign = s.startsWith("-") ? -1 : 1;
   const t = s.replace(/^[+-]\s*/, "");
 
-  // mixed number?
   if(t.includes(" ")){
     const [wholeStr, fracStr] = t.split(" ");
     const whole = parseInt(wholeStr, 10);
     if(!Number.isFinite(whole)) throw new Error("Invalid mixed number.");
-    const f = parseFraction(fracStr); // already reduced
-    const n = sign * (Math.abs(whole) * f.d + f.n) * (whole < 0 ? -1 : 1); // handle weirdness
-    // simpler: whole is unsigned in mixed mode
-    const nn = sign * (whole * f.d + f.n);
-    return reduceFrac(nn, f.d);
+    const f = parseFraction(fracStr);
+    return reduceFrac(sign * (whole * f.d + f.n), f.d);
   }
 
-  // simple a/b
   if(t.includes("/")){
     const [aStr, bStr] = t.split("/");
     const a = parseInt(aStr, 10);
@@ -90,13 +90,11 @@ function parseFraction(input){
     return reduceFrac(sign * a, b);
   }
 
-  // integer inches like "2"
   const whole = parseInt(t, 10);
   if(!Number.isFinite(whole)) throw new Error("Invalid number.");
   return reduceFrac(sign * whole, 1);
 }
 
-// fraction -> nice string "1 3/16" or "3/16" or "2"
 function fracToString(n, d){
   const r = reduceFrac(n,d);
   const sign = r.n < 0 ? "-" : "";
@@ -110,11 +108,14 @@ function fracToString(n, d){
   return `${sign}${whole} ${rem}/${r.d}`;
 }
 
-function fracToDecimal(n, d){
-  return n / d;
+function fracToDecimal(n, d){ return n / d; }
+
+function formatDecimal(x){
+  const s = x.toFixed(6).replace(/\.?0+$/, "");
+  return s;
 }
 
-// decimal inches -> nearest 1/16 => fraction
+// decimal -> nearest 1/16 fraction (keeps sign)
 function decimalToNearestSixteenth(x){
   if(!Number.isFinite(x)) throw new Error("Enter a valid decimal.");
   const denom = 16;
@@ -122,33 +123,86 @@ function decimalToNearestSixteenth(x){
   return reduceFrac(n, denom);
 }
 
-function formatDecimal(x){
-  // keep sane precision, avoid floating garbage
-  // show up to 6 decimals but trim trailing zeros
-  const s = x.toFixed(6).replace(/\.?0+$/, "");
-  return s;
+function nearestSixteenthFromFraction(n, d){
+  const dec = fracToDecimal(n,d);
+  const denom = 16;
+  const raw = dec * denom;
+  const rounded = Math.round(raw);
+  const frac16 = reduceFrac(rounded, denom);
+  const approxDec = frac16.n / frac16.d;
+  return { dec, raw, rounded, frac16, approxDec };
 }
 
-// Buttons
+/* --- Fraction -> Decimal + Nearest 1/16 breakdown --- */
 document.getElementById("btnFracToDec").addEventListener("click", () => {
   try{
     const f = parseFraction(inpFraction.value);
-    const dec = fracToDecimal(f.n, f.d);
-    outFracToDec.textContent = `${fracToString(f.n,f.d)} in = ${formatDecimal(dec)} in`;
+    const pack = nearestSixteenthFromFraction(f.n, f.d);
+
+    const exactLine = `${fracToString(f.n,f.d)} in = ${formatDecimal(pack.dec)} in (exact)`;
+    const approxLine = `Nearest 1/16: ${formatDecimal(pack.dec)} × 16 = ${formatDecimal(pack.raw)} → round = ${pack.rounded}/16 = ${fracToString(pack.frac16.n, pack.frac16.d)} in`;
+    const err = Math.abs(pack.dec - pack.approxDec);
+    const errLine = `Error: ${formatDecimal(err)} in`;
+
+    outFracToDec.textContent = `${exactLine}\n${approxLine}\n${errLine}`;
+
+    setSteps("Fraction → Nearest 1/16", [
+      `Parse input as fraction: ${fracToString(f.n,f.d)}`,
+      `Convert to decimal: n/d = ${formatDecimal(pack.dec)}`,
+      `Multiply by 16: ${formatDecimal(pack.dec)} × 16 = ${formatDecimal(pack.raw)}`,
+      `Round to nearest whole 16th: ${pack.rounded}`,
+      `Write as fraction: ${pack.rounded}/16 → reduce = ${fracToString(pack.frac16.n, pack.frac16.d)}`,
+      `Report error: |exact − approx| = ${formatDecimal(err)} in`,
+    ]);
   }catch(e){
     outFracToDec.textContent = `Error: ${e.message}`;
+    setSteps("Error", [`${e.message}`]);
   }
 });
 
+/* --- Decimal -> Nearest 1/16 breakdown --- */
 document.getElementById("btnDecToFrac").addEventListener("click", () => {
   try{
     const x = Number(String(inpDecimal.value).trim());
-    const f = decimalToNearestSixteenth(x);
-    outDecToFrac.textContent = `${formatDecimal(x)} in ≈ ${fracToString(f.n,f.d)} in (nearest 1/16)`;
+    if(!Number.isFinite(x)) throw new Error("Enter a valid decimal.");
+
+    const denom = 16;
+    const raw = x * denom;
+    const rounded = Math.round(raw);
+    const f = reduceFrac(rounded, denom);
+    const approxDec = f.n / f.d;
+    const err = Math.abs(x - approxDec);
+
+    outDecToFrac.textContent =
+      `${formatDecimal(x)} in (input)\n` +
+      `${formatDecimal(x)} × 16 = ${formatDecimal(raw)} → round = ${rounded}/16\n` +
+      `Nearest 1/16 = ${fracToString(f.n,f.d)} in\n` +
+      `Error: ${formatDecimal(err)} in`;
+
+    setSteps("Decimal → Nearest 1/16", [
+      `Input decimal: ${formatDecimal(x)}`,
+      `Multiply by 16: ${formatDecimal(x)} × 16 = ${formatDecimal(raw)}`,
+      `Round: ${formatDecimal(raw)} → ${rounded}`,
+      `Write as fraction: ${rounded}/16 → reduce = ${fracToString(f.n,f.d)}`,
+      `Report error: |input − approx| = ${formatDecimal(err)} in`,
+    ]);
   }catch(e){
     outDecToFrac.textContent = `Error: ${e.message}`;
+    setSteps("Error", [`${e.message}`]);
   }
 });
+
+/* --- Fraction add/sub -> exact + nearest 1/16 --- */
+function opsOutput(opName, a, b, rExact){
+  const pack = nearestSixteenthFromFraction(rExact.n, rExact.d);
+  const err = Math.abs(pack.dec - pack.approxDec);
+
+  const exactLine = `Exact: ${fracToString(a.n,a.d)} ${opName} ${fracToString(b.n,b.d)} = ${fracToString(rExact.n,rExact.d)} in = ${formatDecimal(pack.dec)} in`;
+  const approxLine = `Nearest 1/16: ${fracToString(pack.frac16.n, pack.frac16.d)} in`;
+  const errLine = `Error: ${formatDecimal(err)} in`;
+
+  return { exactLine, approxLine, errLine, pack };
+}
 
 document.getElementById("btnAdd").addEventListener("click", () => {
   try{
@@ -157,9 +211,21 @@ document.getElementById("btnAdd").addEventListener("click", () => {
     const n = a.n*b.d + b.n*a.d;
     const d = a.d*b.d;
     const r = reduceFrac(n,d);
-    outFracOps.textContent = `${fracToString(a.n,a.d)} + ${fracToString(b.n,b.d)} = ${fracToString(r.n,r.d)} in`;
+
+    const out = opsOutput("+", a, b, r);
+    outFracOps.textContent = `${out.exactLine}\n${out.approxLine}\n${out.errLine}`;
+
+    setSteps("A + B (then nearest 1/16)", [
+      `Parse A: ${fracToString(a.n,a.d)}`,
+      `Parse B: ${fracToString(b.n,b.d)}`,
+      `Common denom: a.n*b.d + b.n*a.d = ${a.n}*${b.d} + ${b.n}*${a.d}`,
+      `Exact result: ${fracToString(r.n,r.d)} in`,
+      `Convert exact to decimal: ${formatDecimal(out.pack.dec)}`,
+      `Nearest 1/16: ${fracToString(out.pack.frac16.n, out.pack.frac16.d)}`,
+    ]);
   }catch(e){
     outFracOps.textContent = `Error: ${e.message}`;
+    setSteps("Error", [`${e.message}`]);
   }
 });
 
@@ -170,9 +236,21 @@ document.getElementById("btnSub").addEventListener("click", () => {
     const n = a.n*b.d - b.n*a.d;
     const d = a.d*b.d;
     const r = reduceFrac(n,d);
-    outFracOps.textContent = `${fracToString(a.n,a.d)} − ${fracToString(b.n,b.d)} = ${fracToString(r.n,r.d)} in`;
+
+    const out = opsOutput("−", a, b, r);
+    outFracOps.textContent = `${out.exactLine}\n${out.approxLine}\n${out.errLine}`;
+
+    setSteps("A − B (then nearest 1/16)", [
+      `Parse A: ${fracToString(a.n,a.d)}`,
+      `Parse B: ${fracToString(b.n,b.d)}`,
+      `Common denom: a.n*b.d − b.n*a.d = ${a.n}*${b.d} − ${b.n}*${a.d}`,
+      `Exact result: ${fracToString(r.n,r.d)} in`,
+      `Convert exact to decimal: ${formatDecimal(out.pack.dec)}`,
+      `Nearest 1/16: ${fracToString(out.pack.frac16.n, out.pack.frac16.d)}`,
+    ]);
   }catch(e){
     outFracOps.textContent = `Error: ${e.message}`;
+    setSteps("Error", [`${e.message}`]);
   }
 });
 
@@ -195,30 +273,83 @@ document.getElementById("btnClearC").addEventListener("click", () => {
 });
 
 /* ---------------------------
-   NOTES (LOCAL ONLY)
+   LAYOUT TOOL
 ---------------------------- */
-const txtNotes = document.getElementById("txtNotes");
-const notesStatus = document.getElementById("notesStatus");
+const inpLenFt = document.getElementById("inpLenFt");
+const inpLenIn = document.getElementById("inpLenIn");
+const selOC = document.getElementById("selOC");
+const selFormat = document.getElementById("selFormat");
+const outLayout = document.getElementById("outLayout");
 
-function loadNotes(){
-  txtNotes.value = localStorage.getItem("cc_notes") || "";
+function toIntOrZero(v){
+  const n = parseInt(String(v).trim(), 10);
+  return Number.isFinite(n) ? n : 0;
 }
-function setStatus(msg){
-  notesStatus.textContent = msg;
-  setTimeout(() => (notesStatus.textContent = ""), 1500);
+
+function inchesToFtIn(inches){
+  const sign = inches < 0 ? "-" : "";
+  const x = Math.abs(inches);
+  const ft = Math.floor(x / 12);
+  const inch = x % 12;
+  return `${sign}${ft}' ${inch}"`;
 }
 
-document.getElementById("btnSaveNotes").addEventListener("click", () => {
-  localStorage.setItem("cc_notes", txtNotes.value || "");
-  setStatus("Saved.");
-});
-document.getElementById("btnClearNotes").addEventListener("click", () => {
-  txtNotes.value = "";
-  localStorage.removeItem("cc_notes");
-  setStatus("Cleared.");
+document.getElementById("btnLayout").addEventListener("click", () => {
+  try{
+    const ft = toIntOrZero(inpLenFt.value);
+    const inch = toIntOrZero(inpLenIn.value);
+    const totalIn = ft * 12 + inch;
+    if(totalIn <= 0) throw new Error("Enter a wall length > 0.");
+
+    const oc = parseInt(selOC.value, 10);
+    const marks = [];
+    for(let m = 0; m <= totalIn; m += oc){
+      marks.push(m);
+    }
+
+    const fmt = selFormat.value;
+    const formatted = marks.map(m => (fmt === "in" ? `${m}"` : inchesToFtIn(m)));
+
+    outLayout.textContent =
+      `Length: ${ft}' ${inch}" (${totalIn}" total)\n` +
+      `Spacing: ${oc}" OC\n` +
+      `Marks (${marks.length}):\n` +
+      formatted.join(", ");
+
+    setSteps("Stud/Joist Layout", [
+      `Convert length to inches: ${ft}×12 + ${inch} = ${totalIn}"`,
+      `Choose spacing: ${oc}"`,
+      `Generate marks: 0, ${oc}, ${oc*2}, ... up to ≤ ${totalIn}"`,
+      `Count marks: ${marks.length}`,
+    ]);
+  }catch(e){
+    outLayout.textContent = `Error: ${e.message}`;
+    setSteps("Error", [`${e.message}`]);
+  }
 });
 
-loadNotes();
+document.getElementById("btnLayoutClear").addEventListener("click", () => {
+  inpLenFt.value = "";
+  inpLenIn.value = "";
+  outLayout.textContent = "—";
+});
+
+/* ---------------------------
+   REFERENCE TABLES
+---------------------------- */
+const tbl16ths = document.getElementById("tbl16ths");
+
+(function build16thsTable(){
+  // 1/16 through 16/16
+  const lines = [];
+  for(let n = 1; n <= 16; n++){
+    const dec = n / 16;
+    const frac = reduceFrac(n,16);
+    const label = fracToString(frac.n, frac.d).padEnd(5, " ");
+    lines.push(`${label} = ${formatDecimal(dec)}`);
+  }
+  tbl16ths.textContent = lines.join("\n");
+})();
 
 /* ---------------------------
    PWA: INSTALL + SERVICE WORKER
