@@ -33,13 +33,13 @@
 
         <div class="grid2">
           <div class="field">
-            <label for="inpFraction">Fraction (e.g., 3/16, 1 1/2)</label>
+            <label for="inpFraction">Fraction (e.g., 3/16, 1 1/2, 1/3)</label>
             <input id="inpFraction" inputmode="text" placeholder="3/16 or 1 1/2" />
             <div class="row">
-              <button id="btnFracToDec" class="btnPrimary" type="button">→ Decimal</button>
+              <button id="btnFracToDec" class="btnPrimary" type="button">→ Convert</button>
               <button id="btnClearA" class="btnGhost" type="button">Clear</button>
             </div>
-            <p class="out" id="outFracToDec">—</p>
+            <div class="out" id="outFracToDec">—</div>
           </div>
 
           <div class="field">
@@ -49,13 +49,13 @@
               <button id="btnDecToFrac" class="btnPrimary" type="button">→ Nearest 1/16</button>
               <button id="btnClearB" class="btnGhost" type="button">Clear</button>
             </div>
-            <p class="out" id="outDecToFrac">—</p>
+            <div class="out" id="outDecToFrac">—</div>
           </div>
         </div>
 
         <div class="divider"></div>
 
-        <h3>Fraction Add / Subtract</h3>
+        <h3>Fraction Add / Subtract (rounded to nearest 1/16)</h3>
         <div class="grid2">
           <div class="field">
             <label for="inpF1">A (e.g., 1 3/8)</label>
@@ -73,26 +73,52 @@
           <button id="btnClearC" class="btnGhost" type="button">Clear</button>
         </div>
 
-        <p class="out" id="outFracOps">—</p>
+        <div class="out" id="outFracOps">—</div>
         <p class="hint">Tip: supports <span class="mono">a/b</span> and mixed numbers like <span class="mono">1 1/2</span>.</p>
-      </div>
-
-      <div class="card">
-        <h2>Coming Next</h2>
-        <ul class="list">
-          <li>Stud / Joist layout (16" / 24" OC)</li>
-          <li>Board feet + sheet estimator</li>
-          <li>Pitch / rafter quick calcs</li>
-          <li>Reference notes (jobsite rules-of-thumb)</li>
-        </ul>
       </div>
     </section>
 
     <!-- LAYOUT -->
     <section id="view-layout" class="view" aria-label="Layout">
       <div class="card">
-        <h2>Layout</h2>
-        <p class="muted">This tab is wired and ready. Next we’ll add stud/joist layout tools here.</p>
+        <h2>Stud / Joist Layout</h2>
+        <p class="muted">Returns on-center marks from 0" to the last mark ≤ wall length. Use as a layout helper (verify with your plan).</p>
+
+        <div class="grid2">
+          <div class="field">
+            <label for="inpLenFt">Length (feet)</label>
+            <input id="inpLenFt" inputmode="numeric" placeholder="e.g., 8" />
+          </div>
+          <div class="field">
+            <label for="inpLenIn">Length (inches)</label>
+            <input id="inpLenIn" inputmode="numeric" placeholder="e.g., 0" />
+          </div>
+        </div>
+
+        <div class="grid2" style="margin-top:12px;">
+          <div class="field">
+            <label for="selOC">On Center (OC)</label>
+            <select id="selOC" class="select">
+              <option value="16">16" OC</option>
+              <option value="24">24" OC</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="selFormat">Display marks as</label>
+            <select id="selFormat" class="select">
+              <option value="ftin">ft + in (e.g., 5' 4")</option>
+              <option value="in">inches only (e.g., 64")</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="row">
+          <button id="btnLayout" class="btnPrimary" type="button">Generate</button>
+          <button id="btnLayoutClear" class="btnGhost" type="button">Clear</button>
+        </div>
+
+        <div class="out" id="outLayout">—</div>
       </div>
     </section>
 
@@ -100,45 +126,58 @@
     <section id="view-ref" class="view" aria-label="Reference">
       <div class="card">
         <h2>Reference</h2>
-        <p class="muted">Add your class notes, nailing patterns, and conversions here. Keep it “reference”, not engineering claims.</p>
+        <p class="muted">Fast lookups for common carpentry math and field conversions.</p>
 
         <div class="miniGrid">
           <div class="mini">
-            <div class="miniTitle">Quick Conversions</div>
-            <div class="miniBody">
-              <div>12 in = 1 ft</div>
-              <div>16 in OC = 0.75 ft</div>
-              <div>24 in OC = 2 ft</div>
+            <div class="miniTitle">16ths → Decimal (in)</div>
+            <div class="miniBody mono" id="tbl16ths">
+              <!-- filled by JS -->
             </div>
           </div>
+
           <div class="mini">
-            <div class="miniTitle">Fractions</div>
+            <div class="miniTitle">Common Conversions</div>
             <div class="miniBody">
-              <div>1/8 = 0.125</div>
-              <div>1/16 = 0.0625</div>
-              <div>3/16 = 0.1875</div>
+              <div class="refRow"><span class="mono">12 in</span> = 1 ft</div>
+              <div class="refRow"><span class="mono">16 in OC</span> = 1.333 ft spacing</div>
+              <div class="refRow"><span class="mono">24 in OC</span> = 2.000 ft spacing</div>
+              <div class="refRow"><span class="mono">144 in²</span> = 1 ft²</div>
+              <div class="refRow"><span class="mono">1 yd³</span> = 27 ft³</div>
+            </div>
+          </div>
+
+          <div class="mini">
+            <div class="miniTitle">Board Feet</div>
+            <div class="miniBody">
+              <div class="refRow"><span class="mono">BF</span> = (T × W × L) / 144</div>
+              <div class="muted" style="margin-top:8px;">T and W in inches, L in inches.</div>
+              <div class="refRow" style="margin-top:10px;"><span class="mono">2×4×8'</span> ≈ 5.33 BF</div>
+              <div class="refRow"><span class="mono">2×6×8'</span> ≈ 8.00 BF</div>
+              <div class="refRow"><span class="mono">2×8×8'</span> ≈ 10.67 BF</div>
+            </div>
+          </div>
+
+          <div class="mini">
+            <div class="miniTitle">Pitch Quick Ref</div>
+            <div class="miniBody">
+              <div class="refRow"><span class="mono">4/12</span> ≈ 18.4°</div>
+              <div class="refRow"><span class="mono">6/12</span> ≈ 26.6°</div>
+              <div class="refRow"><span class="mono">8/12</span> ≈ 33.7°</div>
+              <div class="refRow"><span class="mono">12/12</span> = 45.0°</div>
+              <div class="muted" style="margin-top:8px;">Angle = arctan(rise/run).</div>
             </div>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- NOTES -->
-    <section id="view-notes" class="view" aria-label="Notes">
+    <!-- STEPS -->
+    <section id="view-steps" class="view" aria-label="Steps">
       <div class="card">
-        <h2>Notes</h2>
-        <p class="muted">Local notes are stored on this device only.</p>
-
-        <div class="field">
-          <label for="txtNotes">Class / Jobsite Notes</label>
-          <textarea id="txtNotes" rows="10" placeholder="Example: ‘Always crown your studs the same direction…’"></textarea>
-        </div>
-
-        <div class="row">
-          <button id="btnSaveNotes" class="btnPrimary" type="button">Save</button>
-          <button id="btnClearNotes" class="btnGhost" type="button">Clear</button>
-          <span class="muted" id="notesStatus"></span>
-        </div>
+        <h2>Steps</h2>
+        <p class="muted">Shows how the last answer was produced (quick breakdown).</p>
+        <div class="out" id="outSteps">Run any calc to see steps.</div>
       </div>
     </section>
   </main>
@@ -147,7 +186,7 @@
     <button class="tab isActive" data-target="calc" type="button">Calc</button>
     <button class="tab" data-target="layout" type="button">Layout</button>
     <button class="tab" data-target="ref" type="button">Reference</button>
-    <button class="tab" data-target="notes" type="button">Notes</button>
+    <button class="tab" data-target="steps" type="button">Steps</button>
   </nav>
 
   <script src="./app.js"></script>
