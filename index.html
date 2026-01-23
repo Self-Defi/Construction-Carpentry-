@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>Construction Carpentry</title>
+  <meta name="description" content="Construction Carpentry — field calculators and quick references." />
+  <meta name="theme-color" content="#070b14" />
+
+  <!-- PWA -->
+  <link rel="manifest" href="./manifest.webmanifest" />
+  <link rel="apple-touch-icon" href="./icons/icon-192.png" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <div class="brandTitle">Construction Carpentry</div>
+      <div class="brandSub">PWA • Offline • Field-first</div>
+    </div>
+    <button id="btnInstall" class="btnGhost" type="button" hidden>Install</button>
+  </header>
+
+  <main class="main">
+    <!-- CALC -->
+    <section id="view-calc" class="view isActive" aria-label="Calculators">
+      <div class="card">
+        <h2>Tape / Fraction Converter</h2>
+
+        <div class="grid2">
+          <div class="field">
+            <label for="inpFraction">Fraction (e.g., 3/16, 1 1/2)</label>
+            <input id="inpFraction" inputmode="text" placeholder="3/16 or 1 1/2" />
+            <div class="row">
+              <button id="btnFracToDec" class="btnPrimary" type="button">→ Decimal</button>
+              <button id="btnClearA" class="btnGhost" type="button">Clear</button>
+            </div>
+            <p class="out" id="outFracToDec">—</p>
+          </div>
+
+          <div class="field">
+            <label for="inpDecimal">Decimal inches (e.g., 0.1875)</label>
+            <input id="inpDecimal" inputmode="decimal" placeholder="0.1875" />
+            <div class="row">
+              <button id="btnDecToFrac" class="btnPrimary" type="button">→ Nearest 1/16</button>
+              <button id="btnClearB" class="btnGhost" type="button">Clear</button>
+            </div>
+            <p class="out" id="outDecToFrac">—</p>
+          </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <h3>Fraction Add / Subtract</h3>
+        <div class="grid2">
+          <div class="field">
+            <label for="inpF1">A (e.g., 1 3/8)</label>
+            <input id="inpF1" inputmode="text" placeholder="1 3/8" />
+          </div>
+          <div class="field">
+            <label for="inpF2">B (e.g., 7/16)</label>
+            <input id="inpF2" inputmode="text" placeholder="7/16" />
+          </div>
+        </div>
+
+        <div class="row">
+          <button id="btnAdd" class="btnPrimary" type="button">A + B</button>
+          <button id="btnSub" class="btnPrimary" type="button">A − B</button>
+          <button id="btnClearC" class="btnGhost" type="button">Clear</button>
+        </div>
+
+        <p class="out" id="outFracOps">—</p>
+        <p class="hint">Tip: supports <span class="mono">a/b</span> and mixed numbers like <span class="mono">1 1/2</span>.</p>
+      </div>
+
+      <div class="card">
+        <h2>Coming Next</h2>
+        <ul class="list">
+          <li>Stud / Joist layout (16" / 24" OC)</li>
+          <li>Board feet + sheet estimator</li>
+          <li>Pitch / rafter quick calcs</li>
+          <li>Reference notes (jobsite rules-of-thumb)</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- LAYOUT -->
+    <section id="view-layout" class="view" aria-label="Layout">
+      <div class="card">
+        <h2>Layout</h2>
+        <p class="muted">This tab is wired and ready. Next we’ll add stud/joist layout tools here.</p>
+      </div>
+    </section>
+
+    <!-- REFERENCE -->
+    <section id="view-ref" class="view" aria-label="Reference">
+      <div class="card">
+        <h2>Reference</h2>
+        <p class="muted">Add your class notes, nailing patterns, and conversions here. Keep it “reference”, not engineering claims.</p>
+
+        <div class="miniGrid">
+          <div class="mini">
+            <div class="miniTitle">Quick Conversions</div>
+            <div class="miniBody">
+              <div>12 in = 1 ft</div>
+              <div>16 in OC = 0.75 ft</div>
+              <div>24 in OC = 2 ft</div>
+            </div>
+          </div>
+          <div class="mini">
+            <div class="miniTitle">Fractions</div>
+            <div class="miniBody">
+              <div>1/8 = 0.125</div>
+              <div>1/16 = 0.0625</div>
+              <div>3/16 = 0.1875</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- NOTES -->
+    <section id="view-notes" class="view" aria-label="Notes">
+      <div class="card">
+        <h2>Notes</h2>
+        <p class="muted">Local notes are stored on this device only.</p>
+
+        <div class="field">
+          <label for="txtNotes">Class / Jobsite Notes</label>
+          <textarea id="txtNotes" rows="10" placeholder="Example: ‘Always crown your studs the same direction…’"></textarea>
+        </div>
+
+        <div class="row">
+          <button id="btnSaveNotes" class="btnPrimary" type="button">Save</button>
+          <button id="btnClearNotes" class="btnGhost" type="button">Clear</button>
+          <span class="muted" id="notesStatus"></span>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <nav class="tabbar" aria-label="Primary navigation">
+    <button class="tab isActive" data-target="calc" type="button">Calc</button>
+    <button class="tab" data-target="layout" type="button">Layout</button>
+    <button class="tab" data-target="ref" type="button">Reference</button>
+    <button class="tab" data-target="notes" type="button">Notes</button>
+  </nav>
+
+  <script src="./app.js"></script>
+</body>
+</html>
