@@ -200,3 +200,33 @@ input:focus, textarea:focus, select:focus{
   border-color: rgba(76,201,240,.35);
   background: rgba(76,201,240,.14);
 }
+
+.cardHead{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  margin-bottom:10px;
+}
+
+.btnSmall{
+  padding:8px 10px;
+  font-size:12px;
+  font-weight:900;
+}
+
+.stepsPanel{
+  margin-top:12px;
+  border-top:1px solid rgba(255,255,255,.10);
+  padding-top:12px;
+}
+
+.stepsTitle{
+  font-weight:900;
+  margin-bottom:8px;
+  color: rgba(255,255,255,.86);
+}
+
+.stepsOut{
+  margin-top:0; /* tighter in panel */
+}
