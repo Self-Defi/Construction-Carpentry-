@@ -29,7 +29,10 @@
     <!-- CALC -->
     <section id="view-calc" class="view isActive" aria-label="Calculators">
       <div class="card">
-        <h2>Tape / Fraction Converter</h2>
+        <div class="cardHead">
+          <h2>Tape / Fraction Converter</h2>
+          <button class="btnGhost btnSmall" id="btnStepsConv" type="button" aria-expanded="false">Steps</button>
+        </div>
 
         <div class="grid2">
           <div class="field">
@@ -53,9 +56,18 @@
           </div>
         </div>
 
-        <div class="divider"></div>
+        <div id="stepsConv" class="stepsPanel" hidden>
+          <div class="stepsTitle">Steps (Converter)</div>
+          <div class="out stepsOut" id="outStepsConv">Run a conversion to see steps.</div>
+        </div>
+      </div>
 
-        <h3>Fraction Add / Subtract (rounded to nearest 1/16)</h3>
+      <div class="card">
+        <div class="cardHead">
+          <h2>Fraction Add / Subtract <span class="muted">(rounded to nearest 1/16)</span></h2>
+          <button class="btnGhost btnSmall" id="btnStepsOps" type="button" aria-expanded="false">Steps</button>
+        </div>
+
         <div class="grid2">
           <div class="field">
             <label for="inpF1">A (e.g., 1 3/8)</label>
@@ -75,13 +87,22 @@
 
         <div class="out" id="outFracOps">—</div>
         <p class="hint">Tip: supports <span class="mono">a/b</span> and mixed numbers like <span class="mono">1 1/2</span>.</p>
+
+        <div id="stepsOps" class="stepsPanel" hidden>
+          <div class="stepsTitle">Steps (Add/Subtract)</div>
+          <div class="out stepsOut" id="outStepsOps">Run A+B or A−B to see steps.</div>
+        </div>
       </div>
     </section>
 
     <!-- LAYOUT -->
     <section id="view-layout" class="view" aria-label="Layout">
       <div class="card">
-        <h2>Stud / Joist Layout</h2>
+        <div class="cardHead">
+          <h2>Stud / Joist Layout</h2>
+          <button class="btnGhost btnSmall" id="btnStepsLayout" type="button" aria-expanded="false">Steps</button>
+        </div>
+
         <p class="muted">Returns on-center marks from 0" to the last mark ≤ wall length. Use as a layout helper (verify with your plan).</p>
 
         <div class="grid2">
@@ -119,6 +140,11 @@
         </div>
 
         <div class="out" id="outLayout">—</div>
+
+        <div id="stepsLayout" class="stepsPanel" hidden>
+          <div class="stepsTitle">Steps (Layout)</div>
+          <div class="out stepsOut" id="outStepsLayout">Generate a layout to see steps.</div>
+        </div>
       </div>
     </section>
 
@@ -131,9 +157,7 @@
         <div class="miniGrid">
           <div class="mini">
             <div class="miniTitle">16ths → Decimal (in)</div>
-            <div class="miniBody mono" id="tbl16ths">
-              <!-- filled by JS -->
-            </div>
+            <div class="miniBody mono" id="tbl16ths"></div>
           </div>
 
           <div class="mini">
@@ -171,22 +195,12 @@
         </div>
       </div>
     </section>
-
-    <!-- STEPS -->
-    <section id="view-steps" class="view" aria-label="Steps">
-      <div class="card">
-        <h2>Steps</h2>
-        <p class="muted">Shows how the last answer was produced (quick breakdown).</p>
-        <div class="out" id="outSteps">Run any calc to see steps.</div>
-      </div>
-    </section>
   </main>
 
   <nav class="tabbar" aria-label="Primary navigation">
     <button class="tab isActive" data-target="calc" type="button">Calc</button>
     <button class="tab" data-target="layout" type="button">Layout</button>
     <button class="tab" data-target="ref" type="button">Reference</button>
-    <button class="tab" data-target="steps" type="button">Steps</button>
   </nav>
 
   <script src="./app.js"></script>
