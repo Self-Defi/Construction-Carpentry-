@@ -1,4 +1,4 @@
-const CACHE_NAME = "ccarpentry-v1";
+const CACHE_NAME = "ccarpentry-v2";
 const ASSETS = [
   "./",
   "./index.html",
@@ -26,16 +26,14 @@ self.addEventListener("activate", (event) => {
 });
 
 self.addEventListener("fetch", (event) => {
-  const req = event.request;
   event.respondWith(
-    caches.match(req).then(cached => {
+    caches.match(event.request).then(cached => {
       if(cached) return cached;
-      return fetch(req).then(res => {
-        // optional: runtime cache same-origin GETs
-        const url = new URL(req.url);
-        if(req.method === "GET" && url.origin === self.location.origin){
+      return fetch(event.request).then(res => {
+        const url = new URL(event.request.url);
+        if(event.request.method === "GET" && url.origin === self.location.origin){
           const copy = res.clone();
-          caches.open(CACHE_NAME).then(cache => cache.put(req, copy));
+          caches.open(CACHE_NAME).then(cache => cache.put(event.request, copy));
         }
         return res;
       }).catch(() => caches.match("./index.html"));
