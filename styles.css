@@ -7,7 +7,6 @@
   --muted:rgba(255,255,255,.62);
   --line:rgba(255,255,255,.10);
   --accent:#4cc9f0;
-  --danger:#ff5d5d;
 
   --radius:16px;
   --shadow:0 16px 40px rgba(0,0,0,.45);
@@ -73,7 +72,8 @@ h3{margin:0 0 10px; font-size:15px; color:rgba(255,255,255,.85)}
   color:var(--muted);
   margin:0 0 6px;
 }
-input, textarea{
+
+input, textarea, select{
   width:100%;
   border-radius:12px;
   border:1px solid rgba(255,255,255,.12);
@@ -82,7 +82,21 @@ input, textarea{
   padding:12px 12px;
   outline:none;
 }
-input:focus, textarea:focus{
+
+.select{
+  appearance:none;
+  -webkit-appearance:none;
+  background-image:
+    linear-gradient(45deg, transparent 50%, rgba(255,255,255,.65) 50%),
+    linear-gradient(135deg, rgba(255,255,255,.65) 50%, transparent 50%);
+  background-position:
+    calc(100% - 18px) calc(50% - 3px),
+    calc(100% - 12px) calc(50% - 3px);
+  background-size:6px 6px;
+  background-repeat:no-repeat;
+}
+
+input:focus, textarea:focus, select:focus{
   border-color: rgba(76,201,240,.55);
   box-shadow: 0 0 0 4px rgba(76,201,240,.12);
 }
@@ -99,7 +113,7 @@ input:focus, textarea:focus{
   border-radius: 12px;
   padding: 10px 12px;
   border:1px solid rgba(255,255,255,.12);
-  font-weight:700;
+  font-weight:800;
   cursor:pointer;
 }
 .btnPrimary{
@@ -119,6 +133,8 @@ input:focus, textarea:focus{
   border:1px dashed rgba(255,255,255,.18);
   background: rgba(0,0,0,.18);
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  white-space: pre-wrap;
+  line-height: 1.6;
 }
 
 .hint{color:var(--muted); font-size:12px; margin:10px 0 0}
@@ -130,9 +146,6 @@ input:focus, textarea:focus{
   background: var(--line);
   margin:14px 0;
 }
-
-.list{margin:0; padding-left:18px; color:rgba(255,255,255,.82)}
-.list li{margin:6px 0}
 
 .miniGrid{
   display:grid;
@@ -151,7 +164,7 @@ input:focus, textarea:focus{
 }
 .miniTitle{
   padding:10px 12px;
-  font-weight:800;
+  font-weight:900;
   border-bottom:1px solid var(--line);
 }
 .miniBody{
@@ -159,6 +172,7 @@ input:focus, textarea:focus{
   color: rgba(255,255,255,.82);
   line-height: 1.7;
 }
+.refRow{margin:4px 0}
 
 /* Bottom Tab Bar */
 .tabbar{
@@ -177,8 +191,9 @@ input:focus, textarea:focus{
   border:1px solid rgba(255,255,255,.12);
   background: rgba(255,255,255,.06);
   color: rgba(255,255,255,.86);
-  padding:10px 8px;
-  font-weight:800;
+  padding:10px 6px;
+  font-weight:900;
+  font-size: 13px;
   cursor:pointer;
 }
 .tab.isActive{
