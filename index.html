@@ -99,19 +99,21 @@
     <section id="view-layout" class="view" aria-label="Layout">
       <div class="card">
         <div class="cardHead">
-          <h2>Stud / Joist Layout</h2>
+          <h2>Stud Layout (Framing-Accurate)</h2>
           <button class="btnGhost btnSmall" id="btnStepsLayout" type="button" aria-expanded="false">Steps</button>
         </div>
 
-        <p class="muted">Returns on-center marks from 0" to the last mark ≤ wall length. Use as a layout helper (verify with your plan).</p>
+        <p class="muted">
+          Marks are <span class="mono">centerline</span> positions. Defaults match typical wall layout: end studs included, and we avoid placing an interior stud too close to the end.
+        </p>
 
         <div class="grid2">
           <div class="field">
-            <label for="inpLenFt">Length (feet)</label>
+            <label for="inpLenFt">Wall length (feet)</label>
             <input id="inpLenFt" inputmode="numeric" placeholder="e.g., 8" />
           </div>
           <div class="field">
-            <label for="inpLenIn">Length (inches)</label>
+            <label for="inpLenIn">Wall length (inches)</label>
             <input id="inpLenIn" inputmode="numeric" placeholder="e.g., 0" />
           </div>
         </div>
@@ -134,6 +136,18 @@
           </div>
         </div>
 
+        <div class="checks" style="margin-top:12px;">
+          <label class="check">
+            <input id="chkEndStuds" type="checkbox" checked />
+            <span>Include end studs (0" and end)</span>
+          </label>
+
+          <label class="check">
+            <input id="chkDropNearEnd" type="checkbox" checked />
+            <span>Drop last interior stud if within 1½" of the end</span>
+          </label>
+        </div>
+
         <div class="row">
           <button id="btnLayout" class="btnPrimary" type="button">Generate</button>
           <button id="btnLayoutClear" class="btnGhost" type="button">Clear</button>
@@ -142,7 +156,7 @@
         <div class="out" id="outLayout">—</div>
 
         <div id="stepsLayout" class="stepsPanel" hidden>
-          <div class="stepsTitle">Steps (Layout)</div>
+          <div class="stepsTitle">Steps (Stud Layout)</div>
           <div class="out stepsOut" id="outStepsLayout">Generate a layout to see steps.</div>
         </div>
       </div>
