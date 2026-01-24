@@ -247,5 +247,5 @@ input:focus, textarea:focus, select:focus{
 }
 
 .stepsOut{
-  margin-top:0;
+  margin-top:0; /* tighter in panel */
 }
