@@ -1,4 +1,4 @@
-const CACHE_NAME = "ccarpentry-v3";
+const CACHE_NAME = "ccarpentry-v4";
 const ASSETS = [
   "./",
   "./index.html",
