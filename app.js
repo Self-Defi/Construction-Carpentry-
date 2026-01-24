@@ -33,9 +33,9 @@ function wireStepsToggle(btnId, panelId){
   if(!btn || !panel) return;
 
   btn.addEventListener("click", () => {
-    const next = panel.hidden ? false : true;
-    panel.hidden = next;
-    btn.setAttribute("aria-expanded", String(!next));
+    const nextHidden = !panel.hidden ? true : false;
+    panel.hidden = nextHidden;
+    btn.setAttribute("aria-expanded", String(!nextHidden));
   });
 }
 
@@ -77,7 +77,6 @@ function normalizeSpaces(s){
   return String(s || "").trim().replace(/\s+/g, " ");
 }
 
-// returns {n, d} as reduced fraction, d>0
 function reduceFrac(n, d){
   if(d === 0) throw new Error("Division by zero");
   if(d < 0){ n = -n; d = -d; }
@@ -148,25 +147,24 @@ function nearestSixteenthFromFraction(n, d){
   return { dec, ...pack };
 }
 
-/* --- Fraction -> Decimal + Nearest 1/16 breakdown --- */
+/* Converter */
 document.getElementById("btnFracToDec").addEventListener("click", () => {
   try{
     const f = parseFraction(inpFraction.value);
     const pack = nearestSixteenthFromFraction(f.n, f.d);
 
-    const exactLine = `${fracToString(f.n,f.d)} in = ${formatDecimal(pack.dec)} in (exact)`;
-    const approxLine = `Nearest 1/16: ${formatDecimal(pack.dec)} × 16 = ${formatDecimal(pack.raw)} → round = ${pack.rounded}/16 = ${fracToString(pack.frac16.n, pack.frac16.d)} in`;
-    const errLine = `Error: ${formatDecimal(pack.err)} in`;
-
-    outFracToDec.textContent = `${exactLine}\n${approxLine}\n${errLine}`;
+    outFracToDec.textContent =
+      `${fracToString(f.n,f.d)} in = ${formatDecimal(pack.dec)} in (exact)\n` +
+      `Nearest 1/16: ${formatDecimal(pack.dec)} × 16 = ${formatDecimal(pack.raw)} → round = ${pack.rounded}/16 = ${fracToString(pack.frac16.n, pack.frac16.d)} in\n` +
+      `Error: ${formatDecimal(pack.err)} in`;
 
     setSteps(outStepsConv, "Fraction → Nearest 1/16", [
       `Parse input: ${fracToString(f.n,f.d)}`,
-      `Convert to decimal: n/d = ${formatDecimal(pack.dec)}`,
-      `Multiply by 16: ${formatDecimal(pack.dec)} × 16 = ${formatDecimal(pack.raw)}`,
-      `Round: ${formatDecimal(pack.raw)} → ${pack.rounded}`,
-      `Write as fraction: ${pack.rounded}/16 → reduce = ${fracToString(pack.frac16.n, pack.frac16.d)}`,
-      `Error: |exact − approx| = ${formatDecimal(pack.err)} in`,
+      `Decimal: n/d = ${formatDecimal(pack.dec)}`,
+      `×16 = ${formatDecimal(pack.raw)}`,
+      `Round to whole 16ths: ${pack.rounded}`,
+      `Back to fraction: ${pack.rounded}/16 → ${fracToString(pack.frac16.n, pack.frac16.d)}`,
+      `Error: ${formatDecimal(pack.err)} in`,
     ]);
   }catch(e){
     outFracToDec.textContent = `Error: ${e.message}`;
@@ -174,7 +172,6 @@ document.getElementById("btnFracToDec").addEventListener("click", () => {
   }
 });
 
-/* --- Decimal -> Nearest 1/16 breakdown --- */
 document.getElementById("btnDecToFrac").addEventListener("click", () => {
   try{
     const x = Number(String(inpDecimal.value).trim());
@@ -189,11 +186,11 @@ document.getElementById("btnDecToFrac").addEventListener("click", () => {
       `Error: ${formatDecimal(pack.err)} in`;
 
     setSteps(outStepsConv, "Decimal → Nearest 1/16", [
-      `Input decimal: ${formatDecimal(x)}`,
-      `Multiply by 16: ${formatDecimal(x)} × 16 = ${formatDecimal(pack.raw)}`,
-      `Round: ${formatDecimal(pack.raw)} → ${pack.rounded}`,
-      `Write as fraction: ${pack.rounded}/16 → reduce = ${fracToString(pack.frac16.n, pack.frac16.d)}`,
-      `Error: |input − approx| = ${formatDecimal(pack.err)} in`,
+      `Input: ${formatDecimal(x)}`,
+      `×16 = ${formatDecimal(pack.raw)}`,
+      `Round: ${pack.rounded}`,
+      `Fraction: ${pack.rounded}/16 → ${fracToString(pack.frac16.n, pack.frac16.d)}`,
+      `Error: ${formatDecimal(pack.err)} in`,
     ]);
   }catch(e){
     outDecToFrac.textContent = `Error: ${e.message}`;
@@ -201,34 +198,32 @@ document.getElementById("btnDecToFrac").addEventListener("click", () => {
   }
 });
 
-/* --- Fraction add/sub -> exact + nearest 1/16 --- */
+/* Ops */
 function opsOutput(opName, a, b, rExact){
   const pack = nearestSixteenthFromFraction(rExact.n, rExact.d);
-
-  const exactLine = `Exact: ${fracToString(a.n,a.d)} ${opName} ${fracToString(b.n,b.d)} = ${fracToString(rExact.n,rExact.d)} in = ${formatDecimal(pack.dec)} in`;
-  const approxLine = `Nearest 1/16: ${fracToString(pack.frac16.n, pack.frac16.d)} in`;
-  const errLine = `Error: ${formatDecimal(pack.err)} in`;
-
-  return { exactLine, approxLine, errLine, pack };
+  return {
+    pack,
+    text:
+      `Exact: ${fracToString(a.n,a.d)} ${opName} ${fracToString(b.n,b.d)} = ${fracToString(rExact.n,rExact.d)} in = ${formatDecimal(pack.dec)} in\n` +
+      `Nearest 1/16: ${fracToString(pack.frac16.n, pack.frac16.d)} in\n` +
+      `Error: ${formatDecimal(pack.err)} in`
+  };
 }
 
 document.getElementById("btnAdd").addEventListener("click", () => {
   try{
     const a = parseFraction(inpF1.value);
     const b = parseFraction(inpF2.value);
-    const n = a.n*b.d + b.n*a.d;
-    const d = a.d*b.d;
-    const r = reduceFrac(n,d);
+    const r = reduceFrac(a.n*b.d + b.n*a.d, a.d*b.d);
 
     const out = opsOutput("+", a, b, r);
-    outFracOps.textContent = `${out.exactLine}\n${out.approxLine}\n${out.errLine}`;
+    outFracOps.textContent = out.text;
 
     setSteps(outStepsOps, "A + B (then nearest 1/16)", [
       `Parse A: ${fracToString(a.n,a.d)}`,
       `Parse B: ${fracToString(b.n,b.d)}`,
-      `Exact math: (a.n*b.d + b.n*a.d) / (a.d*b.d)`,
-      `Exact result: ${fracToString(r.n,r.d)} in`,
-      `Convert exact to decimal: ${formatDecimal(out.pack.dec)}`,
+      `Exact: (a.n*b.d + b.n*a.d) / (a.d*b.d)`,
+      `Exact result: ${fracToString(r.n,r.d)}`,
       `Nearest 1/16: ${fracToString(out.pack.frac16.n, out.pack.frac16.d)}`,
       `Error: ${formatDecimal(out.pack.err)} in`,
     ]);
@@ -242,19 +237,16 @@ document.getElementById("btnSub").addEventListener("click", () => {
   try{
     const a = parseFraction(inpF1.value);
     const b = parseFraction(inpF2.value);
-    const n = a.n*b.d - b.n*a.d;
-    const d = a.d*b.d;
-    const r = reduceFrac(n,d);
+    const r = reduceFrac(a.n*b.d - b.n*a.d, a.d*b.d);
 
     const out = opsOutput("−", a, b, r);
-    outFracOps.textContent = `${out.exactLine}\n${out.approxLine}\n${out.errLine}`;
+    outFracOps.textContent = out.text;
 
     setSteps(outStepsOps, "A − B (then nearest 1/16)", [
       `Parse A: ${fracToString(a.n,a.d)}`,
       `Parse B: ${fracToString(b.n,b.d)}`,
-      `Exact math: (a.n*b.d − b.n*a.d) / (a.d*b.d)`,
-      `Exact result: ${fracToString(r.n,r.d)} in`,
-      `Convert exact to decimal: ${formatDecimal(out.pack.dec)}`,
+      `Exact: (a.n*b.d − b.n*a.d) / (a.d*b.d)`,
+      `Exact result: ${fracToString(r.n,r.d)}`,
       `Nearest 1/16: ${fracToString(out.pack.frac16.n, out.pack.frac16.d)}`,
       `Error: ${formatDecimal(out.pack.err)} in`,
     ]);
@@ -264,7 +256,6 @@ document.getElementById("btnSub").addEventListener("click", () => {
   }
 });
 
-// Clear buttons
 document.getElementById("btnClearA").addEventListener("click", () => {
   inpFraction.value = "";
   outFracToDec.textContent = "—";
@@ -280,12 +271,14 @@ document.getElementById("btnClearC").addEventListener("click", () => {
 });
 
 /* ---------------------------
-   LAYOUT TOOL
+   STUD LAYOUT (framing-accurate rules)
 ---------------------------- */
 const inpLenFt = document.getElementById("inpLenFt");
 const inpLenIn = document.getElementById("inpLenIn");
 const selOC = document.getElementById("selOC");
 const selFormat = document.getElementById("selFormat");
+const chkEndStuds = document.getElementById("chkEndStuds");
+const chkDropNearEnd = document.getElementById("chkDropNearEnd");
 const outLayout = document.getElementById("outLayout");
 
 function toIntOrZero(v){
@@ -301,6 +294,10 @@ function inchesToFtIn(inches){
   return `${sign}${ft}' ${inch}"`;
 }
 
+function formatMark(inches, mode){
+  return mode === "in" ? `${inches}"` : inchesToFtIn(inches);
+}
+
 document.getElementById("btnLayout").addEventListener("click", () => {
   try{
     const ft = toIntOrZero(inpLenFt.value);
@@ -309,26 +306,77 @@ document.getElementById("btnLayout").addEventListener("click", () => {
     if(totalIn <= 0) throw new Error("Enter a wall length > 0.");
 
     const oc = parseInt(selOC.value, 10);
-    const marks = [];
-    for(let m = 0; m <= totalIn; m += oc){
-      marks.push(m);
+    const fmt = selFormat.value;
+
+    const includeEnds = !!chkEndStuds?.checked;
+    const dropNearEnd = !!chkDropNearEnd?.checked;
+
+    // Typical stud thickness used as "too close to end" threshold
+    const END_THRESHOLD_IN = 1.5;
+
+    // Build interior OC marks
+    const interior = [];
+    for(let m = oc; m < totalIn; m += oc){
+      interior.push(m);
     }
 
-    const fmt = selFormat.value;
-    const formatted = marks.map(m => (fmt === "in" ? `${m}"` : inchesToFtIn(m)));
+    // Optionally drop the last interior mark if it's too close to the end
+    let dropped = null;
+    if(dropNearEnd && interior.length){
+      const last = interior[interior.length - 1];
+      const gap = totalIn - last;
+      if(gap <= END_THRESHOLD_IN){
+        dropped = interior.pop();
+      }
+    }
 
-    outLayout.textContent =
-      `Length: ${ft}' ${inch}" (${totalIn}" total)\n` +
-      `Spacing: ${oc}" OC\n` +
-      `Marks (${marks.length}):\n` +
-      formatted.join(", ");
+    // Final stud center marks
+    const marks = [];
+    if(includeEnds){
+      marks.push(0);
+      marks.push(...interior);
+      if(totalIn !== 0) marks.push(totalIn);
+    } else {
+      marks.push(...interior);
+    }
 
-    setSteps(outStepsLayout, "Stud/Joist Layout", [
-      `Convert length to inches: ${ft}×12 + ${inch} = ${totalIn}"`,
-      `Choose spacing: ${oc}"`,
-      `Generate marks: 0, ${oc}, ${oc*2}, ... up to ≤ ${totalIn}"`,
-      `Count marks: ${marks.length}`,
-    ]);
+    // Count = studs at these center marks
+    const studCount = marks.length;
+
+    const formatted = marks.map(m => formatMark(m, fmt)).join(", ");
+
+    const summary =
+      `Wall: ${ft}' ${inch}" (${totalIn}" total)\n` +
+      `Spacing: ${oc}" OC • End studs: ${includeEnds ? "YES" : "NO"} • Drop-near-end: ${dropNearEnd ? "YES" : "NO"}\n` +
+      `Stud count: ${studCount}\n` +
+      `Center marks:\n${formatted}`;
+
+    outLayout.textContent = summary;
+
+    const steps = [
+      `Convert length → inches: ${ft}×12 + ${inch} = ${totalIn}"`,
+      `Generate interior OC marks: ${oc}", ${oc*2}", ... < ${totalIn}"`,
+    ];
+
+    if(dropNearEnd){
+      if(dropped !== null){
+        steps.push(`Last interior mark was within 1½" of end: end − last = ${totalIn} − ${dropped} = ${totalIn - dropped}" → dropped ${dropped}"`);
+      } else {
+        steps.push(`Check last interior mark vs end: no mark within 1½" → none dropped`);
+      }
+    } else {
+      steps.push(`Drop-near-end disabled → keep all interior marks`);
+    }
+
+    if(includeEnds){
+      steps.push(`Add end studs: include 0" and ${totalIn}"`);
+    } else {
+      steps.push(`End studs disabled: interior marks only`);
+    }
+
+    steps.push(`Final stud count = number of center marks = ${studCount}`);
+
+    setSteps(outStepsLayout, "Stud Layout Steps", steps);
   }catch(e){
     outLayout.textContent = `Error: ${e.message}`;
     setSteps(outStepsLayout, "Error", [String(e.message)]);
