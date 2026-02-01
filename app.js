@@ -1,3 +1,5 @@
+// app.js
+
 /* =========================
    Build / PWA SW register (safe)
 ========================= */
@@ -133,9 +135,18 @@ function toFeetInString(totalInches, denom = 16) {
   return `${sign}${feet}' ${inchStr}`;
 }
 
+function normalizeQuotes(s) {
+  // Critical iOS fix: normalize smart apostrophes ’ ‘ plus prime ′ into ASCII '
+  // and smart inch quotes “ ” plus double-prime ″ into ASCII "
+  return String(s || "")
+    .replace(/″|“|”/g, '"')
+    .replace(/′|’|‘/g, "'")
+    .trim();
+}
+
 function parseMixedFraction(str) {
   if (!str) return NaN;
-  const s = String(str).trim().replace(/″|“|”/g, '"').replace(/′/g, "'");
+  const s = normalizeQuotes(str);
 
   const parts = s.split(/\s+/);
 
@@ -158,7 +169,14 @@ function parseMixedFraction(str) {
 
 function parseFeetInches(str) {
   if (!str) return NaN;
-  let s = String(str).trim().replace(/″|“|”/g, '"').replace(/′/g, "'");
+
+  // Normalize smart quotes FIRST (this fixes 24’ 0” parsing as 2' instead of 24')
+  let s = normalizeQuotes(str);
+
+  // Optional hardening: support "ft/in" words
+  s = s
+    .replace(/\b(feet|foot|ft)\b/gi, "'")
+    .replace(/\b(inches|inch|in)\b/gi, '"');
 
   if (!s.includes("'") && !s.includes('"') && !s.includes("/")) {
     const n = parseFloat(s);
