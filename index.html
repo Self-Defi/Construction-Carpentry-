@@ -3,172 +3,251 @@
 <head>
   <meta charset="utf-8" />
   <title>Construction Carpentry</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="description" content="Mobile-friendly carpentry math, measurement conversions, layout estimating, and roofing calculators." />
   <meta name="theme-color" content="#0b1220" />
-  <link rel="manifest" href="manifest.webmanifest" />
-  <link rel="stylesheet" href="styles.css" />
+
+  <link rel="manifest" href="./manifest.webmanifest" />
+  <link rel="stylesheet" href="./styles.css" />
 </head>
 
-<body>
-  <header class="topbar">
-    <div class="brand">
-      <div class="title">Construction Carpentry</div>
-      <div class="sub">PWA • Offline • Field-first</div>
-    </div>
+<body class="bg">
+  <header class="top">
+    <h1>Construction Carpentry</h1>
+    <div class="sub">PWA • Offline • Field-first</div>
   </header>
 
   <main class="wrap">
 
-    <!-- HOME / TAPE MATH -->
-    <section class="view isActive" id="view-home" aria-label="Home">
+    <!-- HOME -->
+    <section id="tab-home" class="tab isActive" aria-label="Home">
+
       <div class="card">
         <div class="cardHead">
-          <h2>Tape / Fraction Converter</h2>
-          <button class="btnGhost btnSmall" data-steps="stepsTape">Steps</button>
+          <div class="cardTitle">Tape / Fraction Converter</div>
+          <button class="btn ghost sm" data-steps-open="steps-tape">Steps</button>
         </div>
 
         <div class="grid2">
           <div class="field">
             <label>Fraction / mixed (e.g., 3/16, 1 1/2)</label>
-            <input id="inpFracToDec" inputmode="text" placeholder="1 3/8" />
-            <div class="row">
-              <button class="btnPrimary" id="btnFracToDec">→ Decimal (in)</button>
-              <button class="btnGhost" id="btnTapeClear1">Clear</button>
+            <input id="tape_frac" type="text" placeholder='1 3/8' />
+            <div class="btnRow">
+              <button class="btn" id="btn_frac_to_dec">→ Decimal (in)</button>
+              <button class="btn ghost" id="btn_frac_clear">Clear</button>
             </div>
-            <div class="out" id="outFracToDec">—</div>
+            <pre class="out" id="out_frac_to_dec">—</pre>
           </div>
 
           <div class="field">
             <label>Decimal inches (e.g., 0.1875)</label>
-            <input id="inpDecToTape" inputmode="decimal" placeholder="0.333333" />
-            <div class="row">
-              <button class="btnPrimary" id="btnDecToTape">→ Nearest 1/16</button>
-              <button class="btnGhost" id="btnTapeClear2">Clear</button>
+            <input id="tape_dec" type="text" placeholder="0.333333" />
+            <div class="btnRow">
+              <button class="btn" id="btn_dec_to_16">→ Nearest 1/16</button>
+              <button class="btn ghost" id="btn_dec_clear">Clear</button>
             </div>
-            <div class="out" id="outDecToTape">—</div>
+            <pre class="out" id="out_dec_to_16">—</pre>
           </div>
-        </div>
-
-        <div class="stepsPanel" id="stepsTape" hidden>
-          <div class="stepsTitle">Steps</div>
-          <pre class="stepsOut" id="outStepsTape"></pre>
         </div>
       </div>
 
       <div class="card">
         <div class="cardHead">
-          <h2>Fraction Add / Subtract / Multiply / Divide (nearest 1/16)</h2>
-          <button class="btnGhost btnSmall" data-steps="stepsFracOps">Steps</button>
+          <div class="cardTitle">Fraction Add / Subtract / Multiply / Divide (nearest 1/16)</div>
+          <button class="btn ghost sm" data-steps-open="steps-fracops">Steps</button>
         </div>
 
         <div class="grid2">
           <div class="field">
             <label>A (e.g., 1 3/8)</label>
-            <input id="inpA" inputmode="text" placeholder="1 3/8" />
+            <input id="ops_a" type="text" placeholder="1 3/8" />
           </div>
           <div class="field">
             <label>B (e.g., 7/16)</label>
-            <input id="inpB" inputmode="text" placeholder="7/16" />
+            <input id="ops_b" type="text" placeholder="7/16" />
           </div>
         </div>
 
-        <div class="row wrapRow">
-          <button class="btnPrimary" id="btnAdd">A + B</button>
-          <button class="btnPrimary" id="btnSub">A − B</button>
-          <button class="btnPrimary" id="btnMul">A × B</button>
-          <button class="btnPrimary" id="btnDiv">A ÷ B</button>
-          <button class="btnGhost" id="btnFracOpsClear">Clear</button>
+        <div class="btnRow">
+          <button class="btn" data-op="add">A + B</button>
+          <button class="btn" data-op="sub">A − B</button>
+          <button class="btn" data-op="mul">A × B</button>
+          <button class="btn" data-op="div">A ÷ B</button>
+          <button class="btn ghost" id="btn_ops_clear">Clear</button>
         </div>
 
-        <div class="out" id="outFracOps">—</div>
-
-        <div class="stepsPanel" id="stepsFracOps" hidden>
-          <div class="stepsTitle">Steps</div>
-          <pre class="stepsOut" id="outStepsFracOps"></pre>
-        </div>
+        <pre class="out" id="out_ops">—</pre>
       </div>
 
       <div class="card">
         <div class="cardHead">
-          <h2>Inches ↔ Decimal Feet (tape-ready)</h2>
-          <button class="btnGhost btnSmall" data-steps="stepsFeet">Steps</button>
+          <div class="cardTitle">Inches ↔ Decimal Feet (tape-ready)</div>
+          <button class="btn ghost sm" data-steps-open="steps-feetdec">Steps</button>
         </div>
 
         <div class="grid2">
           <div class="field">
-            <label>Feet & Inches (e.g., 5' 3 7/16")</label>
-            <input id="inpFtIn" inputmode="text" placeholder="5' 3 7/16" />
-            <div class="row">
-              <button class="btnPrimary" id="btnToDecFt">→ Decimal Feet</button>
-              <button class="btnGhost" id="btnFeetClear1">Clear</button>
+            <label>Feet &amp; Inches (e.g., 5' 3 7/16")</label>
+            <input id="fi_in" type="text" placeholder={`5' 3 7/16"`} />
+            <div class="btnRow">
+              <button class="btn" id="btn_fi_to_df">→ Decimal Feet</button>
+              <button class="btn ghost" id="btn_fi_clear">Clear</button>
             </div>
-            <div class="out" id="outToDecFt">—</div>
+            <pre class="out" id="out_fi_to_df">—</pre>
           </div>
 
           <div class="field">
             <label>Decimal Feet (e.g., 5.286458)</label>
-            <input id="inpDecFt" inputmode="decimal" placeholder="5.286458" />
-            <div class="row">
-              <button class="btnPrimary" id="btnToFtIn">→ Ft + In (1/16)</button>
-              <button class="btnGhost" id="btnFeetClear2">Clear</button>
+            <input id="df_in" type="text" placeholder="5.286458" />
+            <div class="btnRow">
+              <button class="btn" id="btn_df_to_fi">→ Ft + In (1/16)</button>
+              <button class="btn ghost" id="btn_df_clear">Clear</button>
             </div>
-            <div class="out" id="outToFtIn">—</div>
+            <pre class="out" id="out_df_to_fi">—</pre>
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- LAYOUT -->
+    <section id="tab-layout" class="tab" aria-label="Layout">
+
+      <!-- NEW: measurement-driven estimator -->
+      <div class="card">
+        <div class="cardHead">
+          <div class="cardTitle">Wall Materials Estimator (sheet goods + fasteners)</div>
+          <button class="btn ghost sm" data-steps-open="steps-wall">Steps</button>
+        </div>
+
+        <div class="grid2">
+          <div class="field">
+            <label>Wall length</label>
+            <input id="wall_len" type="text" placeholder={`12' 0"`} value={`12' 0"`} />
+            <div class="hint">Accepts: 144, 12', 12' 0", 12' 3 1/2"</div>
+          </div>
+          <div class="field">
+            <label>Wall height</label>
+            <input id="wall_h" type="text" placeholder={`8' 0"`} value={`8' 0"`} />
+          </div>
+
+          <div class="field">
+            <label>Stud spacing</label>
+            <select id="stud_oc">
+              <option value="16">16" OC</option>
+              <option value="24">24" OC</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label>Sheet size</label>
+            <select id="sheet_size">
+              <option value="4x8">4×8</option>
+              <option value="4x12">4×12</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label>Hang direction</label>
+            <select id="hang_dir">
+              <option value="vertical">Vertical (common)</option>
+              <option value="horizontal">Horizontal</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label>Waste % (optional)</label>
+            <input id="waste_pct" type="number" min="0" max="30" step="1" value="10" />
           </div>
         </div>
 
-        <div class="stepsPanel" id="stepsFeet" hidden>
-          <div class="stepsTitle">Steps</div>
-          <pre class="stepsOut" id="outStepsFeet"></pre>
-        </div>
-      </div>
-    </section>
+        <div class="divider"></div>
 
-    <!-- LAYOUT / MATERIALS AUDITOR -->
-    <section class="view" id="view-layout" aria-label="Layout">
+        <div class="grid2">
+          <div class="field">
+            <label>Drywall screw spacing (editable defaults)</label>
+            <div class="grid2 tight">
+              <div>
+                <label class="mini">Edges (in)</label>
+                <input id="dw_edge" type="number" min="4" max="16" step="1" value="8" />
+              </div>
+              <div>
+                <label class="mini">Field (in)</label>
+                <input id="dw_field" type="number" min="6" max="24" step="1" value="12" />
+              </div>
+            </div>
+            <div class="hint">Defaults are common jobsite schedules. Adjust to match your class/module.</div>
+          </div>
+
+          <div class="field">
+            <label>Bottom plate anchors (concrete screws)</label>
+            <div class="grid2 tight">
+              <div>
+                <label class="mini">Spacing (in)</label>
+                <input id="anc_space" type="number" min="12" max="120" step="6" value="72" />
+              </div>
+              <div>
+                <label class="mini">End distance (in)</label>
+                <input id="anc_end" type="number" min="4" max="24" step="1" value="12" />
+              </div>
+            </div>
+            <div class="hint">Estimate assumes one continuous bottom plate on slab.</div>
+          </div>
+        </div>
+
+        <div class="btnRow">
+          <button class="btn" id="btn_wall_calc">Calculate</button>
+          <button class="btn ghost" id="btn_wall_clear">Clear</button>
+          <button class="btn ghost" id="btn_wall_to_auditor">Add lines to Auditor</button>
+        </div>
+
+        <pre class="out" id="out_wall">—</pre>
+      </div>
+
+      <!-- EXISTING: running tally / auditor -->
       <div class="card">
         <div class="cardHead">
-          <h2>Materials Auditor (running tally)</h2>
-          <button class="btnGhost btnSmall" data-steps="stepsAudit">Steps</button>
+          <div class="cardTitle">Materials Auditor (running tally)</div>
+          <button class="btn ghost sm" data-steps-open="steps-auditor">Steps</button>
         </div>
 
         <div class="grid3">
           <div class="field">
             <label>Item</label>
-            <input id="audItem" placeholder="2x4 Stud" />
+            <input id="aud_item" type="text" placeholder="2x4 Stud" />
           </div>
           <div class="field">
             <label>Qty</label>
-            <input id="audQty" inputmode="decimal" placeholder="10" />
+            <input id="aud_qty" type="number" min="0" step="1" value="1" />
           </div>
           <div class="field">
             <label>Unit (optional)</label>
-            <input id="audUnit" placeholder="pcs" />
+            <input id="aud_unit" type="text" placeholder="pcs" />
           </div>
-        </div>
 
-        <div class="grid2">
           <div class="field">
             <label>Unit Cost (optional)</label>
-            <input id="audCost" inputmode="decimal" placeholder="3.48" />
+            <input id="aud_cost" type="number" min="0" step="0.01" placeholder="3.48" />
           </div>
           <div class="field">
             <label>Notes (optional)</label>
-            <input id="audNotes" placeholder="Wall A, north side" />
+            <input id="aud_notes" type="text" placeholder="Wall A, north side" />
           </div>
+          <div class="field"></div>
         </div>
 
-        <div class="row wrapRow">
-          <button class="btnPrimary" id="audAdd">Add Line</button>
-          <button class="btnGhost" id="audClearInputs">Clear Inputs</button>
-          <button class="btnGhost" id="audExport">Export JSON</button>
-          <button class="btnGhost" id="audImport">Import JSON</button>
-          <button class="btnDanger" id="audWipe">Wipe List</button>
+        <div class="btnRow wrapBtns">
+          <button class="btn" id="aud_add">Add Line</button>
+          <button class="btn ghost" id="aud_clear_inputs">Clear Inputs</button>
+          <button class="btn ghost" id="aud_export">Export JSON</button>
+          <button class="btn ghost" id="aud_import">Import JSON</button>
+          <button class="btn danger" id="aud_wipe">Wipe List</button>
         </div>
 
-        <div class="out" id="audSummary">—</div>
+        <pre class="out" id="aud_meta">Lines: 0 • Total $: 0.00 • Saved locally</pre>
 
         <div class="tableWrap">
-          <table class="tbl" id="audTable" aria-label="Materials table">
+          <table class="tbl">
             <thead>
               <tr>
                 <th>Item</th>
@@ -180,135 +259,113 @@
                 <th></th>
               </tr>
             </thead>
-            <tbody id="audBody"></tbody>
+            <tbody id="aud_rows"></tbody>
           </table>
         </div>
-
-        <div class="stepsPanel" id="stepsAudit" hidden>
-          <div class="stepsTitle">How to use</div>
-          <pre class="stepsOut">
-• Add items as you measure / cut / purchase (studs, plates, sheets, fasteners)
-• Export JSON to text (Notes app) as your backup
-• Import JSON to restore later
-• This is an auditor — it preserves reality even when plans change
-          </pre>
-        </div>
       </div>
+
     </section>
 
     <!-- ROOFING -->
-    <section class="view" id="view-roof" aria-label="Roofing">
+    <section id="tab-roofing" class="tab" aria-label="Roofing">
+
       <div class="card">
         <div class="cardHead">
-          <h2>Pitch ↔ Angle (standard rise per 12)</h2>
-          <button class="btnGhost btnSmall" data-steps="stepsPitch">Steps</button>
+          <div class="cardTitle">Pitch ↔ Angle (standard rise per 12)</div>
+          <button class="btn ghost sm" data-steps-open="steps-pitch">Steps</button>
         </div>
 
         <div class="grid2">
           <div class="field">
             <label>Pitch rise (per 12)</label>
-            <input id="inpPitchRise" inputmode="decimal" placeholder="6" />
+            <input id="pitch_rise" type="number" min="0" step="0.25" value="6" />
           </div>
           <div class="field">
             <label>Run (default 12)</label>
-            <input id="inpPitchRun" inputmode="decimal" placeholder="12" />
+            <input id="pitch_run" type="number" min="1" step="0.25" value="12" />
           </div>
         </div>
 
-        <div class="row">
-          <button class="btnPrimary" id="btnPitchCalc">Calculate</button>
-          <button class="btnGhost" id="btnPitchClear">Clear</button>
+        <div class="btnRow">
+          <button class="btn" id="btn_pitch_calc">Calculate</button>
+          <button class="btn ghost" id="btn_pitch_clear">Clear</button>
         </div>
 
-        <div class="out" id="outPitch">—</div>
-
-        <div class="stepsPanel" id="stepsPitch" hidden>
-          <div class="stepsTitle">Steps</div>
-          <pre class="stepsOut" id="outStepsPitch"></pre>
-        </div>
+        <pre class="out" id="out_pitch">—</pre>
       </div>
 
       <div class="card">
         <div class="cardHead">
-          <h2>Rise / Run → Rafter Length</h2>
-          <button class="btnGhost btnSmall" data-steps="stepsRafter">Steps</button>
+          <div class="cardTitle">Rise / Run → Rafter Length</div>
+          <button class="btn ghost sm" data-steps-open="steps-rafter">Steps</button>
         </div>
 
         <div class="grid2">
           <div class="field">
             <label>Run (e.g., 12' 0)</label>
-            <input id="inpRun" inputmode="text" placeholder="12' 0" />
+            <input id="raf_run" type="text" value={`12' 0"`} />
           </div>
           <div class="field">
             <label>Pitch rise (per 12)</label>
-            <input id="inpPitch" inputmode="decimal" placeholder="6" />
+            <input id="raf_pitch" type="number" min="0" step="0.25" value="6" />
           </div>
         </div>
 
-        <div class="row">
-          <button class="btnPrimary" id="btnRafterCalc">Calculate</button>
-          <button class="btnGhost" id="btnRafterClear">Clear</button>
+        <div class="btnRow">
+          <button class="btn" id="btn_raf_calc">Calculate</button>
+          <button class="btn ghost" id="btn_raf_clear">Clear</button>
         </div>
 
-        <div class="out" id="outRafter">—</div>
-
-        <div class="stepsPanel" id="stepsRafter" hidden>
-          <div class="stepsTitle">Steps</div>
-          <pre class="stepsOut" id="outStepsRafter"></pre>
-        </div>
+        <pre class="out" id="out_raf">—</pre>
       </div>
 
       <div class="card">
         <div class="cardHead">
-          <h2>Diagonal (Pythagorean)</h2>
-          <button class="btnGhost btnSmall" data-steps="stepsSquare">Steps</button>
+          <div class="cardTitle">Diagonal (Pythagorean)</div>
+          <button class="btn ghost sm" data-steps-open="steps-diag">Steps</button>
         </div>
 
         <div class="grid2">
           <div class="field">
             <label>Side A</label>
-            <input id="inpSideA" inputmode="text" placeholder="3'" />
+            <input id="diag_a" type="text" value={`3' 0"`} />
           </div>
           <div class="field">
             <label>Side B</label>
-            <input id="inpSideB" inputmode="text" placeholder="4'" />
+            <input id="diag_b" type="text" value={`4' 0"`} />
           </div>
         </div>
 
-        <div class="row">
-          <button class="btnPrimary" id="btnSquareCalc">Calculate</button>
-          <button class="btnGhost" id="btnSquareClear">Clear</button>
+        <div class="btnRow">
+          <button class="btn" id="btn_diag_calc">Calculate</button>
+          <button class="btn ghost" id="btn_diag_clear">Clear</button>
         </div>
 
-        <div class="out" id="outSquare">—</div>
-
-        <div class="stepsPanel" id="stepsSquare" hidden>
-          <div class="stepsTitle">Steps</div>
-          <pre class="stepsOut" id="outStepsSquare"></pre>
-        </div>
+        <pre class="out" id="out_diag">—</pre>
       </div>
+
     </section>
 
     <!-- REFERENCE -->
-    <section class="view" id="view-ref" aria-label="Reference">
+    <section id="tab-ref" class="tab" aria-label="Reference">
       <div class="card">
         <div class="cardHead">
-          <h2>Quick Reference</h2>
+          <div class="cardTitle">Quick Reference</div>
         </div>
 
-        <div class="refGrid">
-          <div class="refBox">
-            <h3>Quick Conversions</h3>
-            <ul>
+        <div class="grid3 refGrid">
+          <div class="miniCard">
+            <div class="miniTitle">Quick Conversions</div>
+            <ul class="bul">
               <li>12 in = 1 ft</li>
-              <li>16" OC = 1' 4"</li>
-              <li>24" OC = 2' 0"</li>
+              <li>16&quot; OC = 1&apos; 4&quot;</li>
+              <li>24&quot; OC = 2&apos; 0&quot;</li>
             </ul>
           </div>
 
-          <div class="refBox">
-            <h3>Common Fractions (in)</h3>
-            <ul>
+          <div class="miniCard">
+            <div class="miniTitle">Common Fractions (in)</div>
+            <ul class="bul">
               <li>1/16 = 0.0625</li>
               <li>1/8 = 0.125</li>
               <li>3/16 = 0.1875</li>
@@ -318,27 +375,38 @@
             </ul>
           </div>
 
-          <div class="refBox">
-            <h3>Square Layout</h3>
-            <ul>
+          <div class="miniCard">
+            <div class="miniTitle">Square Layout</div>
+            <ul class="bul">
               <li>3-4-5 triangle scales to any size</li>
               <li>Check diagonal for square frames</li>
             </ul>
           </div>
         </div>
+
       </div>
     </section>
 
   </main>
 
-  <!-- Bottom Nav -->
-  <nav class="bottomNav" aria-label="Primary">
-    <button class="navBtn isActive" data-target="view-home">Home</button>
-    <button class="navBtn" data-target="view-layout">Layout</button>
-    <button class="navBtn" data-target="view-roof">Roofing</button>
-    <button class="navBtn" data-target="view-ref">Reference</button>
+  <nav class="nav">
+    <button class="navBtn isActive" data-tab="home">Home</button>
+    <button class="navBtn" data-tab="layout">Layout</button>
+    <button class="navBtn" data-tab="roofing">Roofing</button>
+    <button class="navBtn" data-tab="ref">Reference</button>
   </nav>
 
-  <script src="app.js"></script>
+  <!-- Steps Modal -->
+  <div id="stepsModal" class="modal" aria-hidden="true">
+    <div class="modalInner">
+      <div class="modalHead">
+        <div id="stepsTitle" class="modalTitle">Steps</div>
+        <button class="btn ghost sm" id="stepsClose">Close</button>
+      </div>
+      <pre id="stepsBody" class="stepsPre">—</pre>
+    </div>
+  </div>
+
+  <script src="./app.js"></script>
 </body>
 </html>
