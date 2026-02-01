@@ -1,403 +1,618 @@
 /* =========================
-   NAV
+   PWA SW register (safe)
 ========================= */
-const views = Array.from(document.querySelectorAll(".view"));
-const navBtns = Array.from(document.querySelectorAll(".navBtn"));
-
-function showView(id) {
-  views.forEach(v => v.classList.toggle("isActive", v.id === id));
-  navBtns.forEach(b => b.classList.toggle("isActive", b.dataset.target === id));
-  // keep scroll sane on mobile
-  window.scrollTo({ top: 0, behavior: "instant" });
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("./sw.js").catch(() => {});
+  });
 }
 
-navBtns.forEach(btn => {
-  btn.addEventListener("click", () => showView(btn.dataset.target));
-});
-
-// Steps toggles (all buttons with data-steps)
-document.querySelectorAll("[data-steps]").forEach(btn => {
+/* =========================
+   Tabs
+========================= */
+const tabs = {
+  home: document.getElementById("tab-home"),
+  layout: document.getElementById("tab-layout"),
+  roofing: document.getElementById("tab-roofing"),
+  ref: document.getElementById("tab-ref"),
+};
+document.querySelectorAll(".navBtn").forEach(btn => {
   btn.addEventListener("click", () => {
-    const id = btn.getAttribute("data-steps");
-    const panel = document.getElementById(id);
-    if (panel) panel.hidden = !panel.hidden;
+    const key = btn.dataset.tab;
+    Object.values(tabs).forEach(t => t.classList.remove("isActive"));
+    tabs[key].classList.add("isActive");
+    document.querySelectorAll(".navBtn").forEach(b => b.classList.remove("isActive"));
+    btn.classList.add("isActive");
+    window.scrollTo({ top: 0, behavior: "smooth" });
   });
 });
 
 /* =========================
-   MATH HELPERS
+   Steps modal
 ========================= */
+const stepsModal = document.getElementById("stepsModal");
+const stepsTitle = document.getElementById("stepsTitle");
+const stepsBody = document.getElementById("stepsBody");
+document.getElementById("stepsClose").addEventListener("click", closeSteps);
+
+function openSteps(title, body) {
+  stepsTitle.textContent = title;
+  stepsBody.textContent = body || "—";
+  stepsModal.classList.add("isOpen");
+  stepsModal.setAttribute("aria-hidden", "false");
+}
+function closeSteps() {
+  stepsModal.classList.remove("isOpen");
+  stepsModal.setAttribute("aria-hidden", "true");
+}
+stepsModal.addEventListener("click", (e) => {
+  if (e.target === stepsModal) closeSteps();
+});
+document.querySelectorAll("[data-steps-open]").forEach(btn => {
+  btn.addEventListener("click", () => {
+    const key = btn.getAttribute("data-steps-open");
+    openSteps(STEPS[key]?.title || "Steps", STEPS[key]?.body || "—");
+  });
+});
+
+/* =========================
+   Math helpers
+========================= */
+
+// gcd for fraction reduce
 function gcd(a, b) {
   a = Math.abs(a); b = Math.abs(b);
   while (b) [a, b] = [b, a % b];
   return a || 1;
 }
 
-function lcm(a, b) {
-  return Math.abs(a * b) / gcd(a, b);
+function clamp(n, min, max) { return Math.max(min, Math.min(max, n)); }
+
+function roundToDenom(value, denom) {
+  // value in inches, denom=16 => nearest 1/16"
+  return Math.round(value * denom) / denom;
 }
 
-function parseFractionToRational(raw) {
-  // Supports: "7/16", "1 3/8", "2", "  1/2  "
-  const s = (raw || "").trim().replace(/"/g, "");
-  if (!s) throw new Error("empty");
+function toFractionString(inches, denom = 16) {
+  const sign = inches < 0 ? "-" : "";
+  inches = Math.abs(inches);
+  const whole = Math.floor(inches);
+  const frac = inches - whole;
+  const num = Math.round(frac * denom);
 
-  const parts = s.split(/\s+/);
-  if (parts.length === 1) {
-    if (parts[0].includes("/")) {
-      const [n, d] = parts[0].split("/");
-      const nn = parseInt(n, 10), dd = parseInt(d, 10);
-      if (!dd) throw new Error("bad denom");
-      return { n: nn, d: dd };
-    }
-    const v = Number(parts[0]);
-    if (!Number.isFinite(v)) throw new Error("bad number");
-    return { n: Math.trunc(v), d: 1 };
+  if (num === 0) return sign + `${whole}"`;
+  if (num === denom) return sign + `${whole + 1}"`;
+
+  const g = gcd(num, denom);
+  const rn = num / g, rd = denom / g;
+
+  if (whole === 0) return sign + `${rn}/${rd}"`;
+  return sign + `${whole} ${rn}/${rd}"`;
+}
+
+function toFeetInString(totalInches, denom = 16) {
+  const sign = totalInches < 0 ? "-" : "";
+  totalInches = Math.abs(totalInches);
+  const feet = Math.floor(totalInches / 12);
+  const inches = totalInches - feet * 12;
+  const rounded = roundToDenom(inches, denom);
+  // Handle roll-over to next foot
+  if (rounded >= 12) {
+    return `${sign}${feet + 1}' 0"`;
   }
+  // Convert to mixed fraction
+  const wholeIn = Math.floor(rounded);
+  const frac = rounded - wholeIn;
+  const num = Math.round(frac * denom);
 
-  // mixed number: whole + frac
-  const whole = parseInt(parts[0], 10);
-  const frac = parts[1];
-  if (!frac.includes("/")) throw new Error("bad mixed");
-  const [n, d] = frac.split("/");
-  const nn = parseInt(n, 10), dd = parseInt(d, 10);
-  if (!dd) throw new Error("bad denom");
-  const sign = whole < 0 ? -1 : 1;
-  const absWhole = Math.abs(whole);
-  return { n: sign * (absWhole * dd + nn), d: dd };
-}
-
-function simplify({ n, d }) {
-  if (d < 0) { n = -n; d = -d; }
-  const g = gcd(n, d);
-  return { n: n / g, d: d / g };
-}
-
-function rationalToDecimal({ n, d }) {
-  return n / d;
-}
-
-function rationalOp(a, b, op) {
-  // a,b are rationals
-  let n, d;
-  if (op === "add") {
-    const L = lcm(a.d, b.d);
-    n = a.n * (L / a.d) + b.n * (L / b.d);
-    d = L;
-  } else if (op === "sub") {
-    const L = lcm(a.d, b.d);
-    n = a.n * (L / a.d) - b.n * (L / b.d);
-    d = L;
-  } else if (op === "mul") {
-    n = a.n * b.n;
-    d = a.d * b.d;
-  } else if (op === "div") {
-    if (b.n === 0) throw new Error("divide by zero");
-    n = a.n * b.d;
-    d = a.d * b.n;
+  let inchStr = "";
+  if (num === 0) {
+    inchStr = `${wholeIn}"`;
   } else {
-    throw new Error("bad op");
+    const g = gcd(num, denom);
+    const rn = num / g, rd = denom / g;
+    if (wholeIn === 0) inchStr = `${rn}/${rd}"`;
+    else inchStr = `${wholeIn} ${rn}/${rd}"`;
   }
-  return simplify({ n, d });
+  return `${sign}${feet}' ${inchStr}`;
 }
 
-function toNearestSixteenthInches(decimalInches) {
-  // returns inches as rational with denom 16
-  const rounded = Math.round(decimalInches * 16) / 16;
-  const n = Math.round(rounded * 16);
-  return { n, d: 16 }; // inches
+// Parses:
+// - "144"  (assume inches)
+// - "12'" or "12' 0\"" or "12' 3 1/2\""
+// - "3 7/16" (assume inches)
+// - "7/16" (assume inches)
+function parseMixedFraction(str) {
+  if (!str) return NaN;
+  const s = String(str).trim().replace(/″|“|”/g, '"').replace(/′/g, "'");
+
+  // If it's like "a b/c"
+  const parts = s.split(/\s+/);
+  if (parts.length === 2 && parts[1].includes("/")) {
+    const whole = parseFloat(parts[0]);
+    const [n, d] = parts[1].split("/").map(Number);
+    if (!isFinite(whole) || !isFinite(n) || !isFinite(d) || d === 0) return NaN;
+    return whole + n / d;
+  }
+  // If it's like "b/c"
+  if (parts.length === 1 && parts[0].includes("/")) {
+    const [n, d] = parts[0].split("/").map(Number);
+    if (!isFinite(n) || !isFinite(d) || d === 0) return NaN;
+    return n / d;
+  }
+  // Plain number
+  const n = parseFloat(s);
+  return isFinite(n) ? n : NaN;
 }
 
-function formatTapeFromInches(decimalInches) {
-  // decimal inches -> whole + x/16
-  const r = toNearestSixteenthInches(decimalInches);
-  let total16 = r.n; // in 16ths
-  const sign = total16 < 0 ? -1 : 1;
-  total16 = Math.abs(total16);
+function parseFeetInches(str) {
+  if (!str) return NaN;
+  let s = String(str).trim().replace(/″|“|”/g, '"').replace(/′/g, "'");
 
-  const whole = Math.floor(total16 / 16);
-  const frac = total16 % 16;
+  // If only a number, assume inches
+  if (!s.includes("'") && !s.includes('"') && !s.includes("/")) {
+    const n = parseFloat(s);
+    return isFinite(n) ? n : NaN;
+  }
 
-  if (frac === 0) return `${sign < 0 ? "-" : ""}${whole}"`;
-
-  // reduce fraction out of 16 for display (still nearest 1/16)
-  const g = gcd(frac, 16);
-  const nn = frac / g;
-  const dd = 16 / g;
-
-  return `${sign < 0 ? "-" : ""}${whole} ${nn}/${dd}"`;
-}
-
-function parseFeetInchesToInches(raw) {
-  // Supports: 12' 0, 5' 3 7/16, 3', 6 1/2 (assumes inches if no ')
-  const s = (raw || "").trim().replace(/”|“/g, '"');
-  if (!s) throw new Error("empty");
+  // If contains feet mark:
+  let feet = 0;
+  let inchesPart = "";
 
   if (s.includes("'")) {
-    const [ftPart, restPart] = s.split("'");
-    const ft = Number(ftPart.trim() || "0");
-    if (!Number.isFinite(ft)) throw new Error("bad ft");
-    const rest = (restPart || "").trim();
-    if (!rest) return ft * 12;
-
-    // rest may be: 3 7/16, 3, 0, 3/8
-    const inchesRat = simplify(parseFractionToRational(rest));
-    return ft * 12 + rationalToDecimal(inchesRat);
+    const [f, rest] = s.split("'");
+    feet = parseFloat(f.trim());
+    inchesPart = (rest || "").replace(/"/g, "").trim();
+  } else {
+    // no feet, just inches text
+    inchesPart = s.replace(/"/g, "").trim();
   }
 
-  // no feet symbol => inches fraction/mixed/decimal
-  if (s.includes("/") || s.includes(" ")) {
-    return rationalToDecimal(simplify(parseFractionToRational(s)));
+  // inchesPart can be: 0, 3, 3 1/2, 1/2
+  let inches = 0;
+  if (inchesPart.length > 0) {
+    inches = parseMixedFraction(inchesPart);
+    if (!isFinite(inches)) return NaN;
   }
 
-  const v = Number(s.replace(/"/g, ""));
-  if (!Number.isFinite(v)) throw new Error("bad inches");
-  return v;
+  if (!isFinite(feet)) return NaN;
+  return feet * 12 + inches;
 }
 
-function formatFtInFromInches(decimalInches) {
-  const rounded = Math.round(decimalInches * 16) / 16; // nearest 1/16
-  const sign = rounded < 0 ? "-" : "";
-  let x = Math.abs(rounded);
-
-  const ft = Math.floor(x / 12);
-  x = x - ft * 12;
-
-  const inchesText = formatTapeFromInches(x);
-  // inchesText returns like `3 7/16"` or `0"` etc
-  return `${sign}${ft}' ${inchesText}`;
+function fmt(n, digits = 6) {
+  if (!isFinite(n)) return "—";
+  return Number(n).toFixed(digits).replace(/\.?0+$/, "");
 }
 
 /* =========================
-   HOME: Tape / Fraction Converter
+   HOME: Tape/Fraction
 ========================= */
-const inpFracToDec = document.getElementById("inpFracToDec");
-const outFracToDec = document.getElementById("outFracToDec");
-const outStepsTape = document.getElementById("outStepsTape");
+const tapeFrac = document.getElementById("tape_frac");
+const tapeDec = document.getElementById("tape_dec");
+const outFracToDec = document.getElementById("out_frac_to_dec");
+const outDecTo16 = document.getElementById("out_dec_to_16");
 
-document.getElementById("btnFracToDec").addEventListener("click", () => {
-  try {
-    const rat = simplify(parseFractionToRational(inpFracToDec.value));
-    const dec = rationalToDecimal(rat);
-    const tape = formatTapeFromInches(dec);
+document.getElementById("btn_frac_to_dec").addEventListener("click", () => {
+  const v = parseMixedFraction(tapeFrac.value);
+  if (!isFinite(v)) { outFracToDec.textContent = "Enter a valid fraction/mixed number."; return; }
+  outFracToDec.textContent = `${tapeFrac.value.trim()} in = ${fmt(v, 6)} in`;
+  STEPS["steps-tape"].body =
+`Tape / Fraction Converter Steps
 
-    outFracToDec.textContent =
-      `${inpFracToDec.value.trim()} in = ${dec.toFixed(6)} in\n≈ ${tape} (nearest 1/16)`;
-
-    outStepsTape.textContent =
-`Given: ${inpFracToDec.value.trim()}
-Convert to rational: ${rat.n}/${rat.d}
-Decimal inches = n ÷ d = ${dec.toFixed(6)}
-Nearest 1/16 = round(decimal × 16) ÷ 16 = ${tape}`;
-  } catch (e) {
-    outFracToDec.textContent = "—";
-    outStepsTape.textContent = "Enter a valid fraction or mixed number (e.g., 1 3/8, 7/16).";
-  }
+Given fraction/mixed: ${tapeFrac.value.trim()}
+1) Parse whole + numerator/denominator (if present)
+2) Convert to decimal inches:
+   decimal = whole + (num/denom)
+Result: ${fmt(v, 6)} inches`;
 });
 
-document.getElementById("btnTapeClear1").addEventListener("click", () => {
-  inpFracToDec.value = "";
+document.getElementById("btn_dec_to_16").addEventListener("click", () => {
+  const n = parseFloat(String(tapeDec.value).trim());
+  if (!isFinite(n)) { outDecTo16.textContent = "Enter a valid decimal inches value."; return; }
+  const r = roundToDenom(n, 16);
+  outDecTo16.textContent = `${fmt(n, 6)} in ≈ ${toFractionString(r, 16)} (nearest 1/16)`;
+  STEPS["steps-tape"].body =
+`Tape / Fraction Converter Steps
+
+Given decimal inches: ${fmt(n, 6)}
+1) Round to nearest 1/16:
+   rounded = round(decimal * 16) / 16
+2) Convert to fraction display
+Result: ${toFractionString(r, 16)}`;
+});
+
+document.getElementById("btn_frac_clear").addEventListener("click", () => {
+  tapeFrac.value = "";
   outFracToDec.textContent = "—";
 });
-
-const inpDecToTape = document.getElementById("inpDecToTape");
-const outDecToTape = document.getElementById("outDecToTape");
-
-document.getElementById("btnDecToTape").addEventListener("click", () => {
-  try {
-    const dec = Number(inpDecToTape.value);
-    if (!Number.isFinite(dec)) throw new Error("bad");
-    const tape = formatTapeFromInches(dec);
-    outDecToTape.textContent =
-      `${dec} in ≈ ${tape} (nearest 1/16)`;
-    outStepsTape.textContent =
-`Given: ${dec} inches
-Multiply by 16 = ${(dec * 16).toFixed(4)}
-Round to nearest whole = ${Math.round(dec * 16)}
-Divide by 16 = ${tape}`;
-  } catch {
-    outDecToTape.textContent = "—";
-    outStepsTape.textContent = "Enter a valid decimal inches value (e.g., 0.1875).";
-  }
-});
-
-document.getElementById("btnTapeClear2").addEventListener("click", () => {
-  inpDecToTape.value = "";
-  outDecToTape.textContent = "—";
+document.getElementById("btn_dec_clear").addEventListener("click", () => {
+  tapeDec.value = "";
+  outDecTo16.textContent = "—";
 });
 
 /* =========================
    HOME: Fraction Ops
 ========================= */
-const inpA = document.getElementById("inpA");
-const inpB = document.getElementById("inpB");
-const outFracOps = document.getElementById("outFracOps");
-const outStepsFracOps = document.getElementById("outStepsFracOps");
+const opsA = document.getElementById("ops_a");
+const opsB = document.getElementById("ops_b");
+const outOps = document.getElementById("out_ops");
 
-function runFracOp(op) {
-  try {
-    const A = simplify(parseFractionToRational(inpA.value));
-    const B = simplify(parseFractionToRational(inpB.value));
-    const R = rationalOp(A, B, op);
-    const dec = rationalToDecimal(R);
-    const tape = formatTapeFromInches(dec);
+function fracOps(op) {
+  const a = parseMixedFraction(opsA.value);
+  const b = parseMixedFraction(opsB.value);
+  if (!isFinite(a) || !isFinite(b)) { outOps.textContent = "Enter valid A and B fractions/mixed numbers."; return; }
 
-    const opLabel = op === "add" ? "+" : op === "sub" ? "−" : op === "mul" ? "×" : "÷";
+  let res = NaN;
+  let sym = "?";
+  if (op === "add") { res = a + b; sym = "+"; }
+  if (op === "sub") { res = a - b; sym = "−"; }
+  if (op === "mul") { res = a * b; sym = "×"; }
+  if (op === "div") { res = b === 0 ? NaN : a / b; sym = "÷"; }
 
-    outFracOps.textContent =
-      `Result: ${R.n}/${R.d} in\n` +
-      `Decimal: ${dec.toFixed(6)} in\n` +
-      `≈ ${tape} (nearest 1/16)`;
+  if (!isFinite(res)) { outOps.textContent = "Result undefined (division by zero?)"; return; }
 
-    outStepsFracOps.textContent =
-`A = ${A.n}/${A.d}
-B = ${B.n}/${B.d}
-Operation: A ${opLabel} B
-Result (simplified) = ${R.n}/${R.d}
-Decimal = ${dec.toFixed(6)}
-Nearest 1/16 = ${tape}`;
-  } catch (e) {
-    outFracOps.textContent = "—";
-    outStepsFracOps.textContent = "Enter valid fractions/mixed numbers in A and B.";
-  }
+  const rounded = roundToDenom(res, 16);
+  outOps.textContent = `${opsA.value.trim()} ${sym} ${opsB.value.trim()} = ${fmt(res, 6)} in ≈ ${toFractionString(rounded, 16)} (nearest 1/16)`;
+
+  STEPS["steps-fracops"].body =
+`Fraction Ops Steps
+
+A = ${opsA.value.trim()}  -> ${fmt(a, 6)} in
+B = ${opsB.value.trim()}  -> ${fmt(b, 6)} in
+
+1) Compute: A ${sym} B = ${fmt(res, 6)} in
+2) Round to nearest 1/16:
+   rounded = round(result * 16) / 16
+3) Convert to tape fraction:
+   ${toFractionString(rounded, 16)}
+
+Tape-ready result: ${toFractionString(rounded, 16)}`;
 }
 
-document.getElementById("btnAdd").addEventListener("click", () => runFracOp("add"));
-document.getElementById("btnSub").addEventListener("click", () => runFracOp("sub"));
-document.getElementById("btnMul").addEventListener("click", () => runFracOp("mul"));
-document.getElementById("btnDiv").addEventListener("click", () => runFracOp("div"));
-
-document.getElementById("btnFracOpsClear").addEventListener("click", () => {
-  inpA.value = "";
-  inpB.value = "";
-  outFracOps.textContent = "—";
+document.querySelectorAll("[data-op]").forEach(btn => {
+  btn.addEventListener("click", () => fracOps(btn.dataset.op));
+});
+document.getElementById("btn_ops_clear").addEventListener("click", () => {
+  opsA.value = "";
+  opsB.value = "";
+  outOps.textContent = "—";
 });
 
 /* =========================
-   HOME: Inches ↔ Decimal Feet
+   HOME: Inches <-> Decimal Feet
 ========================= */
-const inpFtIn = document.getElementById("inpFtIn");
-const inpDecFt = document.getElementById("inpDecFt");
-const outToDecFt = document.getElementById("outToDecFt");
-const outToFtIn = document.getElementById("outToFtIn");
-const outStepsFeet = document.getElementById("outStepsFeet");
+const fiIn = document.getElementById("fi_in");
+const dfIn = document.getElementById("df_in");
+const outFiToDf = document.getElementById("out_fi_to_df");
+const outDfToFi = document.getElementById("out_df_to_fi");
 
-document.getElementById("btnToDecFt").addEventListener("click", () => {
-  try {
-    const inches = parseFeetInchesToInches(inpFtIn.value);
-    const decFt = inches / 12;
+document.getElementById("btn_fi_to_df").addEventListener("click", () => {
+  const inches = parseFeetInches(fiIn.value);
+  if (!isFinite(inches)) { outFiToDf.textContent = "Enter a valid feet & inches value."; return; }
+  const decFeet = inches / 12;
+  outFiToDf.textContent = `${fiIn.value.trim()} = ${fmt(decFeet, 6)} ft`;
+  STEPS["steps-feetdec"].body =
+`Inches ↔ Decimal Feet Steps
 
-    outToDecFt.textContent =
-      `${formatFtInFromInches(inches)} = ${decFt.toFixed(6)} ft`;
+Given: ${fiIn.value.trim()}
+1) Convert to total inches
+2) Decimal feet = totalInches / 12
 
-    outStepsFeet.textContent =
-`Parse input into inches = ${inches.toFixed(6)}"
-Decimal feet = inches ÷ 12
-= ${decFt.toFixed(6)} ft`;
-  } catch {
-    outToDecFt.textContent = "—";
-    outStepsFeet.textContent = "Enter a valid feet/inches value (e.g., 5' 3 7/16).";
+Total inches: ${fmt(inches, 6)}
+Decimal feet: ${fmt(decFeet, 6)} ft`;
+});
+
+document.getElementById("btn_df_to_fi").addEventListener("click", () => {
+  const decFeet = parseFloat(String(dfIn.value).trim());
+  if (!isFinite(decFeet)) { outDfToFi.textContent = "Enter a valid decimal feet value."; return; }
+  const totalIn = decFeet * 12;
+  const out = toFeetInString(totalIn, 16);
+  outDfToFi.textContent = `${fmt(decFeet, 6)} ft = ${out} (nearest 1/16")`;
+  STEPS["steps-feetdec"].body =
+`Inches ↔ Decimal Feet Steps
+
+Given decimal feet: ${fmt(decFeet, 6)} ft
+1) total inches = feet * 12 = ${fmt(totalIn, 6)}
+2) Convert to ft + in with rounding to nearest 1/16"
+Result: ${out}`;
+});
+
+document.getElementById("btn_fi_clear").addEventListener("click", () => {
+  fiIn.value = "";
+  outFiToDf.textContent = "—";
+});
+document.getElementById("btn_df_clear").addEventListener("click", () => {
+  dfIn.value = "";
+  outDfToFi.textContent = "—";
+});
+
+/* =========================
+   LAYOUT: Wall estimator
+========================= */
+const wallLen = document.getElementById("wall_len");
+const wallH = document.getElementById("wall_h");
+const studOc = document.getElementById("stud_oc");
+const sheetSize = document.getElementById("sheet_size");
+const hangDir = document.getElementById("hang_dir");
+const wastePct = document.getElementById("waste_pct");
+const dwEdge = document.getElementById("dw_edge");
+const dwField = document.getElementById("dw_field");
+const ancSpace = document.getElementById("anc_space");
+const ancEnd = document.getElementById("anc_end");
+const outWall = document.getElementById("out_wall");
+
+let lastWallResult = null;
+
+function calcWallEstimator() {
+  const L = parseFeetInches(wallLen.value);  // inches
+  const H = parseFeetInches(wallH.value);    // inches
+  if (!isFinite(L) || !isFinite(H) || L <= 0 || H <= 0) {
+    outWall.textContent = "Enter valid wall length and height.";
+    return;
   }
-});
 
-document.getElementById("btnToFtIn").addEventListener("click", () => {
-  try {
-    const decFt = Number(inpDecFt.value);
-    if (!Number.isFinite(decFt)) throw new Error("bad");
-    const inches = decFt * 12;
+  const oc = parseFloat(studOc.value); // inches
+  const waste = clamp(parseFloat(wastePct.value || "0"), 0, 30) / 100;
 
-    outToFtIn.textContent =
-      `${decFt} ft = ${formatFtInFromInches(inches)} (nearest 1/16)`;
+  // sheet dimensions in inches
+  const [sw, sh] = (sheetSize.value === "4x12") ? [48, 144] : [48, 96];
 
-    outStepsFeet.textContent =
-`Feet to inches = ${decFt} × 12 = ${inches.toFixed(6)}"
-Round to nearest 1/16 and format as ft + in`;
-  } catch {
-    outToFtIn.textContent = "—";
-    outStepsFeet.textContent = "Enter a valid decimal feet value.";
+  // Determine effective coverage based on hang direction
+  // vertical: sheet height must cover wall height; width covers along wall
+  // horizontal: sheet width covers height in "rows"; length covers along wall
+  let sheetsBase = 0;
+  let rows = 0;
+
+  if (hangDir.value === "vertical") {
+    // rows along height: if wall taller than sheet height -> multiple rows (rare for 8/12)
+    rows = Math.ceil(H / sh);
+    const perRow = Math.ceil(L / sw);
+    sheetsBase = rows * perRow;
+  } else {
+    // horizontal: sheet width (48) stacks to cover height
+    rows = Math.ceil(H / sw);          // 8' wall => 2 rows of 4'
+    const perRow = Math.ceil(L / sh);  // along length with 8' or 12'
+    sheetsBase = rows * perRow;
   }
+
+  const sheetsWithWaste = Math.ceil(sheetsBase * (1 + waste));
+
+  // Stud count (simple framing estimate):
+  // count = floor(L / OC) + 1 (includes both ends) but common layout includes both ends always.
+  // We'll do: n = Math.floor(L/oc) + 1; then add 1 to ensure end stud at far end => +1
+  // Equivalent to: Math.floor(L/oc) + 2
+  const interior = Math.floor(L / oc);
+  const studs = interior + 2;
+
+  // Drywall screws estimate:
+  // We estimate screws per sheet using edge+field spacing.
+  // Approx approach:
+  // - Assume studs behind sheet are at OC
+  // - For a 4' sheet width, studs crossing sheet ≈ (48/oc) + 1
+  // - Screws per stud line ≈ ceil(sheetHeight / fieldSpacing) + 1
+  // - Edge lines: treat as same for simplicity; user can adjust spacings.
+  const edge = clamp(parseFloat(dwEdge.value || "8"), 4, 16);   // inches
+  const field = clamp(parseFloat(dwField.value || "12"), 6, 24); // inches
+
+  const studLinesPerSheet = Math.floor(sw / oc) + 1; // studs crossing a 4' sheet
+  const sheetVertical = (hangDir.value === "vertical") ? Math.min(sh, H) : sw; // height dimension on wall
+  const screwsPerStudLine = Math.ceil(sheetVertical / field) + 1;
+  // edges: two edge lines with tighter spacing; field lines use field spacing
+  const edgeLines = 2;
+  const fieldLines = Math.max(0, studLinesPerSheet - edgeLines);
+  const screwsEdgeLine = Math.ceil(sheetVertical / edge) + 1;
+  const screwsPerSheet = (edgeLines * screwsEdgeLine) + (fieldLines * screwsPerStudLine);
+  const totalScrews = Math.ceil(screwsPerSheet * sheetsWithWaste);
+
+  // Bottom plate anchors estimate:
+  // anchors at end distance + every spacing; include both ends.
+  const space = clamp(parseFloat(ancSpace.value || "72"), 12, 120); // inches
+  const end = clamp(parseFloat(ancEnd.value || "12"), 4, 24);       // inches
+  const usable = Math.max(0, L - 2 * end);
+  const anchors = (usable <= 0) ? 2 : (2 + Math.floor(usable / space) + (usable % space === 0 ? 0 : 1));
+
+  const areaSqFt = (L * H) / 144;
+  const out =
+`Wall: ${toFeetInString(L, 16)} long × ${toFeetInString(H, 16)} high
+Area: ${fmt(areaSqFt, 2)} sq ft
+
+Sheet goods:
+- Sheet: ${sheetSize.value} (${sw}"×${sh}")
+- Hang: ${hangDir.value}
+- Base sheets: ${sheetsBase}
+- Waste: ${Math.round(waste * 100)}%
+- Total sheets (waste included): ${sheetsWithWaste}
+
+Framing estimate:
+- Stud spacing: ${oc}" OC
+- Stud count (includes both ends): ${studs}
+
+Fastener estimates (editable):
+- Drywall screws (edges ${edge}" / field ${field}"): ~${totalScrews} screws
+- Bottom plate anchors (end ${end}" / spacing ${space}"): ~${anchors} anchors
+
+Note: Fastener counts are estimates. Adjust spacing to match your course/jobsite spec.`;
+
+  outWall.textContent = out;
+
+  STEPS["steps-wall"].body =
+`Wall Materials Estimator Steps
+
+Inputs
+- Wall length: ${wallLen.value.trim()} -> ${fmt(L, 3)} in
+- Wall height: ${wallH.value.trim()} -> ${fmt(H, 3)} in
+- Stud OC: ${oc}"  | Sheet: ${sheetSize.value}  | Hang: ${hangDir.value}
+- Waste: ${Math.round(waste * 100)}%
+
+1) Sheet count
+Vertical hang:
+  rows = ceil(H / sheetHeight)
+  perRow = ceil(L / sheetWidth)
+Horizontal hang:
+  rows = ceil(H / 48")
+  perRow = ceil(L / sheetLength)
+
+Base sheets = rows * perRow
+Waste sheets = ceil(base * (1 + waste))
+
+2) Stud estimate (simple)
+studs = floor(L / OC) + 2  (includes both ends)
+
+3) Drywall screws estimate (editable defaults)
+- studs crossing 4' sheet ≈ floor(48/OC)+1
+- screws per line ≈ ceil(sheetVertical/spacing)+1
+- total = screwsPerSheet * totalSheets
+
+4) Anchors estimate (editable defaults)
+- start/end anchors at "end distance"
+- then add anchors every "spacing" between them`;
+
+  lastWallResult = { L, H, oc, sheetsWithWaste, studs, totalScrews, anchors, sheetSize: sheetSize.value };
+}
+
+document.getElementById("btn_wall_calc").addEventListener("click", calcWallEstimator);
+document.getElementById("btn_wall_clear").addEventListener("click", () => {
+  outWall.textContent = "—";
+  lastWallResult = null;
 });
 
-document.getElementById("btnFeetClear1").addEventListener("click", () => {
-  inpFtIn.value = "";
-  outToDecFt.textContent = "—";
-});
-document.getElementById("btnFeetClear2").addEventListener("click", () => {
-  inpDecFt.value = "";
-  outToFtIn.textContent = "—";
+document.getElementById("btn_wall_to_auditor").addEventListener("click", () => {
+  if (!lastWallResult) { outWall.textContent = "Calculate first, then add to Auditor."; return; }
+  // add lines to auditor using current list
+  auditorAddLine({ item: `Drywall ${lastWallResult.sheetSize}`, qty: lastWallResult.sheetsWithWaste, unit: "sheets", cost: "", notes: "from estimator" });
+  auditorAddLine({ item: `Studs (est)`, qty: lastWallResult.studs, unit: "pcs", cost: "", notes: `${lastWallResult.oc}" OC` });
+  auditorAddLine({ item: `Drywall screws (est)`, qty: lastWallResult.totalScrews, unit: "pcs", cost: "", notes: "spacing editable" });
+  auditorAddLine({ item: `Anchors (est)`, qty: lastWallResult.anchors, unit: "pcs", cost: "", notes: "bottom plate" });
+  renderAuditor();
 });
 
 /* =========================
    LAYOUT: Materials Auditor (localStorage)
 ========================= */
-const LS_KEY = "ccarpentry_materials_v1";
-let materials = [];
+const AUD_KEY = "ccarpentry_auditor_v1";
+let aud = loadAuditor();
 
-const audItem = document.getElementById("audItem");
-const audQty  = document.getElementById("audQty");
-const audUnit = document.getElementById("audUnit");
-const audCost = document.getElementById("audCost");
-const audNotes= document.getElementById("audNotes");
+const audItem = document.getElementById("aud_item");
+const audQty = document.getElementById("aud_qty");
+const audUnit = document.getElementById("aud_unit");
+const audCost = document.getElementById("aud_cost");
+const audNotes = document.getElementById("aud_notes");
+const audRows = document.getElementById("aud_rows");
+const audMeta = document.getElementById("aud_meta");
 
-const audBody = document.getElementById("audBody");
-const audSummary = document.getElementById("audSummary");
-
-function saveMaterials() {
-  localStorage.setItem(LS_KEY, JSON.stringify(materials));
-}
-
-function loadMaterials() {
+function loadAuditor() {
   try {
-    const raw = localStorage.getItem(LS_KEY);
-    materials = raw ? JSON.parse(raw) : [];
-    if (!Array.isArray(materials)) materials = [];
+    const raw = localStorage.getItem(AUD_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
   } catch {
-    materials = [];
+    return [];
   }
 }
-
-function money(x) {
-  return (Math.round(x * 100) / 100).toFixed(2);
+function saveAuditor() {
+  localStorage.setItem(AUD_KEY, JSON.stringify(aud));
 }
 
-function renderMaterials() {
-  audBody.innerHTML = "";
-  let totalCost = 0;
+function auditorAddLine(line) {
+  aud.push({
+    id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now() + Math.random()),
+    item: line.item ?? audItem.value.trim(),
+    qty: Number(line.qty ?? audQty.value) || 0,
+    unit: line.unit ?? (audUnit.value.trim() || ""),
+    cost: (line.cost ?? audCost.value) === "" ? "" : Number(line.cost ?? audCost.value),
+    notes: line.notes ?? (audNotes.value.trim() || ""),
+  });
+  saveAuditor();
+}
 
-  materials.forEach((m, idx) => {
-    const qty = Number(m.qty) || 0;
-    const cost = Number(m.cost) || 0;
-    const line = qty * cost;
-    totalCost += line;
+document.getElementById("aud_add").addEventListener("click", () => {
+  if (!audItem.value.trim()) { audMeta.textContent = "Enter an item name before adding."; return; }
+  auditorAddLine({});
+  renderAuditor();
+});
+
+document.getElementById("aud_clear_inputs").addEventListener("click", () => {
+  audItem.value = "";
+  audQty.value = 1;
+  audUnit.value = "";
+  audCost.value = "";
+  audNotes.value = "";
+});
+
+document.getElementById("aud_wipe").addEventListener("click", () => {
+  if (!confirm("Wipe the entire materials list?")) return;
+  aud = [];
+  saveAuditor();
+  renderAuditor();
+});
+
+document.getElementById("aud_export").addEventListener("click", async () => {
+  const blob = new Blob([JSON.stringify(aud, null, 2)], { type: "application/json" });
+  const text = await blob.text();
+  try {
+    await navigator.clipboard.writeText(text);
+    audMeta.textContent = `Export copied to clipboard (${aud.length} lines).`;
+  } catch {
+    prompt("Copy JSON:", text);
+  }
+});
+
+document.getElementById("aud_import").addEventListener("click", () => {
+  const raw = prompt("Paste exported JSON here:");
+  if (!raw) return;
+  try {
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) throw new Error("Not an array");
+    aud = parsed.map(x => ({
+      id: x.id || (crypto.randomUUID ? crypto.randomUUID() : String(Date.now() + Math.random())),
+      item: String(x.item || ""),
+      qty: Number(x.qty) || 0,
+      unit: String(x.unit || ""),
+      cost: x.cost === "" || x.cost == null ? "" : Number(x.cost),
+      notes: String(x.notes || ""),
+    }));
+    saveAuditor();
+    renderAuditor();
+  } catch {
+    audMeta.textContent = "Import failed. JSON must be an array of line items.";
+  }
+});
+
+function renderAuditor() {
+  audRows.innerHTML = "";
+  let total = 0;
+
+  aud.forEach(line => {
+    const lineTotal = (line.cost === "" ? 0 : (Number(line.cost) || 0)) * (Number(line.qty) || 0);
+    total += lineTotal;
 
     const tr = document.createElement("tr");
     tr.innerHTML = `
-      <td>${escapeHtml(m.item || "")}</td>
-      <td class="num">${qty}</td>
-      <td>${escapeHtml(m.unit || "")}</td>
-      <td class="num">${m.cost ? money(cost) : ""}</td>
-      <td>${escapeHtml(m.notes || "")}</td>
-      <td class="num">${m.cost ? money(line) : ""}</td>
-      <td class="num"><button class="btnX" data-del="${idx}">✕</button></td>
+      <td>${escapeHtml(line.item)}</td>
+      <td class="num">${escapeHtml(String(line.qty))}</td>
+      <td>${escapeHtml(line.unit || "")}</td>
+      <td class="num">${line.cost === "" ? "" : escapeHtml(fmt(Number(line.cost), 2))}</td>
+      <td>${escapeHtml(line.notes || "")}</td>
+      <td class="num">${line.cost === "" ? "" : escapeHtml(fmt(lineTotal, 2))}</td>
+      <td class="num"><button class="iconBtn" data-del="${line.id}">Del</button></td>
     `;
-    audBody.appendChild(tr);
+    audRows.appendChild(tr);
   });
 
-  const count = materials.length;
-  audSummary.textContent =
-    `Lines: ${count}  •  Total $: ${count ? money(totalCost) : "0.00"}  •  Saved locally`;
-
-  audBody.querySelectorAll("[data-del]").forEach(btn => {
+  audRows.querySelectorAll("[data-del]").forEach(btn => {
     btn.addEventListener("click", () => {
-      const i = Number(btn.getAttribute("data-del"));
-      materials.splice(i, 1);
-      saveMaterials();
-      renderMaterials();
+      const id = btn.getAttribute("data-del");
+      aud = aud.filter(x => x.id !== id);
+      saveAuditor();
+      renderAuditor();
     });
   });
+
+  audMeta.textContent = `Lines: ${aud.length} • Total $: ${fmt(total, 2)} • Saved locally`;
 }
 
-function escapeHtml(s) {
+function escapeHtml(s){
   return String(s)
     .replaceAll("&","&amp;")
     .replaceAll("<","&lt;")
@@ -406,180 +621,108 @@ function escapeHtml(s) {
     .replaceAll("'","&#039;");
 }
 
-document.getElementById("audAdd").addEventListener("click", () => {
-  const item = (audItem.value || "").trim();
-  const qty = Number(audQty.value);
-  const unit = (audUnit.value || "").trim();
-  const cost = audCost.value ? Number(audCost.value) : 0;
-  const notes = (audNotes.value || "").trim();
-
-  if (!item || !Number.isFinite(qty)) return;
-
-  materials.unshift({
-    item,
-    qty,
-    unit,
-    cost: Number.isFinite(cost) ? cost : 0,
-    notes,
-    ts: Date.now()
-  });
-
-  saveMaterials();
-  renderMaterials();
-
-  audItem.value = "";
-  audQty.value = "";
-  audUnit.value = "";
-  audCost.value = "";
-  audNotes.value = "";
-});
-
-document.getElementById("audClearInputs").addEventListener("click", () => {
-  audItem.value = "";
-  audQty.value = "";
-  audUnit.value = "";
-  audCost.value = "";
-  audNotes.value = "";
-});
-
-document.getElementById("audWipe").addEventListener("click", () => {
-  materials = [];
-  saveMaterials();
-  renderMaterials();
-});
-
-document.getElementById("audExport").addEventListener("click", async () => {
-  const text = JSON.stringify(materials, null, 2);
-  try {
-    await navigator.clipboard.writeText(text);
-    audSummary.textContent = "Exported to clipboard (JSON). Paste into Notes as backup.";
-  } catch {
-    // fallback prompt
-    prompt("Copy this JSON:", text);
-  }
-});
-
-document.getElementById("audImport").addEventListener("click", () => {
-  const raw = prompt("Paste Materials JSON:");
-  if (!raw) return;
-  try {
-    const parsed = JSON.parse(raw);
-    if (!Array.isArray(parsed)) throw new Error("not array");
-    materials = parsed;
-    saveMaterials();
-    renderMaterials();
-  } catch {
-    audSummary.textContent = "Import failed. JSON format not valid.";
-  }
-});
+renderAuditor();
 
 /* =========================
    ROOFING
 ========================= */
-const outStepsPitch = document.getElementById("outStepsPitch");
-const outStepsRafter = document.getElementById("outStepsRafter");
-const outStepsSquare = document.getElementById("outStepsSquare");
+const outPitch = document.getElementById("out_pitch");
+const outRaf = document.getElementById("out_raf");
+const outDiag = document.getElementById("out_diag");
 
-document.getElementById("btnPitchCalc").addEventListener("click", () => {
-  try {
-    const rise = Number(document.getElementById("inpPitchRise").value);
-    const run = Number(document.getElementById("inpPitchRun").value || 12);
-    if (!Number.isFinite(rise) || !Number.isFinite(run) || run === 0) throw new Error("bad");
+document.getElementById("btn_pitch_calc").addEventListener("click", () => {
+  const rise = parseFloat(document.getElementById("pitch_rise").value);
+  const run = parseFloat(document.getElementById("pitch_run").value);
+  if (!isFinite(rise) || !isFinite(run) || run <= 0) { outPitch.textContent = "Enter valid rise and run."; return; }
+  const ratio = rise / run;
+  const angle = Math.atan(ratio) * (180 / Math.PI);
+  const pct = ratio * 100;
+  outPitch.textContent = `Pitch: ${rise}/${run}\nAngle: ${fmt(angle, 1)}°\nSlope: ${fmt(pct, 1)}%`;
+  STEPS["steps-pitch"].body =
+`Pitch ↔ Angle Steps
 
-    const ratio = rise / run;
-    const angle = Math.atan(ratio) * 180 / Math.PI;
-    const percent = ratio * 100;
-
-    document.getElementById("outPitch").textContent =
-      `Pitch: ${rise}/${run}\nAngle: ${angle.toFixed(1)}°\nSlope: ${percent.toFixed(1)}%`;
-
-    outStepsPitch.textContent =
-`Given rise = ${rise}, run = ${run}
-Ratio = rise/run = ${ratio.toFixed(4)}
-Angle = atan(ratio) × 180/π = ${angle.toFixed(1)}°
-Slope % = ratio × 100 = ${percent.toFixed(1)}%`;
-  } catch {
-    document.getElementById("outPitch").textContent = "—";
-    outStepsPitch.textContent = "Enter valid rise/run numbers.";
-  }
+Given rise=${rise}, run=${run}
+1) ratio = rise/run = ${fmt(ratio, 6)}
+2) angle = atan(ratio) × 180/π = ${fmt(angle, 3)}°
+3) slope% = ratio × 100 = ${fmt(pct, 3)}%`;
 });
+document.getElementById("btn_pitch_clear").addEventListener("click", () => outPitch.textContent = "—");
 
-document.getElementById("btnPitchClear").addEventListener("click", () => {
-  document.getElementById("inpPitchRise").value = "";
-  document.getElementById("inpPitchRun").value = "";
-  document.getElementById("outPitch").textContent = "—";
+document.getElementById("btn_raf_calc").addEventListener("click", () => {
+  const runIn = parseFeetInches(document.getElementById("raf_run").value);
+  const pitch = parseFloat(document.getElementById("raf_pitch").value);
+  if (!isFinite(runIn) || !isFinite(pitch) || runIn <= 0) { outRaf.textContent = "Enter valid run and pitch."; return; }
+
+  // pitch is rise per 12 inches run
+  const riseIn = runIn * (pitch / 12);
+  const diag = Math.sqrt(runIn * runIn + riseIn * riseIn);
+  const angle = Math.atan(riseIn / runIn) * (180 / Math.PI);
+
+  outRaf.textContent =
+`Run: ${toFeetInString(runIn, 16)}
+Rise: ${toFeetInString(riseIn, 16)}
+Rafter (diagonal): ${toFeetInString(diag, 16)}
+Angle: ${fmt(angle, 1)}°`;
+
+  STEPS["steps-rafter"].body =
+`Rafter Length Steps
+
+Given run=${fmt(runIn, 3)} in, pitch=${pitch}/12
+1) rise = run × (pitch/12) = ${fmt(riseIn, 3)} in
+2) diagonal = √(run² + rise²) = ${fmt(diag, 3)} in
+3) angle = atan(rise/run) × 180/π = ${fmt(angle, 3)}°`;
 });
+document.getElementById("btn_raf_clear").addEventListener("click", () => outRaf.textContent = "—");
 
-document.getElementById("btnRafterCalc").addEventListener("click", () => {
-  try {
-    const runIn = parseFeetInchesToInches(document.getElementById("inpRun").value);
-    const pitchRise = Number(document.getElementById("inpPitch").value);
-    if (!Number.isFinite(runIn) || !Number.isFinite(pitchRise)) throw new Error("bad");
+document.getElementById("btn_diag_calc").addEventListener("click", () => {
+  const a = parseFeetInches(document.getElementById("diag_a").value);
+  const b = parseFeetInches(document.getElementById("diag_b").value);
+  if (!isFinite(a) || !isFinite(b) || a <= 0 || b <= 0) { outDiag.textContent = "Enter valid A and B."; return; }
+  const d = Math.sqrt(a * a + b * b);
+  outDiag.textContent = `Diagonal: ${toFeetInString(d, 16)}\n(√(A² + B²))`;
+  STEPS["steps-diag"].body =
+`Diagonal Steps
 
-    const riseIn = runIn * (pitchRise / 12);
-    const diagIn = Math.sqrt(runIn ** 2 + riseIn ** 2);
-    const angle = Math.atan(riseIn / runIn) * 180 / Math.PI;
-
-    document.getElementById("outRafter").textContent =
-      `Run: ${formatFtInFromInches(runIn)}\n` +
-      `Rise: ${formatFtInFromInches(riseIn)}\n` +
-      `Rafter: ${formatFtInFromInches(diagIn)}\n` +
-      `Angle: ${angle.toFixed(1)}°`;
-
-    outStepsRafter.textContent =
-`Run (in) = ${runIn.toFixed(6)}
-Rise = run × (pitchRise/12)
-= ${runIn.toFixed(6)} × (${pitchRise}/12)
-= ${riseIn.toFixed(6)}
-Rafter = √(run² + rise²)
-= ${diagIn.toFixed(6)}
-Angle = atan(rise/run) = ${angle.toFixed(1)}°`;
-  } catch {
-    document.getElementById("outRafter").textContent = "—";
-    outStepsRafter.textContent = "Enter valid run and pitch.";
-  }
+A=${fmt(a, 3)} in
+B=${fmt(b, 3)} in
+1) A² + B² = ${fmt(a*a + b*b, 3)}
+2) √(sum) = ${fmt(d, 3)} in
+Result: ${toFeetInString(d, 16)}`;
 });
+document.getElementById("btn_diag_clear").addEventListener("click", () => outDiag.textContent = "—");
 
-document.getElementById("btnRafterClear").addEventListener("click", () => {
-  document.getElementById("inpRun").value = "";
-  document.getElementById("inpPitch").value = "";
-  document.getElementById("outRafter").textContent = "—";
-});
+/* =========================
+   Steps content registry
+========================= */
+const STEPS = {
+  "steps-tape": {
+    title: "Steps — Tape / Fraction Converter",
+    body: "Use Convert to see the breakdown."
+  },
+  "steps-fracops": {
+    title: "Steps — Fraction Operations",
+    body: "Run an operation to populate steps."
+  },
+  "steps-feetdec": {
+    title: "Steps — Inches ↔ Decimal Feet",
+    body: "Run a conversion to populate steps."
+  },
+  "steps-wall": {
+    title: "Steps — Wall Materials Estimator",
+    body: "Tap Calculate to see the breakdown."
+  },
+  "steps-auditor": {
+    title: "Steps — Materials Auditor",
+    body:
+`Materials Auditor Steps
 
-document.getElementById("btnSquareCalc").addEventListener("click", () => {
-  try {
-    const a = parseFeetInchesToInches(document.getElementById("inpSideA").value);
-    const b = parseFeetInchesToInches(document.getElementById("inpSideB").value);
-    if (!Number.isFinite(a) || !Number.isFinite(b)) throw new Error("bad");
-
-    const d = Math.sqrt(a ** 2 + b ** 2);
-
-    document.getElementById("outSquare").textContent =
-      `Diagonal: ${formatFtInFromInches(d)} (nearest 1/16)`;
-
-    outStepsSquare.textContent =
-`A = ${a.toFixed(6)} in
-B = ${b.toFixed(6)} in
-Diagonal = √(A² + B²)
-= ${d.toFixed(6)} in`;
-  } catch {
-    document.getElementById("outSquare").textContent = "—";
-    outStepsSquare.textContent = "Enter valid lengths for A and B.";
-  }
-});
-
-document.getElementById("btnSquareClear").addEventListener("click", () => {
-  document.getElementById("inpSideA").value = "";
-  document.getElementById("inpSideB").value = "";
-  document.getElementById("outSquare").textContent = "—";
-});
-
-/* boot */
-loadMaterials();
-renderMaterials();
-
-if ("serviceWorker" in navigator) {
-  window.addEventListener("load", () => {
-    navigator.serviceWorker.register("./sw.js");
-  });
-}
+- Add Line: stores an item (qty, unit, cost, notes)
+- Saved locally (offline) in your browser
+- Export JSON: copy your list as JSON
+- Import JSON: paste JSON back in
+- Wipe List: clears all saved lines`
+  },
+  "steps-pitch": { title: "Steps — Pitch ↔ Angle", body: "Tap Calculate to see the breakdown." },
+  "steps-rafter": { title: "Steps — Rafter Length", body: "Tap Calculate to see the breakdown." },
+  "steps-diag": { title: "Steps — Diagonal", body: "Tap Calculate to see the breakdown." },
+};
