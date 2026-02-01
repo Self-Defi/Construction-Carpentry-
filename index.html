@@ -14,8 +14,16 @@
 <body class="bg">
   <header class="top">
     <h1>Construction Carpentry</h1>
-    <div class="sub">PWA • Offline • Field-first</div>
+    <div class="sub" id="buildLine">Build: v6 • Live</div>
   </header>
+
+  <!-- TOP NAV (sticky) -->
+  <nav class="nav" aria-label="Primary">
+    <button class="navBtn isActive" data-tab="home" type="button">Home</button>
+    <button class="navBtn" data-tab="layout" type="button">Layout</button>
+    <button class="navBtn" data-tab="roofing" type="button">Roofing</button>
+    <button class="navBtn" data-tab="ref" type="button">Reference</button>
+  </nav>
 
   <main class="wrap">
 
@@ -25,16 +33,16 @@
       <div class="card">
         <div class="cardHead">
           <div class="cardTitle">Tape / Fraction Converter</div>
-          <button class="btn ghost sm" data-steps-open="steps-tape">Steps</button>
+          <button class="btn ghost sm" type="button" data-steps-open="steps-tape">Steps</button>
         </div>
 
         <div class="grid2">
           <div class="field">
             <label>Fraction / mixed (e.g., 3/16, 1 1/2)</label>
-            <input id="tape_frac" type="text" placeholder='1 3/8' />
+            <input id="tape_frac" type="text" placeholder="1 3/8" />
             <div class="btnRow">
-              <button class="btn" id="btn_frac_to_dec">→ Decimal (in)</button>
-              <button class="btn ghost" id="btn_frac_clear">Clear</button>
+              <button class="btn" type="button" id="btn_frac_to_dec">→ Decimal (in)</button>
+              <button class="btn ghost" type="button" id="btn_frac_clear">Clear</button>
             </div>
             <pre class="out" id="out_frac_to_dec">—</pre>
           </div>
@@ -43,8 +51,8 @@
             <label>Decimal inches (e.g., 0.1875)</label>
             <input id="tape_dec" type="text" placeholder="0.333333" />
             <div class="btnRow">
-              <button class="btn" id="btn_dec_to_16">→ Nearest 1/16</button>
-              <button class="btn ghost" id="btn_dec_clear">Clear</button>
+              <button class="btn" type="button" id="btn_dec_to_16">→ Nearest 1/16</button>
+              <button class="btn ghost" type="button" id="btn_dec_clear">Clear</button>
             </div>
             <pre class="out" id="out_dec_to_16">—</pre>
           </div>
@@ -54,7 +62,7 @@
       <div class="card">
         <div class="cardHead">
           <div class="cardTitle">Fraction Add / Subtract / Multiply / Divide (nearest 1/16)</div>
-          <button class="btn ghost sm" data-steps-open="steps-fracops">Steps</button>
+          <button class="btn ghost sm" type="button" data-steps-open="steps-fracops">Steps</button>
         </div>
 
         <div class="grid2">
@@ -69,11 +77,11 @@
         </div>
 
         <div class="btnRow">
-          <button class="btn" data-op="add">A + B</button>
-          <button class="btn" data-op="sub">A − B</button>
-          <button class="btn" data-op="mul">A × B</button>
-          <button class="btn" data-op="div">A ÷ B</button>
-          <button class="btn ghost" id="btn_ops_clear">Clear</button>
+          <button class="btn" type="button" data-op="add">A + B</button>
+          <button class="btn" type="button" data-op="sub">A − B</button>
+          <button class="btn" type="button" data-op="mul">A × B</button>
+          <button class="btn" type="button" data-op="div">A ÷ B</button>
+          <button class="btn ghost" type="button" id="btn_ops_clear">Clear</button>
         </div>
 
         <pre class="out" id="out_ops">—</pre>
@@ -82,16 +90,16 @@
       <div class="card">
         <div class="cardHead">
           <div class="cardTitle">Inches ↔ Decimal Feet (tape-ready)</div>
-          <button class="btn ghost sm" data-steps-open="steps-feetdec">Steps</button>
+          <button class="btn ghost sm" type="button" data-steps-open="steps-feetdec">Steps</button>
         </div>
 
         <div class="grid2">
           <div class="field">
             <label>Feet &amp; Inches (e.g., 5' 3 7/16")</label>
-            <input id="fi_in" type="text" placeholder={`5' 3 7/16"`} />
+            <input id="fi_in" type="text" placeholder="5' 3 7/16&quot;" />
             <div class="btnRow">
-              <button class="btn" id="btn_fi_to_df">→ Decimal Feet</button>
-              <button class="btn ghost" id="btn_fi_clear">Clear</button>
+              <button class="btn" type="button" id="btn_fi_to_df">→ Decimal Feet</button>
+              <button class="btn ghost" type="button" id="btn_fi_clear">Clear</button>
             </div>
             <pre class="out" id="out_fi_to_df">—</pre>
           </div>
@@ -100,8 +108,8 @@
             <label>Decimal Feet (e.g., 5.286458)</label>
             <input id="df_in" type="text" placeholder="5.286458" />
             <div class="btnRow">
-              <button class="btn" id="btn_df_to_fi">→ Ft + In (1/16)</button>
-              <button class="btn ghost" id="btn_df_clear">Clear</button>
+              <button class="btn" type="button" id="btn_df_to_fi">→ Ft + In (1/16)</button>
+              <button class="btn ghost" type="button" id="btn_df_clear">Clear</button>
             </div>
             <pre class="out" id="out_df_to_fi">—</pre>
           </div>
@@ -113,22 +121,21 @@
     <!-- LAYOUT -->
     <section id="tab-layout" class="tab" aria-label="Layout">
 
-      <!-- NEW: measurement-driven estimator -->
       <div class="card">
         <div class="cardHead">
           <div class="cardTitle">Wall Materials Estimator (sheet goods + fasteners)</div>
-          <button class="btn ghost sm" data-steps-open="steps-wall">Steps</button>
+          <button class="btn ghost sm" type="button" data-steps-open="steps-wall">Steps</button>
         </div>
 
         <div class="grid2">
           <div class="field">
             <label>Wall length</label>
-            <input id="wall_len" type="text" placeholder={`12' 0"`} value={`12' 0"`} />
+            <input id="wall_len" type="text" placeholder="12' 0&quot;" value="12' 0&quot;" />
             <div class="hint">Accepts: 144, 12', 12' 0", 12' 3 1/2"</div>
           </div>
           <div class="field">
             <label>Wall height</label>
-            <input id="wall_h" type="text" placeholder={`8' 0"`} value={`8' 0"`} />
+            <input id="wall_h" type="text" placeholder="8' 0&quot;" value="8' 0&quot;" />
           </div>
 
           <div class="field">
@@ -196,19 +203,18 @@
         </div>
 
         <div class="btnRow">
-          <button class="btn" id="btn_wall_calc">Calculate</button>
-          <button class="btn ghost" id="btn_wall_clear">Clear</button>
-          <button class="btn ghost" id="btn_wall_to_auditor">Add lines to Auditor</button>
+          <button class="btn" type="button" id="btn_wall_calc">Calculate</button>
+          <button class="btn ghost" type="button" id="btn_wall_clear">Clear</button>
+          <button class="btn ghost" type="button" id="btn_wall_to_auditor">Add lines to Auditor</button>
         </div>
 
         <pre class="out" id="out_wall">—</pre>
       </div>
 
-      <!-- EXISTING: running tally / auditor -->
       <div class="card">
         <div class="cardHead">
           <div class="cardTitle">Materials Auditor (running tally)</div>
-          <button class="btn ghost sm" data-steps-open="steps-auditor">Steps</button>
+          <button class="btn ghost sm" type="button" data-steps-open="steps-auditor">Steps</button>
         </div>
 
         <div class="grid3">
@@ -237,11 +243,11 @@
         </div>
 
         <div class="btnRow wrapBtns">
-          <button class="btn" id="aud_add">Add Line</button>
-          <button class="btn ghost" id="aud_clear_inputs">Clear Inputs</button>
-          <button class="btn ghost" id="aud_export">Export JSON</button>
-          <button class="btn ghost" id="aud_import">Import JSON</button>
-          <button class="btn danger" id="aud_wipe">Wipe List</button>
+          <button class="btn" type="button" id="aud_add">Add Line</button>
+          <button class="btn ghost" type="button" id="aud_clear_inputs">Clear Inputs</button>
+          <button class="btn ghost" type="button" id="aud_export">Export JSON</button>
+          <button class="btn ghost" type="button" id="aud_import">Import JSON</button>
+          <button class="btn danger" type="button" id="aud_wipe">Wipe List</button>
         </div>
 
         <pre class="out" id="aud_meta">Lines: 0 • Total $: 0.00 • Saved locally</pre>
@@ -272,7 +278,7 @@
       <div class="card">
         <div class="cardHead">
           <div class="cardTitle">Pitch ↔ Angle (standard rise per 12)</div>
-          <button class="btn ghost sm" data-steps-open="steps-pitch">Steps</button>
+          <button class="btn ghost sm" type="button" data-steps-open="steps-pitch">Steps</button>
         </div>
 
         <div class="grid2">
@@ -287,8 +293,8 @@
         </div>
 
         <div class="btnRow">
-          <button class="btn" id="btn_pitch_calc">Calculate</button>
-          <button class="btn ghost" id="btn_pitch_clear">Clear</button>
+          <button class="btn" type="button" id="btn_pitch_calc">Calculate</button>
+          <button class="btn ghost" type="button" id="btn_pitch_clear">Clear</button>
         </div>
 
         <pre class="out" id="out_pitch">—</pre>
@@ -297,13 +303,13 @@
       <div class="card">
         <div class="cardHead">
           <div class="cardTitle">Rise / Run → Rafter Length</div>
-          <button class="btn ghost sm" data-steps-open="steps-rafter">Steps</button>
+          <button class="btn ghost sm" type="button" data-steps-open="steps-rafter">Steps</button>
         </div>
 
         <div class="grid2">
           <div class="field">
-            <label>Run (e.g., 12' 0)</label>
-            <input id="raf_run" type="text" value={`12' 0"`} />
+            <label>Run (e.g., 12' 0")</label>
+            <input id="raf_run" type="text" value="12' 0&quot;" />
           </div>
           <div class="field">
             <label>Pitch rise (per 12)</label>
@@ -312,8 +318,8 @@
         </div>
 
         <div class="btnRow">
-          <button class="btn" id="btn_raf_calc">Calculate</button>
-          <button class="btn ghost" id="btn_raf_clear">Clear</button>
+          <button class="btn" type="button" id="btn_raf_calc">Calculate</button>
+          <button class="btn ghost" type="button" id="btn_raf_clear">Clear</button>
         </div>
 
         <pre class="out" id="out_raf">—</pre>
@@ -322,23 +328,23 @@
       <div class="card">
         <div class="cardHead">
           <div class="cardTitle">Diagonal (Pythagorean)</div>
-          <button class="btn ghost sm" data-steps-open="steps-diag">Steps</button>
+          <button class="btn ghost sm" type="button" data-steps-open="steps-diag">Steps</button>
         </div>
 
         <div class="grid2">
           <div class="field">
             <label>Side A</label>
-            <input id="diag_a" type="text" value={`3' 0"`} />
+            <input id="diag_a" type="text" value="3' 0&quot;" />
           </div>
           <div class="field">
             <label>Side B</label>
-            <input id="diag_b" type="text" value={`4' 0"`} />
+            <input id="diag_b" type="text" value="4' 0&quot;" />
           </div>
         </div>
 
         <div class="btnRow">
-          <button class="btn" id="btn_diag_calc">Calculate</button>
-          <button class="btn ghost" id="btn_diag_clear">Clear</button>
+          <button class="btn" type="button" id="btn_diag_calc">Calculate</button>
+          <button class="btn ghost" type="button" id="btn_diag_clear">Clear</button>
         </div>
 
         <pre class="out" id="out_diag">—</pre>
@@ -358,8 +364,8 @@
             <div class="miniTitle">Quick Conversions</div>
             <ul class="bul">
               <li>12 in = 1 ft</li>
-              <li>16&quot; OC = 1&apos; 4&quot;</li>
-              <li>24&quot; OC = 2&apos; 0&quot;</li>
+              <li>16" OC = 1' 4"</li>
+              <li>24" OC = 2' 0"</li>
             </ul>
           </div>
 
@@ -383,25 +389,17 @@
             </ul>
           </div>
         </div>
-
       </div>
     </section>
 
   </main>
-
-  <nav class="nav">
-    <button class="navBtn isActive" data-tab="home">Home</button>
-    <button class="navBtn" data-tab="layout">Layout</button>
-    <button class="navBtn" data-tab="roofing">Roofing</button>
-    <button class="navBtn" data-tab="ref">Reference</button>
-  </nav>
 
   <!-- Steps Modal -->
   <div id="stepsModal" class="modal" aria-hidden="true">
     <div class="modalInner">
       <div class="modalHead">
         <div id="stepsTitle" class="modalTitle">Steps</div>
-        <button class="btn ghost sm" id="stepsClose">Close</button>
+        <button class="btn ghost sm" type="button" id="stepsClose">Close</button>
       </div>
       <pre id="stepsBody" class="stepsPre">—</pre>
     </div>
