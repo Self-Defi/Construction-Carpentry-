@@ -2,221 +2,137 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <title>Construction Carpentry</title>
-  <meta name="description" content="Construction Carpentry — field calculators and quick references." />
-  <meta name="theme-color" content="#070b14" />
-
-  <!-- PWA -->
-  <link rel="manifest" href="./manifest.webmanifest" />
-  <link rel="apple-touch-icon" href="./icons/icon-192.png" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-
-  <link rel="stylesheet" href="./styles.css" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="styles.css" />
 </head>
 
 <body>
-  <header class="topbar">
-    <div class="brand">
-      <div class="brandTitle">Construction Carpentry</div>
-      <div class="brandSub">PWA • Offline • Field-first</div>
+<header class="topbar">
+  <h1>Construction Carpentry</h1>
+  <div class="sub">PWA • Offline • Field-first</div>
+</header>
+
+<main>
+
+<section id="view-calc">
+
+  <!-- Inches ↔ Decimal Feet -->
+  <div class="card">
+    <div class="cardHead">
+      <h2>Inches ↔ Decimal Feet</h2>
+      <button class="btnGhost btnSmall" id="btnStepsFeet">Steps</button>
     </div>
-    <button id="btnInstall" class="btnGhost" type="button" hidden>Install</button>
-  </header>
 
-  <main class="main">
-    <!-- CALC -->
-    <section id="view-calc" class="view isActive" aria-label="Calculators">
-      <div class="card">
-        <div class="cardHead">
-          <h2>Tape / Fraction Converter</h2>
-          <button class="btnGhost btnSmall" id="btnStepsConv" type="button" aria-expanded="false">Steps</button>
-        </div>
-
-        <div class="grid2">
-          <div class="field">
-            <label for="inpFraction">Fraction (e.g., 3/16, 1 1/2, 1/3)</label>
-            <input id="inpFraction" inputmode="text" placeholder="3/16 or 1 1/2" />
-            <div class="row">
-              <button id="btnFracToDec" class="btnPrimary" type="button">→ Convert</button>
-              <button id="btnClearA" class="btnGhost" type="button">Clear</button>
-            </div>
-            <div class="out" id="outFracToDec">—</div>
-          </div>
-
-          <div class="field">
-            <label for="inpDecimal">Decimal inches (e.g., 0.1875)</label>
-            <input id="inpDecimal" inputmode="decimal" placeholder="0.1875" />
-            <div class="row">
-              <button id="btnDecToFrac" class="btnPrimary" type="button">→ Nearest 1/16</button>
-              <button id="btnClearB" class="btnGhost" type="button">Clear</button>
-            </div>
-            <div class="out" id="outDecToFrac">—</div>
-          </div>
-        </div>
-
-        <div id="stepsConv" class="stepsPanel" hidden>
-          <div class="stepsTitle">Steps (Converter)</div>
-          <div class="out stepsOut" id="outStepsConv">Run a conversion to see steps.</div>
-        </div>
+    <div class="grid2">
+      <div class="field">
+        <label>Feet & Inches</label>
+        <input id="inpFtIn" placeholder="5' 3 7/16" />
+        <button id="btnToDecFt" class="btnPrimary">→ Decimal Feet</button>
+        <div class="out" id="outToDecFt">—</div>
       </div>
 
-      <div class="card">
-        <div class="cardHead">
-          <h2>Fraction Add / Subtract <span class="muted">(rounded to nearest 1/16)</span></h2>
-          <button class="btnGhost btnSmall" id="btnStepsOps" type="button" aria-expanded="false">Steps</button>
-        </div>
-
-        <div class="grid2">
-          <div class="field">
-            <label for="inpF1">A (e.g., 1 3/8)</label>
-            <input id="inpF1" inputmode="text" placeholder="1 3/8" />
-          </div>
-          <div class="field">
-            <label for="inpF2">B (e.g., 7/16)</label>
-            <input id="inpF2" inputmode="text" placeholder="7/16" />
-          </div>
-        </div>
-
-        <div class="row">
-          <button id="btnAdd" class="btnPrimary" type="button">A + B</button>
-          <button id="btnSub" class="btnPrimary" type="button">A − B</button>
-          <button id="btnClearC" class="btnGhost" type="button">Clear</button>
-        </div>
-
-        <div class="out" id="outFracOps">—</div>
-        <p class="hint">Tip: supports <span class="mono">a/b</span> and mixed numbers like <span class="mono">1 1/2</span>.</p>
-
-        <div id="stepsOps" class="stepsPanel" hidden>
-          <div class="stepsTitle">Steps (Add/Subtract)</div>
-          <div class="out stepsOut" id="outStepsOps">Run A+B or A−B to see steps.</div>
-        </div>
+      <div class="field">
+        <label>Decimal Feet</label>
+        <input id="inpDecFt" placeholder="5.286458" />
+        <button id="btnToFtIn" class="btnPrimary">→ Ft + In</button>
+        <div class="out" id="outToFtIn">—</div>
       </div>
-    </section>
+    </div>
 
-    <!-- LAYOUT -->
-    <section id="view-layout" class="view" aria-label="Layout">
-      <div class="card">
-        <div class="cardHead">
-          <h2>Stud Layout (Framing-Accurate)</h2>
-          <button class="btnGhost btnSmall" id="btnStepsLayout" type="button" aria-expanded="false">Steps</button>
-        </div>
+    <div id="stepsFeet" class="stepsPanel" hidden>
+      <div class="stepsTitle">Steps</div>
+      <div class="out stepsOut" id="outStepsFeet"></div>
+    </div>
+  </div>
 
-        <p class="muted">
-          Marks are <span class="mono">centerline</span> positions. Defaults match typical wall layout: end studs included, and we avoid placing an interior stud too close to the end.
-        </p>
+  <!-- Pitch ↔ Angle -->
+  <div class="card">
+    <div class="cardHead">
+      <h2>Pitch ↔ Angle</h2>
+      <button class="btnGhost btnSmall" id="btnStepsPitch">Steps</button>
+    </div>
 
-        <div class="grid2">
-          <div class="field">
-            <label for="inpLenFt">Wall length (feet)</label>
-            <input id="inpLenFt" inputmode="numeric" placeholder="e.g., 8" />
-          </div>
-          <div class="field">
-            <label for="inpLenIn">Wall length (inches)</label>
-            <input id="inpLenIn" inputmode="numeric" placeholder="e.g., 0" />
-          </div>
-        </div>
-
-        <div class="grid2" style="margin-top:12px;">
-          <div class="field">
-            <label for="selOC">On Center (OC)</label>
-            <select id="selOC" class="select">
-              <option value="16">16" OC</option>
-              <option value="24">24" OC</option>
-            </select>
-          </div>
-
-          <div class="field">
-            <label for="selFormat">Display marks as</label>
-            <select id="selFormat" class="select">
-              <option value="ftin">ft + in (e.g., 5' 4")</option>
-              <option value="in">inches only (e.g., 64")</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="checks" style="margin-top:12px;">
-          <label class="check">
-            <input id="chkEndStuds" type="checkbox" checked />
-            <span>Include end studs (0" and end)</span>
-          </label>
-
-          <label class="check">
-            <input id="chkDropNearEnd" type="checkbox" checked />
-            <span>Drop last interior stud if within 1½" of the end</span>
-          </label>
-        </div>
-
-        <div class="row">
-          <button id="btnLayout" class="btnPrimary" type="button">Generate</button>
-          <button id="btnLayoutClear" class="btnGhost" type="button">Clear</button>
-        </div>
-
-        <div class="out" id="outLayout">—</div>
-
-        <div id="stepsLayout" class="stepsPanel" hidden>
-          <div class="stepsTitle">Steps (Stud Layout)</div>
-          <div class="out stepsOut" id="outStepsLayout">Generate a layout to see steps.</div>
-        </div>
+    <div class="grid2">
+      <div class="field">
+        <label>Rise (per 12)</label>
+        <input id="inpPitchRise" placeholder="6" />
       </div>
-    </section>
 
-    <!-- REFERENCE -->
-    <section id="view-ref" class="view" aria-label="Reference">
-      <div class="card">
-        <h2>Reference</h2>
-        <p class="muted">Fast lookups for common carpentry math and field conversions.</p>
-
-        <div class="miniGrid">
-          <div class="mini">
-            <div class="miniTitle">16ths → Decimal (in)</div>
-            <div class="miniBody mono" id="tbl16ths"></div>
-          </div>
-
-          <div class="mini">
-            <div class="miniTitle">Common Conversions</div>
-            <div class="miniBody">
-              <div class="refRow"><span class="mono">12 in</span> = 1 ft</div>
-              <div class="refRow"><span class="mono">16 in OC</span> = 1.333 ft spacing</div>
-              <div class="refRow"><span class="mono">24 in OC</span> = 2.000 ft spacing</div>
-              <div class="refRow"><span class="mono">144 in²</span> = 1 ft²</div>
-              <div class="refRow"><span class="mono">1 yd³</span> = 27 ft³</div>
-            </div>
-          </div>
-
-          <div class="mini">
-            <div class="miniTitle">Board Feet</div>
-            <div class="miniBody">
-              <div class="refRow"><span class="mono">BF</span> = (T × W × L) / 144</div>
-              <div class="muted" style="margin-top:8px;">T and W in inches, L in inches.</div>
-              <div class="refRow" style="margin-top:10px;"><span class="mono">2×4×8'</span> ≈ 5.33 BF</div>
-              <div class="refRow"><span class="mono">2×6×8'</span> ≈ 8.00 BF</div>
-              <div class="refRow"><span class="mono">2×8×8'</span> ≈ 10.67 BF</div>
-            </div>
-          </div>
-
-          <div class="mini">
-            <div class="miniTitle">Pitch Quick Ref</div>
-            <div class="miniBody">
-              <div class="refRow"><span class="mono">4/12</span> ≈ 18.4°</div>
-              <div class="refRow"><span class="mono">6/12</span> ≈ 26.6°</div>
-              <div class="refRow"><span class="mono">8/12</span> ≈ 33.7°</div>
-              <div class="refRow"><span class="mono">12/12</span> = 45.0°</div>
-              <div class="muted" style="margin-top:8px;">Angle = arctan(rise/run).</div>
-            </div>
-          </div>
-        </div>
+      <div class="field">
+        <label>Run</label>
+        <input id="inpPitchRun" placeholder="12" />
       </div>
-    </section>
-  </main>
+    </div>
 
-  <nav class="tabbar" aria-label="Primary navigation">
-    <button class="tab isActive" data-target="calc" type="button">Calc</button>
-    <button class="tab" data-target="layout" type="button">Layout</button>
-    <button class="tab" data-target="ref" type="button">Reference</button>
-  </nav>
+    <button id="btnPitchCalc" class="btnPrimary">Calculate</button>
+    <div class="out" id="outPitch">—</div>
 
-  <script src="./app.js"></script>
+    <div id="stepsPitch" class="stepsPanel" hidden>
+      <div class="stepsTitle">Steps</div>
+      <div class="out stepsOut" id="outStepsPitch"></div>
+    </div>
+  </div>
+
+  <!-- Rise / Run → Rafter -->
+  <div class="card">
+    <div class="cardHead">
+      <h2>Rise / Run → Rafter Length</h2>
+      <button class="btnGhost btnSmall" id="btnStepsRafter">Steps</button>
+    </div>
+
+    <div class="grid2">
+      <div class="field">
+        <label>Run</label>
+        <input id="inpRun" placeholder="12' 0" />
+      </div>
+
+      <div class="field">
+        <label>Pitch (rise per 12)</label>
+        <input id="inpPitch" placeholder="6" />
+      </div>
+    </div>
+
+    <button id="btnRafterCalc" class="btnPrimary">Calculate</button>
+    <div class="out" id="outRafter">—</div>
+
+    <div id="stepsRafter" class="stepsPanel" hidden>
+      <div class="stepsTitle">Steps</div>
+      <div class="out stepsOut" id="outStepsRafter"></div>
+    </div>
+  </div>
+
+  <!-- Diagonal / Square -->
+  <div class="card">
+    <div class="cardHead">
+      <h2>Diagonal / Square Layout</h2>
+      <button class="btnGhost btnSmall" id="btnStepsSquare">Steps</button>
+    </div>
+
+    <div class="grid2">
+      <div class="field">
+        <label>Side A</label>
+        <input id="inpSideA" placeholder="3'" />
+      </div>
+
+      <div class="field">
+        <label>Side B</label>
+        <input id="inpSideB" placeholder="4'" />
+      </div>
+    </div>
+
+    <button id="btnSquareCalc" class="btnPrimary">Calculate</button>
+    <div class="out" id="outSquare">—</div>
+
+    <div id="stepsSquare" class="stepsPanel" hidden>
+      <div class="stepsTitle">Steps</div>
+      <div class="out stepsOut" id="outStepsSquare"></div>
+    </div>
+  </div>
+
+</section>
+</main>
+
+<script src="app.js"></script>
 </body>
 </html>
