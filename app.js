@@ -1,14 +1,33 @@
 /* =========================
-   PWA SW register (safe)
+   Build / PWA SW register (safe)
 ========================= */
+const BUILD_VERSION = "v6";
+
+function updateBuildLine() {
+  const el = document.getElementById("buildLine");
+  if (!el) return;
+
+  // If there's a controlling SW, you're very likely in cached mode
+  const cached = !!navigator.serviceWorker?.controller;
+  el.textContent = `Build: ${BUILD_VERSION} • ${cached ? "Cached" : "Live"}`;
+}
+
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
     navigator.serviceWorker.register("./sw.js").catch(() => {});
+    updateBuildLine();
+
+    // If SW takes control after load, update label
+    navigator.serviceWorker.addEventListener("controllerchange", () => {
+      updateBuildLine();
+    });
   });
+} else {
+  updateBuildLine();
 }
 
 /* =========================
-   Tabs
+   Tabs (top nav)
 ========================= */
 const tabs = {
   home: document.getElementById("tab-home"),
@@ -16,16 +35,23 @@ const tabs = {
   roofing: document.getElementById("tab-roofing"),
   ref: document.getElementById("tab-ref"),
 };
+
+function setActiveTab(key) {
+  Object.values(tabs).forEach(t => t && t.classList.remove("isActive"));
+  (tabs[key] || tabs.home)?.classList.add("isActive");
+
+  document.querySelectorAll(".navBtn").forEach(b => b.classList.remove("isActive"));
+  document.querySelector(`.navBtn[data-tab="${key}"]`)?.classList.add("isActive");
+
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
 document.querySelectorAll(".navBtn").forEach(btn => {
-  btn.addEventListener("click", () => {
-    const key = btn.dataset.tab;
-    Object.values(tabs).forEach(t => t.classList.remove("isActive"));
-    tabs[key].classList.add("isActive");
-    document.querySelectorAll(".navBtn").forEach(b => b.classList.remove("isActive"));
-    btn.classList.add("isActive");
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  });
+  btn.addEventListener("click", () => setActiveTab(btn.dataset.tab));
 });
+
+// Force clean initial state
+setActiveTab("home");
 
 /* =========================
    Steps modal
@@ -58,20 +84,13 @@ document.querySelectorAll("[data-steps-open]").forEach(btn => {
 /* =========================
    Math helpers
 ========================= */
-
-// gcd for fraction reduce
 function gcd(a, b) {
   a = Math.abs(a); b = Math.abs(b);
   while (b) [a, b] = [b, a % b];
   return a || 1;
 }
-
 function clamp(n, min, max) { return Math.max(min, Math.min(max, n)); }
-
-function roundToDenom(value, denom) {
-  // value in inches, denom=16 => nearest 1/16"
-  return Math.round(value * denom) / denom;
-}
+function roundToDenom(value, denom) { return Math.round(value * denom) / denom; }
 
 function toFractionString(inches, denom = 16) {
   const sign = inches < 0 ? "-" : "";
@@ -96,11 +115,9 @@ function toFeetInString(totalInches, denom = 16) {
   const feet = Math.floor(totalInches / 12);
   const inches = totalInches - feet * 12;
   const rounded = roundToDenom(inches, denom);
-  // Handle roll-over to next foot
-  if (rounded >= 12) {
-    return `${sign}${feet + 1}' 0"`;
-  }
-  // Convert to mixed fraction
+
+  if (rounded >= 12) return `${sign}${feet + 1}' 0"`;
+
   const wholeIn = Math.floor(rounded);
   const frac = rounded - wholeIn;
   const num = Math.round(frac * denom);
@@ -111,36 +128,30 @@ function toFeetInString(totalInches, denom = 16) {
   } else {
     const g = gcd(num, denom);
     const rn = num / g, rd = denom / g;
-    if (wholeIn === 0) inchStr = `${rn}/${rd}"`;
-    else inchStr = `${wholeIn} ${rn}/${rd}"`;
+    inchStr = wholeIn === 0 ? `${rn}/${rd}"` : `${wholeIn} ${rn}/${rd}"`;
   }
   return `${sign}${feet}' ${inchStr}`;
 }
 
-// Parses:
-// - "144"  (assume inches)
-// - "12'" or "12' 0\"" or "12' 3 1/2\""
-// - "3 7/16" (assume inches)
-// - "7/16" (assume inches)
 function parseMixedFraction(str) {
   if (!str) return NaN;
   const s = String(str).trim().replace(/″|“|”/g, '"').replace(/′/g, "'");
 
-  // If it's like "a b/c"
   const parts = s.split(/\s+/);
+
   if (parts.length === 2 && parts[1].includes("/")) {
     const whole = parseFloat(parts[0]);
     const [n, d] = parts[1].split("/").map(Number);
     if (!isFinite(whole) || !isFinite(n) || !isFinite(d) || d === 0) return NaN;
     return whole + n / d;
   }
-  // If it's like "b/c"
+
   if (parts.length === 1 && parts[0].includes("/")) {
     const [n, d] = parts[0].split("/").map(Number);
     if (!isFinite(n) || !isFinite(d) || d === 0) return NaN;
     return n / d;
   }
-  // Plain number
+
   const n = parseFloat(s);
   return isFinite(n) ? n : NaN;
 }
@@ -149,13 +160,11 @@ function parseFeetInches(str) {
   if (!str) return NaN;
   let s = String(str).trim().replace(/″|“|”/g, '"').replace(/′/g, "'");
 
-  // If only a number, assume inches
   if (!s.includes("'") && !s.includes('"') && !s.includes("/")) {
     const n = parseFloat(s);
     return isFinite(n) ? n : NaN;
   }
 
-  // If contains feet mark:
   let feet = 0;
   let inchesPart = "";
 
@@ -164,11 +173,9 @@ function parseFeetInches(str) {
     feet = parseFloat(f.trim());
     inchesPart = (rest || "").replace(/"/g, "").trim();
   } else {
-    // no feet, just inches text
     inchesPart = s.replace(/"/g, "").trim();
   }
 
-  // inchesPart can be: 0, 3, 3 1/2, 1/2
   let inches = 0;
   if (inchesPart.length > 0) {
     inches = parseMixedFraction(inchesPart);
@@ -344,75 +351,57 @@ const outWall = document.getElementById("out_wall");
 let lastWallResult = null;
 
 function calcWallEstimator() {
-  const L = parseFeetInches(wallLen.value);  // inches
-  const H = parseFeetInches(wallH.value);    // inches
+  const L = parseFeetInches(wallLen.value);
+  const H = parseFeetInches(wallH.value);
   if (!isFinite(L) || !isFinite(H) || L <= 0 || H <= 0) {
     outWall.textContent = "Enter valid wall length and height.";
     return;
   }
 
-  const oc = parseFloat(studOc.value); // inches
+  const oc = parseFloat(studOc.value);
   const waste = clamp(parseFloat(wastePct.value || "0"), 0, 30) / 100;
 
-  // sheet dimensions in inches
   const [sw, sh] = (sheetSize.value === "4x12") ? [48, 144] : [48, 96];
 
-  // Determine effective coverage based on hang direction
-  // vertical: sheet height must cover wall height; width covers along wall
-  // horizontal: sheet width covers height in "rows"; length covers along wall
   let sheetsBase = 0;
   let rows = 0;
 
   if (hangDir.value === "vertical") {
-    // rows along height: if wall taller than sheet height -> multiple rows (rare for 8/12)
     rows = Math.ceil(H / sh);
     const perRow = Math.ceil(L / sw);
     sheetsBase = rows * perRow;
   } else {
-    // horizontal: sheet width (48) stacks to cover height
-    rows = Math.ceil(H / sw);          // 8' wall => 2 rows of 4'
-    const perRow = Math.ceil(L / sh);  // along length with 8' or 12'
+    rows = Math.ceil(H / sw);
+    const perRow = Math.ceil(L / sh);
     sheetsBase = rows * perRow;
   }
 
   const sheetsWithWaste = Math.ceil(sheetsBase * (1 + waste));
 
-  // Stud count (simple framing estimate):
-  // count = floor(L / OC) + 1 (includes both ends) but common layout includes both ends always.
-  // We'll do: n = Math.floor(L/oc) + 1; then add 1 to ensure end stud at far end => +1
-  // Equivalent to: Math.floor(L/oc) + 2
   const interior = Math.floor(L / oc);
   const studs = interior + 2;
 
-  // Drywall screws estimate:
-  // We estimate screws per sheet using edge+field spacing.
-  // Approx approach:
-  // - Assume studs behind sheet are at OC
-  // - For a 4' sheet width, studs crossing sheet ≈ (48/oc) + 1
-  // - Screws per stud line ≈ ceil(sheetHeight / fieldSpacing) + 1
-  // - Edge lines: treat as same for simplicity; user can adjust spacings.
-  const edge = clamp(parseFloat(dwEdge.value || "8"), 4, 16);   // inches
-  const field = clamp(parseFloat(dwField.value || "12"), 6, 24); // inches
+  const edge = clamp(parseFloat(dwEdge.value || "8"), 4, 16);
+  const field = clamp(parseFloat(dwField.value || "12"), 6, 24);
 
-  const studLinesPerSheet = Math.floor(sw / oc) + 1; // studs crossing a 4' sheet
-  const sheetVertical = (hangDir.value === "vertical") ? Math.min(sh, H) : sw; // height dimension on wall
+  const studLinesPerSheet = Math.floor(sw / oc) + 1;
+  const sheetVertical = (hangDir.value === "vertical") ? Math.min(sh, H) : sw;
+
   const screwsPerStudLine = Math.ceil(sheetVertical / field) + 1;
-  // edges: two edge lines with tighter spacing; field lines use field spacing
   const edgeLines = 2;
   const fieldLines = Math.max(0, studLinesPerSheet - edgeLines);
   const screwsEdgeLine = Math.ceil(sheetVertical / edge) + 1;
   const screwsPerSheet = (edgeLines * screwsEdgeLine) + (fieldLines * screwsPerStudLine);
   const totalScrews = Math.ceil(screwsPerSheet * sheetsWithWaste);
 
-  // Bottom plate anchors estimate:
-  // anchors at end distance + every spacing; include both ends.
-  const space = clamp(parseFloat(ancSpace.value || "72"), 12, 120); // inches
-  const end = clamp(parseFloat(ancEnd.value || "12"), 4, 24);       // inches
+  const space = clamp(parseFloat(ancSpace.value || "72"), 12, 120);
+  const end = clamp(parseFloat(ancEnd.value || "12"), 4, 24);
   const usable = Math.max(0, L - 2 * end);
   const anchors = (usable <= 0) ? 2 : (2 + Math.floor(usable / space) + (usable % space === 0 ? 0 : 1));
 
   const areaSqFt = (L * H) / 144;
-  const out =
+
+  outWall.textContent =
 `Wall: ${toFeetInString(L, 16)} long × ${toFeetInString(H, 16)} high
 Area: ${fmt(areaSqFt, 2)} sq ft
 
@@ -433,8 +422,6 @@ Fastener estimates (editable):
 
 Note: Fastener counts are estimates. Adjust spacing to match your course/jobsite spec.`;
 
-  outWall.textContent = out;
-
   STEPS["steps-wall"].body =
 `Wall Materials Estimator Steps
 
@@ -445,27 +432,27 @@ Inputs
 - Waste: ${Math.round(waste * 100)}%
 
 1) Sheet count
-Vertical hang:
+Vertical:
   rows = ceil(H / sheetHeight)
   perRow = ceil(L / sheetWidth)
-Horizontal hang:
+Horizontal:
   rows = ceil(H / 48")
   perRow = ceil(L / sheetLength)
 
 Base sheets = rows * perRow
 Waste sheets = ceil(base * (1 + waste))
 
-2) Stud estimate (simple)
-studs = floor(L / OC) + 2  (includes both ends)
+2) Stud estimate
+studs = floor(L / OC) + 2 (includes both ends)
 
-3) Drywall screws estimate (editable defaults)
+3) Screw estimate
 - studs crossing 4' sheet ≈ floor(48/OC)+1
-- screws per line ≈ ceil(sheetVertical/spacing)+1
+- screws/line ≈ ceil(sheetVertical/spacing)+1
 - total = screwsPerSheet * totalSheets
 
-4) Anchors estimate (editable defaults)
-- start/end anchors at "end distance"
-- then add anchors every "spacing" between them`;
+4) Anchor estimate
+- end anchors at "end distance"
+- then add every "spacing" between ends`;
 
   lastWallResult = { L, H, oc, sheetsWithWaste, studs, totalScrews, anchors, sheetSize: sheetSize.value };
 }
@@ -474,16 +461,6 @@ document.getElementById("btn_wall_calc").addEventListener("click", calcWallEstim
 document.getElementById("btn_wall_clear").addEventListener("click", () => {
   outWall.textContent = "—";
   lastWallResult = null;
-});
-
-document.getElementById("btn_wall_to_auditor").addEventListener("click", () => {
-  if (!lastWallResult) { outWall.textContent = "Calculate first, then add to Auditor."; return; }
-  // add lines to auditor using current list
-  auditorAddLine({ item: `Drywall ${lastWallResult.sheetSize}`, qty: lastWallResult.sheetsWithWaste, unit: "sheets", cost: "", notes: "from estimator" });
-  auditorAddLine({ item: `Studs (est)`, qty: lastWallResult.studs, unit: "pcs", cost: "", notes: `${lastWallResult.oc}" OC` });
-  auditorAddLine({ item: `Drywall screws (est)`, qty: lastWallResult.totalScrews, unit: "pcs", cost: "", notes: "spacing editable" });
-  auditorAddLine({ item: `Anchors (est)`, qty: lastWallResult.anchors, unit: "pcs", cost: "", notes: "bottom plate" });
-  renderAuditor();
 });
 
 /* =========================
@@ -510,9 +487,7 @@ function loadAuditor() {
     return [];
   }
 }
-function saveAuditor() {
-  localStorage.setItem(AUD_KEY, JSON.stringify(aud));
-}
+function saveAuditor() { localStorage.setItem(AUD_KEY, JSON.stringify(aud)); }
 
 function auditorAddLine(line) {
   aud.push({
@@ -579,6 +554,15 @@ document.getElementById("aud_import").addEventListener("click", () => {
   }
 });
 
+function escapeHtml(s){
+  return String(s)
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("'","&#039;");
+}
+
 function renderAuditor() {
   audRows.innerHTML = "";
   let total = 0;
@@ -595,7 +579,7 @@ function renderAuditor() {
       <td class="num">${line.cost === "" ? "" : escapeHtml(fmt(Number(line.cost), 2))}</td>
       <td>${escapeHtml(line.notes || "")}</td>
       <td class="num">${line.cost === "" ? "" : escapeHtml(fmt(lineTotal, 2))}</td>
-      <td class="num"><button class="iconBtn" data-del="${line.id}">Del</button></td>
+      <td class="num"><button class="iconBtn" type="button" data-del="${line.id}">Del</button></td>
     `;
     audRows.appendChild(tr);
   });
@@ -612,16 +596,16 @@ function renderAuditor() {
   audMeta.textContent = `Lines: ${aud.length} • Total $: ${fmt(total, 2)} • Saved locally`;
 }
 
-function escapeHtml(s){
-  return String(s)
-    .replaceAll("&","&amp;")
-    .replaceAll("<","&lt;")
-    .replaceAll(">","&gt;")
-    .replaceAll('"',"&quot;")
-    .replaceAll("'","&#039;");
-}
-
 renderAuditor();
+
+document.getElementById("btn_wall_to_auditor").addEventListener("click", () => {
+  if (!lastWallResult) { outWall.textContent = "Calculate first, then add to Auditor."; return; }
+  auditorAddLine({ item: `Drywall ${lastWallResult.sheetSize}`, qty: lastWallResult.sheetsWithWaste, unit: "sheets", cost: "", notes: "from estimator" });
+  auditorAddLine({ item: `Studs (est)`, qty: lastWallResult.studs, unit: "pcs", cost: "", notes: `${lastWallResult.oc}" OC` });
+  auditorAddLine({ item: `Drywall screws (est)`, qty: lastWallResult.totalScrews, unit: "pcs", cost: "", notes: "spacing editable" });
+  auditorAddLine({ item: `Anchors (est)`, qty: lastWallResult.anchors, unit: "pcs", cost: "", notes: "bottom plate" });
+  renderAuditor();
+});
 
 /* =========================
    ROOFING
@@ -653,7 +637,6 @@ document.getElementById("btn_raf_calc").addEventListener("click", () => {
   const pitch = parseFloat(document.getElementById("raf_pitch").value);
   if (!isFinite(runIn) || !isFinite(pitch) || runIn <= 0) { outRaf.textContent = "Enter valid run and pitch."; return; }
 
-  // pitch is rise per 12 inches run
   const riseIn = runIn * (pitch / 12);
   const diag = Math.sqrt(runIn * runIn + riseIn * riseIn);
   const angle = Math.atan(riseIn / runIn) * (180 / Math.PI);
@@ -695,22 +678,10 @@ document.getElementById("btn_diag_clear").addEventListener("click", () => outDia
    Steps content registry
 ========================= */
 const STEPS = {
-  "steps-tape": {
-    title: "Steps — Tape / Fraction Converter",
-    body: "Use Convert to see the breakdown."
-  },
-  "steps-fracops": {
-    title: "Steps — Fraction Operations",
-    body: "Run an operation to populate steps."
-  },
-  "steps-feetdec": {
-    title: "Steps — Inches ↔ Decimal Feet",
-    body: "Run a conversion to populate steps."
-  },
-  "steps-wall": {
-    title: "Steps — Wall Materials Estimator",
-    body: "Tap Calculate to see the breakdown."
-  },
+  "steps-tape": { title: "Steps — Tape / Fraction Converter", body: "Use Convert to see the breakdown." },
+  "steps-fracops": { title: "Steps — Fraction Operations", body: "Run an operation to populate steps." },
+  "steps-feetdec": { title: "Steps — Inches ↔ Decimal Feet", body: "Run a conversion to populate steps." },
+  "steps-wall": { title: "Steps — Wall Materials Estimator", body: "Tap Calculate to see the breakdown." },
   "steps-auditor": {
     title: "Steps — Materials Auditor",
     body:
