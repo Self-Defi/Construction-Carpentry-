@@ -1,4 +1,4 @@
-const CACHE_NAME = "ccarpentry-v5";
+const CACHE_NAME = "ccarpentry-v6";
 
 const ASSETS = [
   "./",
@@ -26,7 +26,6 @@ self.addEventListener("activate", (event) => {
   self.clients.claim();
 });
 
-// Helper: treat SPA/PWA navigations like index.html
 function isNavigationRequest(req) {
   return req.mode === "navigate" ||
     (req.method === "GET" &&
