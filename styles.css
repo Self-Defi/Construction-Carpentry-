@@ -26,6 +26,7 @@ body{
     linear-gradient(180deg, var(--bg0), var(--bg1));
 }
 
+/* Top header */
 .top{
   padding:20px 16px 10px;
   text-align:center;
@@ -40,15 +41,18 @@ body{
   font-size:13px;
 }
 
+/* Wrap */
 .wrap{
   max-width:980px;
   margin:0 auto;
-  padding:10px 12px 92px;
+  padding:10px 12px 18px;
 }
 
-.tab{display:none}
-.tab.isActive{display:block}
+/* Tabs (FORCE) */
+.tab { display:none !important; }
+.tab.isActive { display:block !important; }
 
+/* Cards */
 .card{
   background: linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.015));
   border:1px solid var(--stroke);
@@ -83,6 +87,7 @@ body{
   font-size:12px;
   color:rgba(255,255,255,.52);
 }
+
 input, select{
   width:100%;
   border-radius:12px;
@@ -117,6 +122,7 @@ select{cursor:pointer}
   flex-wrap:nowrap;
 }
 .btnRow.wrapBtns{flex-wrap:wrap}
+
 .btn{
   border:1px solid rgba(255,255,255,.10);
   background: linear-gradient(180deg, rgba(29,111,255,.95), rgba(15,63,155,.95));
@@ -159,13 +165,17 @@ select{cursor:pointer}
   border-radius:999px;
 }
 
+/* TOP NAV (sticky) */
 .nav{
-  position:fixed;
-  left:0; right:0; bottom:0;
-  padding:10px 10px calc(10px + env(safe-area-inset-bottom));
+  position: sticky;
+  top: 0;
+  z-index: 50;
+
+  padding:10px 10px;
   background: rgba(6,10,18,.85);
   backdrop-filter: blur(12px);
-  border-top:1px solid rgba(255,255,255,.08);
+  border-bottom:1px solid rgba(255,255,255,.08);
+
   display:flex;
   gap:10px;
   justify-content:center;
@@ -272,7 +282,7 @@ select{cursor:pointer}
   .tbl{min-width:740px}
 }
 @media (max-width: 720px){
-  .wrap{padding:10px 10px 94px}
+  .wrap{padding:10px 10px 18px}
   .card{padding:14px}
   .cardTitle{font-size:20px}
   .grid2{grid-template-columns:1fr}
