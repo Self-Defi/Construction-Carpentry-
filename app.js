@@ -1,9 +1,7 @@
-// app.js
-
 /* =========================
    Build / PWA SW register (safe)
 ========================= */
-const BUILD_VERSION = "v7";
+const BUILD_VERSION = "v8";
 
 function updateBuildLine() {
   const el = document.getElementById("buildLine");
@@ -36,7 +34,7 @@ const tabPanels = {
 function setActiveTab(key) {
   Object.entries(tabPanels).forEach(([k, el]) => {
     if (!el) return;
-    const isOn = k === key;
+    const isOn = (k === key);
     el.hidden = !isOn;
     el.classList.toggle("isActive", isOn);
     el.setAttribute("aria-hidden", String(!isOn));
@@ -52,7 +50,6 @@ function setActiveTab(key) {
 document.querySelectorAll(".navBtn").forEach(btn => {
   btn.addEventListener("click", () => setActiveTab(btn.dataset.tab));
 });
-
 setActiveTab("home");
 
 /* =========================
@@ -61,6 +58,7 @@ setActiveTab("home");
 const stepsModal = document.getElementById("stepsModal");
 const stepsTitle = document.getElementById("stepsTitle");
 const stepsBody = document.getElementById("stepsBody");
+
 document.getElementById("stepsClose").addEventListener("click", closeSteps);
 
 function openSteps(title, body) {
@@ -130,7 +128,7 @@ function toFeetInString(totalInches, denom = 16) {
   } else {
     const g = gcd(num, denom);
     const rn = num / g, rd = denom / g;
-    inchStr = wholeIn === 0 ? `${rn}/${rd}"` : `${wholeIn} ${rn}/${rd}"`;
+    inchStr = (wholeIn === 0) ? `${rn}/${rd}"` : `${wholeIn} ${rn}/${rd}"`;
   }
   return `${sign}${feet}' ${inchStr}`;
 }
@@ -166,8 +164,8 @@ function parseMixedFraction(str) {
 
 function parseFeetInches(str) {
   if (!str) return NaN;
-  let s = normalizeQuotes(str);
 
+  let s = normalizeQuotes(str);
   s = s
     .replace(/\b(feet|foot|ft)\b/gi, "'")
     .replace(/\b(inches|inch|in)\b/gi, '"');
@@ -218,7 +216,7 @@ document.getElementById("btn_frac_to_dec").addEventListener("click", () => {
   STEPS["steps-tape"].body =
 `Tape / Fraction Converter Steps
 
-Given fraction/mixed: ${tapeFrac.value.trim()}
+Given: ${tapeFrac.value.trim()}
 1) Parse whole + numerator/denominator (if present)
 2) Convert to decimal inches:
    decimal = whole + (num/denom)
@@ -233,7 +231,7 @@ document.getElementById("btn_dec_to_16").addEventListener("click", () => {
   STEPS["steps-tape"].body =
 `Tape / Fraction Converter Steps
 
-Given decimal inches: ${fmt(n, 6)}
+Given decimal: ${fmt(n, 6)}
 1) Round to nearest 1/16:
    rounded = round(decimal * 16) / 16
 2) Convert to fraction display
@@ -276,8 +274,8 @@ function fracOps(op) {
   STEPS["steps-fracops"].body =
 `Fraction Ops Steps
 
-A = ${opsA.value.trim()}  -> ${fmt(a, 6)} in
-B = ${opsB.value.trim()}  -> ${fmt(b, 6)} in
+A = ${opsA.value.trim()} -> ${fmt(a, 6)} in
+B = ${opsB.value.trim()} -> ${fmt(b, 6)} in
 
 1) Compute: A ${sym} B = ${fmt(res, 6)} in
 2) Round to nearest 1/16:
@@ -367,6 +365,7 @@ function calcWallEstimator() {
   const H = parseFeetInches(wallH.value);
   if (!isFinite(L) || !isFinite(H) || L <= 0 || H <= 0) {
     outWall.textContent = "Enter valid wall length and height.";
+    lastWallResult = null;
     return;
   }
 
@@ -409,7 +408,9 @@ function calcWallEstimator() {
   const space = clamp(parseFloat(ancSpace.value || "72"), 12, 120);
   const end = clamp(parseFloat(ancEnd.value || "12"), 4, 24);
   const usable = Math.max(0, L - 2 * end);
-  const anchors = (usable <= 0) ? 2 : (2 + Math.floor(usable / space) + (usable % space === 0 ? 0 : 1));
+  const anchors = (usable <= 0)
+    ? 2
+    : (2 + Math.floor(usable / space) + (usable % space === 0 ? 0 : 1));
 
   const areaSqFt = (L * H) / 144;
 
@@ -504,7 +505,7 @@ function saveAuditor() { localStorage.setItem(AUD_KEY, JSON.stringify(aud)); }
 function auditorAddLine(line) {
   aud.push({
     id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now() + Math.random()),
-    item: line.item ?? audItem.value.trim(),
+    item: line.item ?? (audItem.value.trim() || ""),
     qty: Number(line.qty ?? audQty.value) || 0,
     unit: line.unit ?? (audUnit.value.trim() || ""),
     cost: (line.cost ?? audCost.value) === "" ? "" : Number(line.cost ?? audCost.value),
@@ -556,7 +557,7 @@ document.getElementById("aud_import").addEventListener("click", () => {
       item: String(x.item || ""),
       qty: Number(x.qty) || 0,
       unit: String(x.unit || ""),
-      cost: x.cost === "" || x.cost == null ? "" : Number(x.cost),
+      cost: (x.cost === "" || x.cost == null) ? "" : Number(x.cost),
       notes: String(x.notes || ""),
     }));
     saveAuditor();
@@ -620,166 +621,310 @@ document.getElementById("btn_wall_to_auditor").addEventListener("click", () => {
 });
 
 /* =========================
-   SUBFLOOR: Estimator
+   SUBFLOOR: Materials estimator
 ========================= */
 const sfLen = document.getElementById("sf_len");
 const sfWid = document.getElementById("sf_wid");
-const sfDir = document.getElementById("sf_joist_dir");
-const sfOc = document.getElementById("sf_joist_oc");
+const sfJoistOc = document.getElementById("sf_joist_oc");
 const sfSheet = document.getElementById("sf_sheet");
 const sfWaste = document.getElementById("sf_waste");
-const sfMethod = document.getElementById("sf_method");
-const sfTubesPerSheet = document.getElementById("sf_tubes_per_sheet");
-const sfEdge = document.getElementById("sf_edge");
-const sfField = document.getElementById("sf_field");
+const sfBlocking = document.getElementById("sf_blocking");
+const sfScrewEdge = document.getElementById("sf_screw_edge");
+const sfScrewField = document.getElementById("sf_screw_field");
+const sfAdhCov = document.getElementById("sf_adh_cov");
 const outSf = document.getElementById("out_sf");
 
-let lastSfResult = null;
+let lastSubfloor = null;
 
 function calcSubfloor() {
-  const L = parseFeetInches(sfLen?.value);
-  const W = parseFeetInches(sfWid?.value);
-
+  const L = parseFeetInches(sfLen.value);
+  const W = parseFeetInches(sfWid.value);
   if (!isFinite(L) || !isFinite(W) || L <= 0 || W <= 0) {
     outSf.textContent = "Enter valid floor length and width.";
-    lastSfResult = null;
+    lastSubfloor = null;
     return;
   }
 
-  const oc = parseFloat(sfOc.value);
-  const waste = clamp(parseFloat(sfWaste.value || "0"), 0, 35) / 100;
+  const oc = parseFloat(sfJoistOc.value);
+  const waste = clamp(parseFloat(sfWaste.value || "0"), 0, 30) / 100;
 
-  const [sw, sh] = (sfSheet.value === "4x12") ? [48, 144] : [48, 96]; // inches
-  const sheetAreaSqFt = (sw * sh) / 144;
+  const joists = Math.floor(W / oc) + 2; // includes both edges
+  const rimLf = (2 * (L + W)) / 12;      // simple perimeter rim
+  const blocking = (sfBlocking.value === "mid") ? (joists - 1) : 0;
 
+  const [sw, sh] = (sfSheet.value === "4x4") ? [48, 48] : [48, 96];
   const areaSqFt = (L * W) / 144;
-  const baseSheets = Math.ceil(areaSqFt / sheetAreaSqFt);
-  const sheetsWithWaste = Math.ceil(baseSheets * (1 + waste));
 
-  // Joist count: depends on direction
-  // along_len => joists span length, spaced across width
-  // along_wid => joists span width, spaced across length
-  const spacingAxisIn = (sfDir.value === "along_len") ? W : L;
-  const spanAxisIn = (sfDir.value === "along_len") ? L : W;
+  const sheetsBase = Math.ceil((L / sw) * (W / sh));
+  const sheets = Math.ceil(sheetsBase * (1 + waste));
 
-  const joists = Math.floor(spacingAxisIn / oc) + 1; // includes both ends
-  const rimLf = (2 * (L + W)) / 12;
+  const edge = clamp(parseFloat(sfScrewEdge.value || "6"), 4, 12);
+  const field = clamp(parseFloat(sfScrewField.value || "8"), 4, 16);
 
-  // Fastener estimate per sheet (simple, consistent, editable)
-  const edge = clamp(parseFloat(sfEdge.value || "6"), 4, 12);
-  const field = clamp(parseFloat(sfField.value || "12"), 6, 24);
+  const perimIn = 2 * (sw + sh);
+  const perimScrews = Math.ceil(perimIn / edge);
 
-  const linesPerSheet = Math.floor(sw / oc) + 1; // joist lines across 4'
-  const edgeLines = 2;
-  const fieldLines = Math.max(0, linesPerSheet - edgeLines);
+  const interiorLines = Math.max(0, Math.floor(sw / oc) - 1);
+  const lineScrews = Math.ceil(sh / field);
+  const fieldScrews = interiorLines * lineScrews;
 
-  const fastenersEdgeLine = Math.ceil(sh / edge) + 1;
-  const fastenersFieldLine = Math.ceil(sh / field) + 1;
+  const screwsPerSheet = perimScrews + fieldScrews;
+  const totalScrews = Math.ceil(screwsPerSheet * sheets);
 
-  const fastenersPerSheet = (edgeLines * fastenersEdgeLine) + (fieldLines * fastenersFieldLine);
-  const totalFasteners = Math.ceil(fastenersPerSheet * sheetsWithWaste);
-
-  // Adhesive
-  const tubesRate = clamp(parseFloat(sfTubesPerSheet.value || "0"), 0, 5);
-  const needsGlue = sfMethod.value.includes("adhesive");
-  const tubes = needsGlue ? Math.ceil(sheetsWithWaste * tubesRate) : 0;
-
-  // Labels
-  const useScrews = sfMethod.value.includes("screws");
-  const fastenerLabel = useScrews ? "subfloor screws" : "ring-shank nails";
+  const cov = clamp(parseFloat(sfAdhCov.value || "32"), 10, 100);
+  const tubes = Math.ceil((areaSqFt * (1 + waste)) / cov);
 
   outSf.textContent =
 `Floor: ${toFeetInString(L, 16)} × ${toFeetInString(W, 16)}
-Area: ${fmt(areaSqFt, 2)} sq ft
+Area: ${fmt(areaSqFt, 1)} sq ft
+Waste: ${Math.round(waste * 100)}%
 
-Sheathing:
-- Sheet: ${sfSheet.value} (${sw}"×${sh}")
-- Base sheets: ${baseSheets}
-- Waste: ${Math.round(waste * 100)}%
-- Total sheets (waste included): ${sheetsWithWaste}
-
-Joists:
-- Direction: ${sfDir.value === "along_len" ? "run along LENGTH (spaced across width)" : "run along WIDTH (spaced across length)"}
+Joists (estimate):
 - Spacing: ${oc}" OC
-- Joist count (est): ${joists}
-- Approx span (est): ${toFeetInString(spanAxisIn, 16)}
-- Rim (perimeter): ${fmt(rimLf, 1)} lf
+- Count (includes both edges): ${joists}
 
-Fasteners (editable schedule):
-- Method: ${sfMethod.options[sfMethod.selectedIndex].text}
-- Spacing: edges ${edge}" / field ${field}"
-- Estimated ${fastenerLabel}: ~${totalFasteners} pcs
+Rim (simple perimeter):
+- Rim length: ~${fmt(rimLf, 1)} lf
 
-Adhesive:
-- Tubes per sheet: ${fmt(tubesRate, 2)}
-- Tubes (est): ${tubes || 0}
+Blocking:
+- Mid-span row: ${sfBlocking.value === "mid" ? "Yes" : "No"}
+- Pieces (estimate): ${blocking}
 
-Notes:
-- Strength axis perpendicular to joists
-- Stagger seams, avoid 4-corner joints
-- Glue on joists reduces squeaks`;
+Subfloor sheets:
+- Sheet: ${sfSheet.value} (${sw}"×${sh}")
+- Base sheets: ${sheetsBase}
+- Total sheets (waste included): ${sheets}
+
+Fasteners (editable defaults):
+- Screws (edges ${edge}" / field ${field}"): ~${totalScrews} screws
+- Adhesive coverage: ${fmt(cov, 0)} sq ft/tube
+- Adhesive tubes: ~${tubes}
+
+Note: Counts are estimates. Verify your fastener schedule + product label.`;
 
   STEPS["steps-subfloor"].body =
 `Subfloor Estimator Steps
 
-Inputs
-- Length: ${sfLen.value.trim()} -> ${fmt(L, 3)} in
-- Width:  ${sfWid.value.trim()} -> ${fmt(W, 3)} in
-- Joist spacing: ${oc}" OC
-- Sheet: ${sfSheet.value} (${sw}"×${sh}")
-- Waste: ${Math.round(waste * 100)}%
+Inputs:
+- L = ${sfLen.value.trim()} -> ${fmt(L, 3)} in
+- W = ${sfWid.value.trim()} -> ${fmt(W, 3)} in
+- OC = ${oc}"   Waste = ${Math.round(waste * 100)}%
 
-1) Area
-areaSqFt = (L * W) / 144 = ${fmt(areaSqFt, 3)}
+1) Joists
+joists = floor(W / OC) + 2
 
-2) Sheets
-sheetAreaSqFt = (${sw} * ${sh}) / 144 = ${fmt(sheetAreaSqFt, 3)}
-baseSheets = ceil(areaSqFt / sheetAreaSqFt) = ${baseSheets}
-totalSheets = ceil(baseSheets * (1 + waste)) = ${sheetsWithWaste}
+2) Area
+area = (L * W) / 144
 
-3) Joists (estimate)
-spacingAxis = ${sfDir.value === "along_len" ? "width" : "length"}
-joists = floor(spacingAxisIn / OC) + 1 = ${joists}
+3) Sheets
+baseSheets ≈ ceil((L/sheetW) * (W/sheetH))
+sheets = ceil(baseSheets * (1 + waste))
 
-4) Fasteners (estimate)
-joistLinesPerSheet = floor(48 / OC) + 1 = ${linesPerSheet}
-fastenersPerEdgeLine = ceil(sheetLong/edge)+1
-fastenersPerFieldLine = ceil(sheetLong/field)+1
-fastenersPerSheet = edgeLines*edgeLine + fieldLines*fieldLine
-totalFasteners = fastenersPerSheet * totalSheets ≈ ${totalFasteners}
+4) Screws (rough)
+perimeter screws at edge spacing + interior line screws at field spacing
+total ≈ screwsPerSheet * sheets
 
-5) Adhesive (if selected)
-tubes = ceil(totalSheets * tubesPerSheet) = ${tubes}`;
+5) Adhesive tubes
+tubes = ceil((area * (1 + waste)) / coveragePerTube)`;
 
-  lastSfResult = { L, W, oc, sheet: sfSheet.value, sheetsWithWaste, joists, rimLf, totalFasteners, tubes, method: sfMethod.value };
+  lastSubfloor = { areaSqFt, waste, joists, rimLf, blocking, sheets, totalScrews, tubes, sheet: sfSheet.value, oc };
 }
 
-document.getElementById("btn_sf_calc")?.addEventListener("click", calcSubfloor);
-
-document.getElementById("btn_sf_clear")?.addEventListener("click", () => {
+document.getElementById("btn_sf_calc").addEventListener("click", calcSubfloor);
+document.getElementById("btn_sf_clear").addEventListener("click", () => {
   outSf.textContent = "—";
-  lastSfResult = null;
+  lastSubfloor = null;
 });
 
-document.getElementById("btn_sf_to_auditor")?.addEventListener("click", () => {
-  if (!lastSfResult) { outSf.textContent = "Calculate first, then add to Auditor."; return; }
-
-  const methodText = sfMethod.options[sfMethod.selectedIndex].text;
-  const useScrews = lastSfResult.method.includes("screws");
-  const fastenerLabel = useScrews ? "Subfloor screws (est)" : "Ring-shank nails (est)";
-
-  auditorAddLine({ item: `Subfloor sheathing ${lastSfResult.sheet}`, qty: lastSfResult.sheetsWithWaste, unit: "sheets", cost: "", notes: "waste included" });
-  auditorAddLine({ item: `Joists (est)`, qty: lastSfResult.joists, unit: "pcs", cost: "", notes: `${lastSfResult.oc}" OC` });
-  auditorAddLine({ item: `Rim/perimeter (est)`, qty: Number(lastSfResult.rimLf.toFixed(1)), unit: "lf", cost: "", notes: "rim/edge planning" });
-  auditorAddLine({ item: fastenerLabel, qty: lastSfResult.totalFasteners, unit: "pcs", cost: "", notes: methodText });
-  if (lastSfResult.tubes > 0) {
-    auditorAddLine({ item: `Construction adhesive (est)`, qty: lastSfResult.tubes, unit: "tubes", cost: "", notes: "subfloor glue" });
-  }
+document.getElementById("btn_sf_to_auditor").addEventListener("click", () => {
+  if (!lastSubfloor) { outSf.textContent = "Calculate first, then add to Auditor."; return; }
+  auditorAddLine({ item: `Subfloor sheets ${lastSubfloor.sheet}`, qty: lastSubfloor.sheets, unit: "sheets", cost: "", notes: "from estimator" });
+  auditorAddLine({ item: `Joists (est)`, qty: lastSubfloor.joists, unit: "pcs", cost: "", notes: `${lastSubfloor.oc}" OC` });
+  auditorAddLine({ item: `Rim (rough)`, qty: Number(lastSubfloor.rimLf.toFixed(1)), unit: "lf", cost: "", notes: "perimeter estimate" });
+  if (lastSubfloor.blocking > 0) auditorAddLine({ item: `Blocking (est)`, qty: lastSubfloor.blocking, unit: "pcs", cost: "", notes: "mid-span row" });
+  auditorAddLine({ item: `Subfloor screws (est)`, qty: lastSubfloor.totalScrews, unit: "pcs", cost: "", notes: "spacing editable" });
+  auditorAddLine({ item: `Construction adhesive (est)`, qty: lastSubfloor.tubes, unit: "tubes", cost: "", notes: "coverage editable" });
   renderAuditor();
 });
 
 /* =========================
-   ROOFING
+   ROOFING: Roof Area + Materials Estimator
+========================= */
+const rmLen = document.getElementById("rm_len");
+const rmWid = document.getElementById("rm_wid");
+const rmType = document.getElementById("rm_type");
+const rmPitch = document.getElementById("rm_pitch");
+const rmOvh = document.getElementById("rm_ovh");
+const rmWaste = document.getElementById("rm_waste");
+
+const rmBundlesPerSq = document.getElementById("rm_bundles_per_sq");
+const rmRollCov = document.getElementById("rm_roll_cov");
+const rmNailsPerSq = document.getElementById("rm_nails_per_sq");
+
+const outRm = document.getElementById("out_rm");
+
+let lastRoof = null;
+
+function slopeFactorFromPitch(pitchPer12) {
+  const p = Number(pitchPer12);
+  if (!isFinite(p) || p < 0) return NaN;
+  return Math.sqrt(12 * 12 + p * p) / 12;
+}
+
+function calcRoofMaterials() {
+  const L = parseFeetInches(rmLen.value);
+  const W = parseFeetInches(rmWid.value);
+  const ovh = parseFeetInches(rmOvh.value);
+
+  if (!isFinite(L) || !isFinite(W) || L <= 0 || W <= 0) {
+    outRm.textContent = "Enter valid building length and width.";
+    lastRoof = null;
+    return;
+  }
+
+  const pitch = parseFloat(String(rmPitch.value).trim());
+  const sf = slopeFactorFromPitch(pitch);
+  if (!isFinite(sf) || sf <= 0) {
+    outRm.textContent = "Enter a valid pitch (per 12).";
+    lastRoof = null;
+    return;
+  }
+
+  const waste = clamp(parseFloat(rmWaste.value || "0"), 0, 35) / 100;
+  const type = rmType.value;
+
+  let areaSqFt = 0;
+
+  if (type === "gable") {
+    const halfSpanIn = (W / 2) + ovh;              // run to ridge + overhang
+    const oneSideSqFt = (L * halfSpanIn * sf) / 144;
+    areaSqFt = oneSideSqFt * 2;
+  } else {
+    const spanIn = W + ovh;
+    areaSqFt = (L * spanIn * sf) / 144;
+  }
+
+  const areaWithWaste = areaSqFt * (1 + waste);
+  const squares = areaWithWaste / 100;
+
+  const bundlesPerSquare = clamp(parseFloat(rmBundlesPerSq.value || "3"), 1, 6);
+  const bundles = Math.ceil(squares * bundlesPerSquare);
+
+  const rollCov = clamp(parseFloat(rmRollCov.value || "400"), 50, 2000);
+  const underlaymentRolls = Math.ceil(areaWithWaste / rollCov);
+
+  const nailsPerSq = clamp(parseFloat(rmNailsPerSq.value || "320"), 100, 2000);
+  const nails = Math.ceil(squares * nailsPerSq);
+
+  // Linear takeoffs (rough)
+  const perimeterLf = (2 * (L + W)) / 12;                 // drip edge
+  const starterLf = (type === "gable") ? (2 * L) / 12 : (L / 12); // eaves only (two eaves for gable, one for shed)
+  const ridgeLf = (type === "gable") ? (L / 12) : 0;      // ridge length ~ building length for simple gable
+
+  outRm.textContent =
+`Roof type: ${type === "gable" ? "Gable (two slopes)" : "Shed (single slope)"}
+Pitch: ${fmt(pitch, 2)}/12
+Slope factor: ${fmt(sf, 4)}
+Overhang: ${toFeetInString(ovh, 16)}
+Waste: ${Math.round(waste * 100)}%
+
+Roof area (no waste): ${fmt(areaSqFt, 1)} sq ft
+Roof area (with waste): ${fmt(areaWithWaste, 1)} sq ft
+
+Shingles:
+- Squares: ${fmt(squares, 2)}
+- Bundles per square: ${fmt(bundlesPerSquare, 2)}
+- Total bundles: ${bundles}
+
+Underlayment:
+- Roll coverage: ${fmt(rollCov, 0)} sq ft
+- Rolls: ${underlaymentRolls}
+
+Nails (estimate):
+- Nails per square: ${fmt(nailsPerSq, 0)}
+- Total nails: ~${nails}
+
+Linear takeoff (rough):
+- Starter (eaves): ~${fmt(starterLf, 1)} lf
+- Drip edge (perimeter): ~${fmt(perimeterLf, 1)} lf
+- Ridge cap length: ${type === "gable" ? `~${fmt(ridgeLf, 1)} lf` : "— (no ridge)"}
+
+Note: This is an estimator. Valleys, hips, dormers, and step flashing change takeoff.`;
+
+  STEPS["steps-roofmat"].body =
+`Roof Area + Materials Steps
+
+Inputs:
+- L = ${rmLen.value.trim()} -> ${fmt(L, 3)} in
+- W = ${rmWid.value.trim()} -> ${fmt(W, 3)} in
+- Pitch = ${fmt(pitch, 2)}/12
+- Overhang = ${rmOvh.value.trim()} -> ${fmt(ovh, 3)} in
+- Type = ${type}
+- Waste = ${Math.round(waste * 100)}%
+
+1) Slope factor
+sf = sqrt(12^2 + pitch^2) / 12 = ${fmt(sf, 6)}
+
+2) Roof area
+Gable:
+  halfSpan = (W/2) + overhang
+  oneSide = (L * halfSpan * sf) / 144
+  total = oneSide * 2
+Shed:
+  span = W + overhang
+  total = (L * span * sf) / 144
+
+3) Add waste
+areaWithWaste = area * (1 + waste)
+
+4) Convert to squares
+squares = areaWithWaste / 100
+
+5) Materials
+bundles = ceil(squares * bundlesPerSquare)
+underlaymentRolls = ceil(areaWithWaste / rollCoverage)
+nails = ceil(squares * nailsPerSquare)
+
+6) Linear takeoff (rough)
+starter ≈ eaves length
+drip edge ≈ perimeter
+ridge ≈ L (gable only)`;
+
+  lastRoof = {
+    squares,
+    bundles,
+    underlaymentRolls,
+    nails,
+    starterLf,
+    perimeterLf,
+    ridgeLf,
+    type
+  };
+}
+
+document.getElementById("btn_rm_calc").addEventListener("click", calcRoofMaterials);
+document.getElementById("btn_rm_clear").addEventListener("click", () => {
+  outRm.textContent = "—";
+  lastRoof = null;
+});
+
+document.getElementById("btn_rm_to_auditor").addEventListener("click", () => {
+  if (!lastRoof) { outRm.textContent = "Calculate first, then add to Auditor."; return; }
+
+  auditorAddLine({ item: "Shingles (bundles)", qty: lastRoof.bundles, unit: "bundles", cost: "", notes: "from estimator" });
+  auditorAddLine({ item: "Underlayment", qty: lastRoof.underlaymentRolls, unit: "rolls", cost: "", notes: "from estimator" });
+  auditorAddLine({ item: "Roofing nails (est)", qty: lastRoof.nails, unit: "nails", cost: "", notes: "est per square" });
+  auditorAddLine({ item: "Starter strip (est)", qty: Number(lastRoof.starterLf.toFixed(1)), unit: "lf", cost: "", notes: "eaves" });
+  auditorAddLine({ item: "Drip edge (est)", qty: Number(lastRoof.perimeterLf.toFixed(1)), unit: "lf", cost: "", notes: "perimeter" });
+  if (lastRoof.type === "gable") {
+    auditorAddLine({ item: "Ridge cap length (est)", qty: Number(lastRoof.ridgeLf.toFixed(1)), unit: "lf", cost: "", notes: "gable ridge" });
+  }
+
+  renderAuditor();
+});
+
+/* =========================
+   ROOFING: Pitch / Rafter / Diagonal
 ========================= */
 const outPitch = document.getElementById("out_pitch");
 const outRaf = document.getElementById("out_raf");
@@ -853,7 +998,8 @@ const STEPS = {
   "steps-fracops": { title: "Steps — Fraction Operations", body: "Run an operation to populate steps." },
   "steps-feetdec": { title: "Steps — Inches ↔ Decimal Feet", body: "Run a conversion to populate steps." },
   "steps-wall": { title: "Steps — Wall Materials Estimator", body: "Tap Calculate to see the breakdown." },
-  "steps-subfloor": { title: "Steps — Subfloor Estimator", body: "Tap Calculate to see the breakdown." },
+  "steps-subfloor": { title: "Steps — Subfloor Materials Estimator", body: "Tap Calculate to see the breakdown." },
+  "steps-roofmat": { title: "Steps — Roof Area + Materials Estimator", body: "Tap Calculate to see the breakdown." },
   "steps-auditor": {
     title: "Steps — Materials Auditor",
     body:
