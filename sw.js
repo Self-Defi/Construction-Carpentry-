@@ -1,4 +1,4 @@
-const CACHE_NAME = "ccarpentry-v7";
+const CACHE_NAME = "ccarpentry-v8";
 
 const ASSETS = [
   "./",
@@ -39,7 +39,7 @@ self.addEventListener("fetch", (event) => {
 
   if (url.origin !== self.location.origin) return;
 
-  // NETWORK-FIRST for HTML
+  // Network-first for HTML
   if (isNavigationRequest(req) || url.pathname.endsWith("/index.html")) {
     event.respondWith(
       fetch(req)
@@ -53,7 +53,7 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // CACHE-FIRST for static assets
+  // Cache-first for everything else
   event.respondWith(
     caches.match(req).then((cached) => {
       if (cached) return cached;
