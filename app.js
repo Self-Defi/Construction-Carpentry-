@@ -1,4 +1,4 @@
-// app.js
+p// app.js
 
 /* =========================
    Build / PWA SW register (safe)
@@ -29,9 +29,9 @@ if ("serviceWorker" in navigator) {
 }
 
 /* =========================
-   Tabs (top nav)
+   Tabs (top nav) — HARD HIDE PANELS (fixes “scrolling 1 page”)
 ========================= */
-const tabs = {
+const tabPanels = {
   home: document.getElementById("tab-home"),
   layout: document.getElementById("tab-layout"),
   roofing: document.getElementById("tab-roofing"),
@@ -39,20 +39,29 @@ const tabs = {
 };
 
 function setActiveTab(key) {
-  Object.values(tabs).forEach(t => t && t.classList.remove("isActive"));
-  (tabs[key] || tabs.home)?.classList.add("isActive");
+  // Hide all panels first (works even if CSS breaks)
+  Object.entries(tabPanels).forEach(([k, el]) => {
+    if (!el) return;
+    const isOn = k === key;
+    el.hidden = !isOn;                      // <-- HARD HIDE
+    el.classList.toggle("isActive", isOn);  // <-- keep styling hook
+    el.setAttribute("aria-hidden", String(!isOn));
+  });
 
-  document.querySelectorAll(".navBtn").forEach(b => b.classList.remove("isActive"));
-  document.querySelector(`.navBtn[data-tab="${key}"]`)?.classList.add("isActive");
+  // Update nav button active state
+  document.querySelectorAll(".navBtn").forEach(b => {
+    b.classList.toggle("isActive", b.dataset.tab === key);
+  });
 
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
+// Bind clicks
 document.querySelectorAll(".navBtn").forEach(btn => {
   btn.addEventListener("click", () => setActiveTab(btn.dataset.tab));
 });
 
-// Force clean initial state
+// Clean initial state
 setActiveTab("home");
 
 /* =========================
