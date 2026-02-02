@@ -1,5 +1,5 @@
-/* sw.js — v9 */
-const CACHE_NAME = "cc-v9";
+/* sw.js — v10 */
+const CACHE_NAME = "cc-v10";
 const ASSETS = [
   "./",
   "./index.html",
@@ -24,7 +24,7 @@ self.addEventListener("activate", (event) => {
 
 self.addEventListener("fetch", (event) => {
   const req = event.request;
-  // Network-first for HTML, cache-first for everything else
+
   if (req.mode === "navigate" || (req.headers.get("accept") || "").includes("text/html")) {
     event.respondWith(
       fetch(req)
