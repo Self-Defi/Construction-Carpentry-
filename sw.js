@@ -1,46 +1,31 @@
-const CACHE_NAME = "ccarpentry-v8";
-
+/* sw.js — v9 */
+const CACHE_NAME = "cc-v9";
 const ASSETS = [
   "./",
   "./index.html",
   "./styles.css",
   "./app.js",
-  "./manifest.webmanifest",
-  "./icons/icon-192.png",
-  "./icons/icon-512.png"
+  "./sw.js",
 ];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS))
+    caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS)).then(() => self.skipWaiting())
   );
-  self.skipWaiting();
 });
 
 self.addEventListener("activate", (event) => {
   event.waitUntil(
     caches.keys().then((keys) =>
       Promise.all(keys.map((k) => (k === CACHE_NAME ? null : caches.delete(k))))
-    )
+    ).then(() => self.clients.claim())
   );
-  self.clients.claim();
 });
-
-function isNavigationRequest(req) {
-  return req.mode === "navigate" ||
-    (req.method === "GET" &&
-     req.headers.get("accept") &&
-     req.headers.get("accept").includes("text/html"));
-}
 
 self.addEventListener("fetch", (event) => {
   const req = event.request;
-  const url = new URL(req.url);
-
-  if (url.origin !== self.location.origin) return;
-
-  // Network-first for HTML
-  if (isNavigationRequest(req) || url.pathname.endsWith("/index.html")) {
+  // Network-first for HTML, cache-first for everything else
+  if (req.mode === "navigate" || (req.headers.get("accept") || "").includes("text/html")) {
     event.respondWith(
       fetch(req)
         .then((res) => {
@@ -53,18 +38,11 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // Cache-first for everything else
   event.respondWith(
-    caches.match(req).then((cached) => {
-      if (cached) return cached;
-
-      return fetch(req)
-        .then((res) => {
-          const copy = res.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(req, copy));
-          return res;
-        })
-        .catch(() => caches.match("./index.html"));
-    })
+    caches.match(req).then((cached) => cached || fetch(req).then((res) => {
+      const copy = res.clone();
+      caches.open(CACHE_NAME).then((cache) => cache.put(req, copy));
+      return res;
+    }))
   );
 });
