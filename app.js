@@ -1,4 +1,4 @@
-p// app.js
+// app.js
 
 /* =========================
    Build / PWA SW register (safe)
