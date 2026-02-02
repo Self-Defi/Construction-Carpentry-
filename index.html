@@ -15,12 +15,13 @@
   <header class="appHeader">
     <div class="titleBlock">
       <h1 class="appTitle">Construction Carpentry</h1>
-      <div class="buildLine" id="buildLine">Build: v6 • Live</div>
+      <div class="buildLine" id="buildLine">Build: v7 • Live</div>
     </div>
 
     <nav class="topNav" aria-label="Primary">
       <button class="navBtn" type="button" data-tab="home">Home</button>
       <button class="navBtn" type="button" data-tab="layout">Layout</button>
+      <button class="navBtn" type="button" data-tab="subfloor">Subfloor</button>
       <button class="navBtn" type="button" data-tab="roofing">Roofing</button>
       <button class="navBtn" type="button" data-tab="ref">Reference</button>
     </nav>
@@ -103,7 +104,7 @@
           <div class="field">
             <label for="fi_in">Feet &amp; inches</label>
             <input id="fi_in" inputmode="text" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"
-              placeholder={`e.g., 12' 3 1/2"`} />
+              placeholder='e.g., 12&apos; 3 1/2"' />
             <div class="btnRow">
               <button id="btn_fi_to_df" type="button" class="btn primary">Convert → Decimal Feet</button>
               <button id="btn_fi_clear" type="button" class="btn">Clear</button>
@@ -128,7 +129,7 @@
     <!-- =========================
          LAYOUT TAB
     ========================== -->
-    <section id="tab-layout" class="tabPanel" aria-label="Layout">
+    <section id="tab-layout" class="tabPanel" aria-label="Layout" hidden>
       <div class="card">
         <div class="cardHead">
           <h2 class="cardTitle">Wall Materials Estimator (sheet goods + fasteners)</h2>
@@ -139,14 +140,14 @@
           <div class="field">
             <label for="wall_len">Wall length</label>
             <input id="wall_len" inputmode="text" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"
-              placeholder={`e.g., 24' 0"`} />
+              placeholder='e.g., 24&apos; 0"' />
             <div class="hint">Accepts: 144, 12', 12' 0", 12' 3 1/2"</div>
           </div>
 
           <div class="field">
             <label for="wall_h">Wall height</label>
             <input id="wall_h" inputmode="text" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"
-              placeholder={`e.g., 8' 0"`} />
+              placeholder='e.g., 8&apos; 0"' />
           </div>
 
           <div class="field">
@@ -291,9 +292,110 @@
     </section>
 
     <!-- =========================
+         SUBFLOOR TAB
+    ========================== -->
+    <section id="tab-subfloor" class="tabPanel" aria-label="Subfloor" hidden>
+      <div class="card">
+        <div class="cardHead">
+          <h2 class="cardTitle">Subfloor Estimator (joists + sheathing + fasteners + adhesive)</h2>
+          <button class="chipBtn" type="button" data-steps-open="steps-subfloor">Steps</button>
+        </div>
+
+        <div class="grid2">
+          <div class="field">
+            <label for="sf_len">Floor length</label>
+            <input id="sf_len" inputmode="text" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"
+              placeholder='e.g., 24&apos; 0"' />
+            <div class="hint">Accepts: 144, 12', 12' 0", 12' 3 1/2"</div>
+          </div>
+
+          <div class="field">
+            <label for="sf_wid">Floor width</label>
+            <input id="sf_wid" inputmode="text" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"
+              placeholder='e.g., 12&apos; 0"' />
+          </div>
+
+          <div class="field">
+            <label for="sf_joist_dir">Joists run</label>
+            <select id="sf_joist_dir">
+              <option value="along_len" selected>Along length (spaced across width)</option>
+              <option value="along_wid">Along width (spaced across length)</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="sf_joist_oc">Joist spacing</label>
+            <select id="sf_joist_oc">
+              <option value="12">12" OC</option>
+              <option value="16" selected>16" OC</option>
+              <option value="19.2">19.2" OC</option>
+              <option value="24">24" OC</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="sf_sheet">Sheet size</label>
+            <select id="sf_sheet">
+              <option value="4x8" selected>4x8</option>
+              <option value="4x12">4x12</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="sf_waste">Waste % (optional)</label>
+            <input id="sf_waste" inputmode="numeric" value="10" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" />
+          </div>
+        </div>
+
+        <hr class="divider" />
+
+        <div class="subTitle">Fasteners + adhesive (editable defaults)</div>
+        <div class="grid2">
+          <div class="field">
+            <label for="sf_method">Method</label>
+            <select id="sf_method">
+              <option value="screws_adhesive" selected>Screws + Adhesive (default)</option>
+              <option value="screws_only">Screws only</option>
+              <option value="nails_only">Ring-shank nails only</option>
+              <option value="nails_adhesive">Nails + Adhesive</option>
+            </select>
+            <div class="hint">Glue reduces squeaks. Screws are best DIY.</div>
+          </div>
+
+          <div class="field">
+            <label for="sf_tubes_per_sheet">Adhesive rate (tubes per sheet)</label>
+            <input id="sf_tubes_per_sheet" inputmode="decimal" value="0.5" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" />
+            <div class="hint">Default 0.5 = 1 tube per 2 sheets (rough estimator).</div>
+          </div>
+        </div>
+
+        <div class="grid2">
+          <div class="field">
+            <label for="sf_edge">Fastener spacing — edges (in)</label>
+            <input id="sf_edge" inputmode="numeric" value="6" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" />
+          </div>
+          <div class="field">
+            <label for="sf_field">Fastener spacing — field (in)</label>
+            <input id="sf_field" inputmode="numeric" value="12" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" />
+          </div>
+        </div>
+
+        <div class="hint">Estimator assumes sheathing strength axis is perpendicular to joists, seams staggered.</div>
+
+        <div class="btnRow wrap">
+          <button id="btn_sf_calc" type="button" class="btn primary">Calculate</button>
+          <button id="btn_sf_clear" type="button" class="btn">Clear</button>
+          <button id="btn_sf_to_auditor" type="button" class="btn">Add lines to Auditor</button>
+        </div>
+
+        <pre id="out_sf" class="out">—</pre>
+      </div>
+    </section>
+
+    <!-- =========================
          ROOFING TAB
     ========================== -->
-    <section id="tab-roofing" class="tabPanel" aria-label="Roofing">
+    <section id="tab-roofing" class="tabPanel" aria-label="Roofing" hidden>
       <div class="card">
         <div class="cardHead">
           <h2 class="cardTitle">Pitch ↔ Angle</h2>
@@ -328,8 +430,8 @@
         <div class="grid2">
           <div class="field">
             <label for="raf_run">Run</label>
-            <input id="raf_run" inputmode="text" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"
-              placeholder={`e.g., 12' 0"`} />
+            <input id="raf_run" inputmode="text" autocomplete="off" autocapitalize="off" autoccorrect="off" spellcheck="false"
+              placeholder='e.g., 12&apos; 0"' />
           </div>
           <div class="field">
             <label for="raf_pitch">Pitch (per 12)</label>
@@ -355,12 +457,12 @@
           <div class="field">
             <label for="diag_a">A</label>
             <input id="diag_a" inputmode="text" autocomplete="off" autocapitalize="off" autoccorrect="off" spellcheck="false"
-              placeholder={`e.g., 8' 0"`} />
+              placeholder='e.g., 8&apos; 0"' />
           </div>
           <div class="field">
             <label for="diag_b">B</label>
             <input id="diag_b" inputmode="text" autocomplete="off" autocapitalize="off" autoccorrect="off" spellcheck="false"
-              placeholder={`e.g., 12' 0"`} />
+              placeholder='e.g., 12&apos; 0"' />
           </div>
         </div>
 
@@ -376,57 +478,62 @@
     <!-- =========================
          REFERENCE TAB
     ========================== -->
-   <div class="stack">
+    <section id="tab-ref" class="tabPanel" aria-label="Reference" hidden>
+      <div class="stack">
 
-  <div class="card">
-    <h3>Stud Spacing</h3>
-    <ul>
-      <li><strong>16&quot; OC</strong> — Load-bearing, standard residential</li>
-      <li><strong>24&quot; OC</strong> — Engineered / non-bearing</li>
-    </ul>
-    <p class="muted">Rule: Load-bearing → 16&quot; | Non-bearing → 24&quot;</p>
-  </div>
+        <div class="card">
+          <h3>Stud Spacing</h3>
+          <ul>
+            <li><strong>16&quot; OC</strong> — Load-bearing, standard residential</li>
+            <li><strong>24&quot; OC</strong> — Engineered / non-bearing</li>
+          </ul>
+          <p class="muted">Rule: Load-bearing → 16&quot; | Non-bearing → 24&quot;</p>
+        </div>
 
-  <div class="card">
-    <h3>Fastener Spacing</h3>
-    <ul>
-      <li><strong>Drywall walls:</strong> 16&quot; field / 8&quot; edges</li>
-      <li><strong>Drywall ceilings:</strong> 12&quot; field / 7&quot; edges</li>
-      <li><strong>Sheathing:</strong> 12&quot; field / 6&quot; edges</li>
-    </ul>
-  </div>
+        <div class="card">
+          <h3>Fastener Spacing</h3>
+          <ul>
+            <li><strong>Drywall walls:</strong> 16&quot; field / 8&quot; edges</li>
+            <li><strong>Drywall ceilings:</strong> 12&quot; field / 7&quot; edges</li>
+            <li><strong>Sheathing:</strong> 12&quot; field / 6&quot; edges</li>
+            <li><strong>Subfloor (common):</strong> 12&quot; field / 6&quot; edges (editable in Subfloor tab)</li>
+          </ul>
+        </div>
 
-  <div class="card">
-    <h3>Roof Pitch</h3>
-    <ul>
-      <li>4/12 → 18.4°</li>
-      <li>6/12 → 26.6°</li>
-      <li>8/12 → 33.7°</li>
-      <li>12/12 → 45°</li>
-    </ul>
-  </div>
+        <div class="card">
+          <h3>Roof Pitch</h3>
+          <ul>
+            <li>4/12 → 18.4°</li>
+            <li>6/12 → 26.6°</li>
+            <li>8/12 → 33.7°</li>
+            <li>12/12 → 45°</li>
+          </ul>
+        </div>
 
-  <div class="card">
-    <h3>Lumber Sizes (Actual)</h3>
-    <ul>
-      <li>2×4 → 1½&quot; × 3½&quot;</li>
-      <li>2×6 → 1½&quot; × 5½&quot;</li>
-      <li>2×8 → 1½&quot; × 7¼&quot;</li>
-    </ul>
-  </div>
+        <div class="card">
+          <h3>Lumber Sizes (Actual)</h3>
+          <ul>
+            <li>2×4 → 1½&quot; × 3½&quot;</li>
+            <li>2×6 → 1½&quot; × 5½&quot;</li>
+            <li>2×8 → 1½&quot; × 7¼&quot;</li>
+          </ul>
+        </div>
 
-  <div class="card">
-    <h3>Sheet Goods</h3>
-    <ul>
-      <li>7/16&quot; OSB → 0.438&quot;</li>
-      <li>½&quot; → 0.5&quot;</li>
-      <li>5/8&quot; → 0.625&quot;</li>
-      <li>¾&quot; → 0.75&quot;</li>
-    </ul>
-  </div>
+        <div class="card">
+          <h3>Sheet Goods</h3>
+          <ul>
+            <li>7/16&quot; OSB → 0.438&quot;</li>
+            <li>½&quot; → 0.5&quot;</li>
+            <li>5/8&quot; → 0.625&quot;</li>
+            <li>¾&quot; → 0.75&quot;</li>
+          </ul>
+        </div>
 
-</div>
-    
+      </div>
+    </section>
+
+  </main>
+
   <!-- =========================
        Steps modal
   ========================== -->
