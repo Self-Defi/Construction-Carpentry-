@@ -2,7 +2,6 @@
   --bg0:#070b14;
   --bg1:#0b1220;
   --card:#0c1730;
-  --card2:#0a142a;
   --stroke:rgba(255,255,255,.08);
   --stroke2:rgba(255,255,255,.12);
   --text:rgba(255,255,255,.92);
@@ -26,31 +25,74 @@ body{
     linear-gradient(180deg, var(--bg0), var(--bg1));
 }
 
-/* Top header */
-.top{
-  padding:20px 16px 10px;
-  text-align:center;
+/* Header */
+.appHeader{
+  position: sticky;
+  top: 0;
+  z-index: 60;
+  background: rgba(6,10,18,.88);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(255,255,255,.08);
+  padding: 14px 12px 12px;
 }
-.top h1{
-  margin:8px 0 4px;
-  font-size:28px;
+
+.titleBlock{
+  max-width: 1100px;
+  margin: 0 auto 10px;
+  padding: 0 4px;
+  display:flex;
+  align-items:baseline;
+  justify-content:space-between;
+  gap:12px;
+}
+
+.appTitle{
+  margin:0;
+  font-size: 22px;
   letter-spacing:.2px;
 }
-.sub{
-  color:var(--muted);
-  font-size:13px;
+.buildLine{
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
 }
 
-/* Wrap */
-.wrap{
-  max-width:980px;
-  margin:0 auto;
-  padding:10px 12px 18px;
+.topNav{
+  max-width: 1100px;
+  margin: 0 auto;
+  display:flex;
+  gap:10px;
+  justify-content:center;
+  padding: 0 4px;
 }
 
-/* Tabs (FORCE) */
-.tab { display:none !important; }
-.tab.isActive { display:block !important; }
+.navBtn{
+  flex:1;
+  max-width: 220px;
+  padding:12px 10px;
+  border-radius:14px;
+  border:1px solid rgba(255,255,255,.10);
+  background: rgba(255,255,255,.05);
+  color:rgba(255,255,255,.86);
+  font-weight:800;
+  cursor:pointer;
+}
+.navBtn.isActive{
+  background: linear-gradient(180deg, rgba(29,111,255,.35), rgba(15,63,155,.25));
+  border-color: rgba(29,111,255,.40);
+  color:white;
+}
+
+/* Main wrap */
+.appMain{
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 14px 12px 20px;
+}
+
+/* Tabs */
+.tabPanel { display:block; }
+.tabPanel[hidden]{ display:none !important; }
 
 /* Cards */
 .card{
@@ -69,10 +111,18 @@ body{
   gap:12px;
   margin-bottom:10px;
 }
+
 .cardTitle{
-  font-size:22px;
-  font-weight:700;
+  margin:0;
+  font-size:20px;
+  font-weight:900;
   letter-spacing:.2px;
+}
+
+.subTitle{
+  font-weight:900;
+  color:rgba(255,255,255,.84);
+  margin: 2px 0 6px;
 }
 
 .field label{
@@ -81,7 +131,7 @@ body{
   color:var(--muted);
   margin:8px 0 6px;
 }
-.field .mini{margin:0 0 6px; font-size:12px}
+
 .hint{
   margin-top:6px;
   font-size:12px;
@@ -111,39 +161,48 @@ select{cursor:pointer}
   grid-template-columns:1fr 1fr 1fr;
   gap:12px;
 }
-.grid2.tight{gap:10px}
-.grid3.refGrid{grid-template-columns:1fr 1fr 1fr}
 
 .btnRow{
   display:flex;
   gap:10px;
   align-items:center;
   margin-top:10px;
-  flex-wrap:nowrap;
+  flex-wrap:wrap;
 }
-.btnRow.wrapBtns{flex-wrap:wrap}
 
 .btn{
   border:1px solid rgba(255,255,255,.10);
-  background: linear-gradient(180deg, rgba(29,111,255,.95), rgba(15,63,155,.95));
+  background: rgba(255,255,255,.06);
   color:white;
   padding:12px 14px;
   border-radius:12px;
-  font-weight:700;
+  font-weight:800;
   cursor:pointer;
   font-size:14px;
 }
-.btn:hover{filter:brightness(1.05)}
+.btn.primary{
+  background: linear-gradient(180deg, rgba(29,111,255,.95), rgba(15,63,155,.95));
+}
 .btn.ghost{
   background: rgba(255,255,255,.06);
-  border-color: rgba(255,255,255,.10);
 }
 .btn.danger{
   background: rgba(201,58,58,.20);
   border-color: rgba(201,58,58,.40);
   color:#ffdede;
 }
-.btn.sm{padding:8px 10px; font-size:13px}
+.btn:hover{filter:brightness(1.06)}
+
+.chipBtn{
+  border:1px solid rgba(255,255,255,.10);
+  background: rgba(255,255,255,.06);
+  color: rgba(255,255,255,.88);
+  padding:8px 10px;
+  border-radius:999px;
+  cursor:pointer;
+  font-weight:900;
+  font-size:12px;
+}
 
 .out{
   background: rgba(0,0,0,.22);
@@ -162,59 +221,29 @@ select{cursor:pointer}
   height:1px;
   background: rgba(255,255,255,.08);
   margin:12px 0;
+  border:0;
   border-radius:999px;
-}
-
-/* TOP NAV (sticky) */
-.nav{
-  position: sticky;
-  top: 0;
-  z-index: 50;
-
-  padding:10px 10px;
-  background: rgba(6,10,18,.85);
-  backdrop-filter: blur(12px);
-  border-bottom:1px solid rgba(255,255,255,.08);
-
-  display:flex;
-  gap:10px;
-  justify-content:center;
-}
-.navBtn{
-  flex:1;
-  max-width:220px;
-  padding:12px 10px;
-  border-radius:14px;
-  border:1px solid rgba(255,255,255,.10);
-  background: rgba(255,255,255,.05);
-  color:rgba(255,255,255,.86);
-  font-weight:800;
-  cursor:pointer;
-}
-.navBtn.isActive{
-  background: linear-gradient(180deg, rgba(29,111,255,.35), rgba(15,63,155,.25));
-  border-color: rgba(29,111,255,.40);
-  color:white;
 }
 
 /* Table */
 .tableWrap{overflow:auto; margin-top:10px}
-.tbl{
+.table{
   width:100%;
   border-collapse:collapse;
   min-width:760px;
 }
-.tbl th, .tbl td{
+.table th, .table td{
   border-bottom:1px solid rgba(255,255,255,.08);
   padding:10px 8px;
   font-size:13px;
 }
-.tbl th{
+.table th{
   color:rgba(255,255,255,.70);
   text-align:left;
-  font-weight:800;
+  font-weight:900;
 }
-.tbl td.num, .tbl th.num{text-align:right}
+.table td.num, .table th.num{text-align:right}
+
 .iconBtn{
   background: rgba(255,255,255,.06);
   border:1px solid rgba(255,255,255,.10);
@@ -222,19 +251,15 @@ select{cursor:pointer}
   border-radius:10px;
   padding:8px 10px;
   cursor:pointer;
-  font-weight:800;
+  font-weight:900;
 }
 
-/* Reference mini cards */
-.miniCard{
-  background: rgba(0,0,0,.18);
-  border:1px solid rgba(255,255,255,.08);
-  border-radius:16px;
-  padding:14px;
-}
-.miniTitle{font-weight:900; margin-bottom:8px}
+/* Reference helpers */
+.stack{display:flex; flex-direction:column; gap:10px}
 .bul{margin:0; padding-left:18px; color:rgba(255,255,255,.78)}
 .bul li{margin:6px 0}
+.muted{color:var(--muted); font-size:13px; margin:10px 0 0}
+.miniTitle{margin:0 0 8px; font-weight:900}
 
 /* Modal */
 .modal{
@@ -275,17 +300,12 @@ select{cursor:pointer}
   line-height:1.4;
 }
 
-/* Mobile optimization */
-@media (max-width: 820px){
+/* Mobile */
+@media (max-width: 900px){
   .grid3{grid-template-columns:1fr}
-  .grid3.refGrid{grid-template-columns:1fr}
-  .tbl{min-width:740px}
 }
 @media (max-width: 720px){
-  .wrap{padding:10px 10px 18px}
-  .card{padding:14px}
-  .cardTitle{font-size:20px}
+  .titleBlock{flex-direction:column; align-items:flex-start; gap:6px}
   .grid2{grid-template-columns:1fr}
-  .btnRow{flex-wrap:wrap}
-  input, select{font-size:16px}
+  .table{min-width:740px}
 }
