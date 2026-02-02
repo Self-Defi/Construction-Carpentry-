@@ -13,593 +13,307 @@
   <header class="appHeader">
     <div class="titleBlock">
       <h1 class="appTitle">Construction Carpentry</h1>
-      <div class="buildLine" id="buildLine">Build: v8 • Live</div>
+      <div class="buildLine" id="buildLine">Build: v9 • Live</div>
     </div>
 
     <nav class="topNav" aria-label="Primary">
-      <button class="navBtn isActive" type="button" data-tab="home">Home</button>
-      <button class="navBtn" type="button" data-tab="layout">Layout</button>
-      <button class="navBtn" type="button" data-tab="subfloor">Subfloor</button>
-      <button class="navBtn" type="button" data-tab="roofing">Roofing</button>
-      <button class="navBtn" type="button" data-tab="ref">Reference</button>
+      <button class="tabBtn isActive" data-tab="home">Home</button>
+      <button class="tabBtn" data-tab="layout">Layout</button>
+      <button class="tabBtn" data-tab="subfloor">Subfloor</button>
+      <button class="tabBtn" data-tab="roofing">Roofing</button>
+      <button class="tabBtn" data-tab="reference">Reference</button>
     </nav>
   </header>
 
   <main class="appMain">
-
-    <!-- =========================
-         HOME TAB
-    ========================== -->
-    <section id="tab-home" class="tabPanel" aria-label="Home">
+    <!-- HOME -->
+    <section class="tabPanel isActive" id="tab-home" role="region" aria-label="Home">
       <div class="card">
-        <div class="cardHead">
-          <h2 class="cardTitle">Tape / Fraction Converter</h2>
-          <button class="chipBtn" type="button" data-steps-open="steps-tape">Steps</button>
-        </div>
-
-        <div class="grid2">
-          <div class="field">
-            <label for="tape_frac">Fraction / mixed (in)</label>
-            <input id="tape_frac" inputmode="text" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"
-              placeholder="e.g., 3 1/2 or 7/16" />
-            <div class="btnRow">
-              <button id="btn_frac_to_dec" type="button" class="btn primary">Convert → Decimal</button>
-              <button id="btn_frac_clear" type="button" class="btn ghost">Clear</button>
-            </div>
-            <pre id="out_frac_to_dec" class="out">—</pre>
+        <div class="cardTop">
+          <div>
+            <h2>Fraction Operations</h2>
+            <p class="muted">Accepts carpenter format: <code>7' 10 7/8"</code>, <code>12' 3/8"</code>, <code>10 7/8"</code>, <code>3/8"</code>, <code>7'</code>, etc.</p>
           </div>
-
-          <div class="field">
-            <label for="tape_dec">Decimal (in)</label>
-            <input id="tape_dec" inputmode="decimal" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"
-              placeholder="e.g., 3.4375" />
-            <div class="btnRow">
-              <button id="btn_dec_to_16" type="button" class="btn primary">Convert → Nearest 1/16</button>
-              <button id="btn_dec_clear" type="button" class="btn ghost">Clear</button>
-            </div>
-            <pre id="out_dec_to_16" class="out">—</pre>
-          </div>
-        </div>
-      </div>
-
-      <div class="card">
-        <div class="cardHead">
-          <h2 class="cardTitle">Fraction Operations</h2>
-          <button class="chipBtn" type="button" data-steps-open="steps-fracops">Steps</button>
+          <button class="pill" data-steps="home-fractions">Steps</button>
         </div>
 
-        <div class="grid2">
-          <div class="field">
-            <label for="ops_a">A</label>
-            <input id="ops_a" inputmode="text" autocomplete="off" autocapitalize="off" autoccorrect="off" spellcheck="false"
-              placeholder="e.g., 1 3/8" />
-          </div>
-          <div class="field">
-            <label for="ops_b">B</label>
-            <input id="ops_b" inputmode="text" autocomplete="off" autocapitalize="off" autoccorrect="off" spellcheck="false"
-              placeholder="e.g., 7/16" />
-          </div>
+        <div class="formGrid">
+          <label class="field">
+            <span class="label">A</span>
+            <input id="fracA" type="text" inputmode="text" placeholder='e.g. 7&#39; 10 7/8"' />
+          </label>
+
+          <label class="field">
+            <span class="label">B</span>
+            <input id="fracB" type="text" inputmode="text" placeholder='e.g. 12&#39; 3/8"' />
+          </label>
         </div>
 
-        <div class="btnRow wrap">
-          <button type="button" class="btn primary" data-op="add">A + B</button>
-          <button type="button" class="btn primary" data-op="sub">A − B</button>
-          <button type="button" class="btn primary" data-op="mul">A × B</button>
-          <button type="button" class="btn primary" data-op="div">A ÷ B</button>
-          <button id="btn_ops_clear" type="button" class="btn ghost">Clear</button>
+        <div class="btnRow">
+          <button class="btn" id="btnAdd">A + B</button>
+          <button class="btn" id="btnSub">A − B</button>
+          <button class="btn" id="btnMul">A × B</button>
+          <button class="btn" id="btnDiv">A ÷ B</button>
         </div>
 
-        <pre id="out_ops" class="out">—</pre>
-      </div>
-
-      <div class="card">
-        <div class="cardHead">
-          <h2 class="cardTitle">Inches ↔ Decimal Feet</h2>
-          <button class="chipBtn" type="button" data-steps-open="steps-feetdec">Steps</button>
+        <div class="btnRow">
+          <button class="btnGhost" id="btnClearFrac">Clear</button>
         </div>
 
-        <div class="grid2">
-          <div class="field">
-            <label for="fi_in">Feet &amp; inches</label>
-            <input id="fi_in" inputmode="text" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"
-              placeholder="e.g., 12' 3 1/2&quot;" />
-            <div class="btnRow">
-              <button id="btn_fi_to_df" type="button" class="btn primary">Convert → Decimal Feet</button>
-              <button id="btn_fi_clear" type="button" class="btn ghost">Clear</button>
-            </div>
-            <pre id="out_fi_to_df" class="out">—</pre>
-          </div>
-
-          <div class="field">
-            <label for="df_in">Decimal feet</label>
-            <input id="df_in" inputmode="decimal" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"
-              placeholder="e.g., 12.2917" />
-            <div class="btnRow">
-              <button id="btn_df_to_fi" type="button" class="btn primary">Convert → Feet &amp; Inches</button>
-              <button id="btn_df_clear" type="button" class="btn ghost">Clear</button>
-            </div>
-            <pre id="out_df_to_fi" class="out">—</pre>
-          </div>
-        </div>
+        <pre class="out" id="fracOut">Enter valid A and B measurements.</pre>
       </div>
     </section>
 
-    <!-- =========================
-         LAYOUT TAB
-    ========================== -->
-    <section id="tab-layout" class="tabPanel" aria-label="Layout" hidden>
+    <!-- LAYOUT -->
+    <section class="tabPanel" id="tab-layout" role="region" aria-label="Layout">
       <div class="card">
-        <div class="cardHead">
-          <h2 class="cardTitle">Wall Materials Estimator (sheet goods + fasteners)</h2>
-          <button class="chipBtn" type="button" data-steps-open="steps-wall">Steps</button>
+        <div class="cardTop">
+          <div>
+            <h2>Wall Materials Estimator</h2>
+            <p class="muted">Wall length/height accept the same input format everywhere.</p>
+          </div>
+          <button class="pill" data-steps="layout-wall">Steps</button>
         </div>
 
-        <div class="grid2">
-          <div class="field">
-            <label for="wall_len">Wall length</label>
-            <input id="wall_len" inputmode="text" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"
-              placeholder="e.g., 24' 0&quot;" />
-            <div class="hint">Accepts: 144, 12', 12' 0", 12' 3 1/2"</div>
-          </div>
+        <div class="formGrid">
+          <label class="field">
+            <span class="label">Wall Length</span>
+            <input id="wallLen" type="text" placeholder='e.g. 12&#39; 6"' />
+            <span class="hint">Accepted: <code>12' 6"</code>, <code>12'</code>, <code>150 1/2"</code>, <code>150 1/2</code></span>
+          </label>
 
-          <div class="field">
-            <label for="wall_h">Wall height</label>
-            <input id="wall_h" inputmode="text" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"
-              placeholder="e.g., 8' 0&quot;" />
-          </div>
+          <label class="field">
+            <span class="label">Wall Height</span>
+            <input id="wallHt" type="text" placeholder='e.g. 8&#39; 1/2"' />
+          </label>
 
-          <div class="field">
-            <label for="stud_oc">Stud spacing</label>
-            <select id="stud_oc">
-              <option value="16">16" OC</option>
-              <option value="24">24" OC</option>
+          <label class="field">
+            <span class="label">Stud Spacing</span>
+            <select id="studSpacing">
+              <option value="16">16" O.C.</option>
+              <option value="24">24" O.C.</option>
             </select>
-          </div>
+          </label>
 
-          <div class="field">
-            <label for="sheet_size">Sheet size</label>
-            <select id="sheet_size">
-              <option value="4x8">4x8</option>
-              <option value="4x12">4x12</option>
+          <label class="field">
+            <span class="label">Sheet Size</span>
+            <select id="sheetSize">
+              <option value="4x8">4×8</option>
+              <option value="4x12">4×12</option>
             </select>
-          </div>
+          </label>
 
-          <div class="field">
-            <label for="hang_dir">Hang direction</label>
-            <select id="hang_dir">
-              <option value="vertical">Vertical (common)</option>
+          <label class="field">
+            <span class="label">Hang Direction</span>
+            <select id="hangDir">
+              <option value="vertical">Vertical</option>
               <option value="horizontal">Horizontal</option>
             </select>
-          </div>
+          </label>
 
-          <div class="field">
-            <label for="waste_pct">Waste % (optional)</label>
-            <input id="waste_pct" inputmode="numeric" autocomplete="off" autocapitalize="off" autoccorrect="off" spellcheck="false"
-              value="10" />
-          </div>
+          <label class="field">
+            <span class="label">Waste %</span>
+            <input id="wastePct" type="number" min="0" max="50" step="1" value="10" />
+          </label>
         </div>
 
-        <hr class="divider" />
-
-        <div class="subTitle">Drywall screw spacing (editable defaults)</div>
-        <div class="grid2">
-          <div class="field">
-            <label for="dw_edge">Edges (in)</label>
-            <input id="dw_edge" inputmode="numeric" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"
-              value="8" />
-          </div>
-          <div class="field">
-            <label for="dw_field">Field (in)</label>
-            <input id="dw_field" inputmode="numeric" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"
-              value="12" />
-          </div>
+        <div class="btnRow">
+          <button class="btn" id="btnCalcWall">Calculate</button>
+          <button class="btnGhost" id="btnClearWall">Clear</button>
         </div>
 
-        <div class="hint">Defaults are common jobsite schedules. Adjust to match your class/module.</div>
-
-        <hr class="divider" />
-
-        <div class="subTitle">Bottom plate anchors (concrete screws)</div>
-        <div class="grid2">
-          <div class="field">
-            <label for="anc_space">Spacing (in)</label>
-            <input id="anc_space" inputmode="numeric" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"
-              value="72" />
-          </div>
-          <div class="field">
-            <label for="anc_end">End distance (in)</label>
-            <input id="anc_end" inputmode="numeric" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"
-              value="12" />
-          </div>
-        </div>
-        <div class="hint">Estimate assumes one continuous bottom plate on slab.</div>
-
-        <div class="btnRow wrap">
-          <button id="btn_wall_calc" type="button" class="btn primary">Calculate</button>
-          <button id="btn_wall_clear" type="button" class="btn ghost">Clear</button>
-          <button id="btn_wall_to_auditor" type="button" class="btn">Add lines to Auditor</button>
-        </div>
-
-        <pre id="out_wall" class="out">—</pre>
-      </div>
-
-      <div class="card">
-        <div class="cardHead">
-          <h2 class="cardTitle">Materials Auditor (running tally)</h2>
-          <button class="chipBtn" type="button" data-steps-open="steps-auditor">Steps</button>
-        </div>
-
-        <div class="grid2">
-          <div class="field">
-            <label for="aud_item">Item</label>
-            <input id="aud_item" autocomplete="off" autocapitalize="off" autoccorrect="off" spellcheck="false"
-              placeholder="e.g., 2x4 Stud" />
-          </div>
-
-          <div class="field">
-            <label for="aud_qty">Qty</label>
-            <input id="aud_qty" inputmode="decimal" value="1" autocomplete="off" autocapitalize="off" autoccorrect="off" spellcheck="false" />
-          </div>
-
-          <div class="field">
-            <label for="aud_unit">Unit</label>
-            <input id="aud_unit" autocomplete="off" autocapitalize="off" autoccorrect="off" spellcheck="false"
-              placeholder="pcs / sheets / boxes" />
-          </div>
-
-          <div class="field">
-            <label for="aud_cost">Unit cost ($)</label>
-            <input id="aud_cost" inputmode="decimal" autocomplete="off" autocapitalize="off" autoccorrect="off" spellcheck="false"
-              placeholder="optional" />
-          </div>
-
-          <div class="field" style="grid-column: 1 / -1;">
-            <label for="aud_notes">Notes</label>
-            <input id="aud_notes" autocomplete="off" autocapitalize="off" autoccorrect="off" spellcheck="false"
-              placeholder="optional" />
-          </div>
-        </div>
-
-        <div class="btnRow wrap">
-          <button id="aud_add" type="button" class="btn primary">Add Line</button>
-          <button id="aud_clear_inputs" type="button" class="btn ghost">Clear Inputs</button>
-          <button id="aud_export" type="button" class="btn">Export JSON</button>
-          <button id="aud_import" type="button" class="btn">Import JSON</button>
-          <button id="aud_wipe" type="button" class="btn danger">Wipe List</button>
-        </div>
-
-        <div class="tableWrap">
-          <table class="table">
-            <thead>
-              <tr>
-                <th>Item</th>
-                <th class="num">Qty</th>
-                <th>Unit</th>
-                <th class="num">Cost</th>
-                <th>Notes</th>
-                <th class="num">Line $</th>
-                <th class="num">—</th>
-              </tr>
-            </thead>
-            <tbody id="aud_rows"></tbody>
-          </table>
-        </div>
-
-        <div id="aud_meta" class="metaLine">—</div>
+        <pre class="out" id="wallOut">Enter wall length and height to estimate studs and sheets.</pre>
       </div>
     </section>
 
-    <!-- =========================
-         SUBFLOOR TAB
-    ========================== -->
-    <section id="tab-subfloor" class="tabPanel" aria-label="Subfloor" hidden>
+    <!-- SUBFLOOR -->
+    <section class="tabPanel" id="tab-subfloor" role="region" aria-label="Subfloor">
       <div class="card">
-        <div class="cardHead">
-          <h2 class="cardTitle">Subfloor Materials Estimator (joists + sheets + fasteners)</h2>
-          <button class="chipBtn" type="button" data-steps-open="steps-subfloor">Steps</button>
+        <div class="cardTop">
+          <div>
+            <h2>Subfloor Estimator</h2>
+            <p class="muted">Room dimensions accept carpenter-native format.</p>
+          </div>
+          <button class="pill" data-steps="subfloor">Steps</button>
         </div>
 
-        <div class="grid2">
-          <div class="field">
-            <label for="sf_len">Floor length</label>
-            <input id="sf_len" inputmode="text" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"
-              placeholder="e.g., 24' 0&quot;" />
-          </div>
+        <div class="formGrid">
+          <label class="field">
+            <span class="label">Room Length</span>
+            <input id="sfLen" type="text" placeholder='e.g. 14&#39; 6"' />
+          </label>
 
-          <div class="field">
-            <label for="sf_wid">Floor width</label>
-            <input id="sf_wid" inputmode="text" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"
-              placeholder="e.g., 12' 0&quot;" />
-          </div>
+          <label class="field">
+            <span class="label">Room Width</span>
+            <input id="sfWid" type="text" placeholder='e.g. 11&#39; 3/4"' />
+          </label>
 
-          <div class="field">
-            <label for="sf_joist_oc">Joist spacing</label>
-            <select id="sf_joist_oc">
-              <option value="16" selected>16" OC (common)</option>
-              <option value="24">24" OC</option>
+          <label class="field">
+            <span class="label">Sheet Size</span>
+            <select id="sfSheet">
+              <option value="4x8">4×8</option>
+              <option value="4x4">4×4</option>
             </select>
-          </div>
+          </label>
 
-          <div class="field">
-            <label for="sf_sheet">Subfloor sheet</label>
-            <select id="sf_sheet">
-              <option value="4x8" selected>4x8 (common)</option>
-              <option value="4x4">4x4</option>
+          <label class="field">
+            <span class="label">Waste %</span>
+            <input id="sfWaste" type="number" min="0" max="50" step="1" value="10" />
+          </label>
+
+          <label class="field">
+            <span class="label">Default Fastener Pattern</span>
+            <select id="sfPattern">
+              <option value="std">Edges 6" • Field 12"</option>
+              <option value="tight">Edges 4" • Field 8"</option>
+              <option value="custom">Custom (below)</option>
             </select>
-          </div>
+          </label>
 
-          <div class="field">
-            <label for="sf_waste">Waste %</label>
-            <input id="sf_waste" inputmode="numeric" value="10" autocomplete="off" autocapitalize="off" autoccorrect="off" spellcheck="false" />
-          </div>
+          <label class="field">
+            <span class="label">Edge Screw Spacing</span>
+            <input id="sfEdge" type="text" placeholder='e.g. 6"' />
+            <span class="hint">Use the same format: <code>6"</code>, <code>6</code>, <code>5 1/2"</code></span>
+          </label>
 
-          <div class="field">
-            <label for="sf_blocking">Blocking row (optional)</label>
-            <select id="sf_blocking">
-              <option value="none" selected>None</option>
-              <option value="mid">1 mid-span row (estimate)</option>
+          <label class="field">
+            <span class="label">Field Screw Spacing</span>
+            <input id="sfField" type="text" placeholder='e.g. 12"' />
+          </label>
+
+          <label class="field">
+            <span class="label">Adhesive</span>
+            <select id="sfAdhesive">
+              <option value="yes">Yes (default)</option>
+              <option value="no">No</option>
             </select>
-          </div>
+          </label>
         </div>
 
-        <hr class="divider" />
-
-        <div class="subTitle">Subfloor screws + adhesive (editable defaults)</div>
-        <div class="grid3">
-          <div class="field">
-            <label for="sf_screw_edge">Screw spacing — edges (in)</label>
-            <input id="sf_screw_edge" inputmode="numeric" value="6" autocomplete="off" autocapitalize="off" autoccorrect="off" spellcheck="false" />
-          </div>
-          <div class="field">
-            <label for="sf_screw_field">Screw spacing — field (in)</label>
-            <input id="sf_screw_field" inputmode="numeric" value="8" autocomplete="off" autocapitalize="off" autoccorrect="off" spellcheck="false" />
-          </div>
-          <div class="field">
-            <label for="sf_adh_cov">Adhesive coverage (sq ft / tube)</label>
-            <input id="sf_adh_cov" inputmode="numeric" value="32" autocomplete="off" autocapitalize="off" autoccorrect="off" spellcheck="false" />
-          </div>
+        <div class="btnRow">
+          <button class="btn" id="btnCalcSubfloor">Calculate</button>
+          <button class="btnGhost" id="btnClearSubfloor">Clear</button>
         </div>
 
-        <div class="hint">Defaults are common. Adjust to match your class/jobsite spec and product label.</div>
-
-        <div class="btnRow wrap">
-          <button id="btn_sf_calc" type="button" class="btn primary">Calculate</button>
-          <button id="btn_sf_clear" type="button" class="btn ghost">Clear</button>
-          <button id="btn_sf_to_auditor" type="button" class="btn">Add lines to Auditor</button>
-        </div>
-
-        <pre id="out_sf" class="out">—</pre>
+        <pre class="out" id="subfloorOut">Enter room dimensions to estimate sheets, fasteners, and adhesive.</pre>
       </div>
     </section>
 
-    <!-- =========================
-         ROOFING TAB
-    ========================== -->
-    <section id="tab-roofing" class="tabPanel" aria-label="Roofing" hidden>
-
+    <!-- ROOFING -->
+    <section class="tabPanel" id="tab-roofing" role="region" aria-label="Roofing">
       <div class="card">
-        <div class="cardHead">
-          <h2 class="cardTitle">Roof Area + Materials Estimator</h2>
-          <button class="chipBtn" type="button" data-steps-open="steps-roofmat">Steps</button>
+        <div class="cardTop">
+          <div>
+            <h2>Roof Area + Materials Estimator</h2>
+            <p class="muted">Inputs accept carpenter-native format. Pitch can be <code>6/12</code> or a number.</p>
+          </div>
+          <button class="pill" data-steps="roofing">Steps</button>
         </div>
 
-        <div class="grid2">
-          <div class="field">
-            <label for="rm_len">Building length</label>
-            <input id="rm_len" inputmode="text" autocomplete="off" autocapitalize="off" autoccorrect="off" spellcheck="false"
-              placeholder="e.g., 24' 0&quot;" />
-          </div>
+        <div class="formGrid">
+          <label class="field">
+            <span class="label">Roof Length (eave)</span>
+            <input id="roofLen" type="text" placeholder='e.g. 40&#39; 0"' />
+          </label>
 
-          <div class="field">
-            <label for="rm_wid">Building width</label>
-            <input id="rm_wid" inputmode="text" autocomplete="off" autocapitalize="off" autoccorrect="off" spellcheck="false"
-              placeholder="e.g., 12' 0&quot;" />
-          </div>
+          <label class="field">
+            <span class="label">Roof Width (ridge to eave)</span>
+            <input id="roofWid" type="text" placeholder='e.g. 18&#39; 6"' />
+          </label>
 
-          <div class="field">
-            <label for="rm_type">Roof type</label>
-            <select id="rm_type">
-              <option value="gable" selected>Gable (two slopes)</option>
-              <option value="shed">Shed (single slope)</option>
+          <label class="field">
+            <span class="label">Pitch</span>
+            <input id="roofPitch" type="text" placeholder="e.g. 6/12" />
+          </label>
+
+          <label class="field">
+            <span class="label">Waste %</span>
+            <input id="roofWaste" type="number" min="0" max="30" step="1" value="10" />
+          </label>
+
+          <label class="field">
+            <span class="label">Squares / Bundle</span>
+            <select id="roofBundlesPerSquare">
+              <option value="3" selected>3 bundles = 1 square (most common)</option>
+              <option value="4">4 bundles = 1 square</option>
             </select>
-          </div>
-
-          <div class="field">
-            <label for="rm_pitch">Pitch (per 12)</label>
-            <input id="rm_pitch" inputmode="decimal" value="4" autocomplete="off" autocapitalize="off" autoccorrect="off" spellcheck="false" />
-          </div>
-
-          <div class="field">
-            <label for="rm_ovh">Overhang (optional)</label>
-            <input id="rm_ovh" inputmode="text" value='0"' autocomplete="off" autocapitalize="off" autoccorrect="off" spellcheck="false"
-              placeholder="e.g., 1' 0&quot;" />
-            <div class="hint">Simple estimator: adds overhang to the sloped edge direction.</div>
-          </div>
-
-          <div class="field">
-            <label for="rm_waste">Waste %</label>
-            <input id="rm_waste" inputmode="numeric" value="10" autocomplete="off" autocapitalize="off" autoccorrect="off" spellcheck="false" />
-          </div>
+          </label>
         </div>
 
-        <hr class="divider" />
-
-        <div class="subTitle">Editable material defaults</div>
-        <div class="grid3">
-          <div class="field">
-            <label for="rm_bundles_per_sq">Bundles per square</label>
-            <input id="rm_bundles_per_sq" inputmode="decimal" value="3" autocomplete="off" autocapitalize="off" autoccorrect="off" spellcheck="false" />
-          </div>
-
-          <div class="field">
-            <label for="rm_roll_cov">Underlayment roll coverage (sq ft)</label>
-            <input id="rm_roll_cov" inputmode="numeric" value="400" autocomplete="off" autocapitalize="off" autoccorrect="off" spellcheck="false" />
-          </div>
-
-          <div class="field">
-            <label for="rm_nails_per_sq">Nails per square (est)</label>
-            <input id="rm_nails_per_sq" inputmode="numeric" value="320" autocomplete="off" autocapitalize="off" autoccorrect="off" spellcheck="false" />
-          </div>
+        <div class="btnRow">
+          <button class="btn" id="btnCalcRoof">Calculate</button>
+          <button class="btnGhost" id="btnClearRoof">Clear</button>
         </div>
 
-        <div class="btnRow wrap">
-          <button id="btn_rm_calc" type="button" class="btn primary">Calculate</button>
-          <button id="btn_rm_clear" type="button" class="btn ghost">Clear</button>
-          <button id="btn_rm_to_auditor" type="button" class="btn">Add lines to Auditor</button>
-        </div>
-
-        <pre id="out_rm" class="out">—</pre>
-      </div>
-
-      <div class="card">
-        <div class="cardHead">
-          <h2 class="cardTitle">Pitch ↔ Angle</h2>
-          <button class="chipBtn" type="button" data-steps-open="steps-pitch">Steps</button>
-        </div>
-
-        <div class="grid2">
-          <div class="field">
-            <label for="pitch_rise">Rise</label>
-            <input id="pitch_rise" inputmode="decimal" value="4" autocomplete="off" autocapitalize="off" autoccorrect="off" spellcheck="false" />
-          </div>
-          <div class="field">
-            <label for="pitch_run">Run</label>
-            <input id="pitch_run" inputmode="decimal" value="12" autocomplete="off" autocapitalize="off" autoccorrect="off" spellcheck="false" />
-          </div>
-        </div>
-
-        <div class="btnRow wrap">
-          <button id="btn_pitch_calc" type="button" class="btn primary">Calculate</button>
-          <button id="btn_pitch_clear" type="button" class="btn ghost">Clear</button>
-        </div>
-
-        <pre id="out_pitch" class="out">—</pre>
-      </div>
-
-      <div class="card">
-        <div class="cardHead">
-          <h2 class="cardTitle">Rafter Length</h2>
-          <button class="chipBtn" type="button" data-steps-open="steps-rafter">Steps</button>
-        </div>
-
-        <div class="grid2">
-          <div class="field">
-            <label for="raf_run">Run</label>
-            <input id="raf_run" inputmode="text" autocomplete="off" autocapitalize="off" autoccorrect="off" spellcheck="false"
-              placeholder="e.g., 12' 0&quot;" />
-          </div>
-          <div class="field">
-            <label for="raf_pitch">Pitch (per 12)</label>
-            <input id="raf_pitch" inputmode="decimal" value="4" autocomplete="off" autocapitalize="off" autoccorrect="off" spellcheck="false" />
-          </div>
-        </div>
-
-        <div class="btnRow wrap">
-          <button id="btn_raf_calc" type="button" class="btn primary">Calculate</button>
-          <button id="btn_raf_clear" type="button" class="btn ghost">Clear</button>
-        </div>
-
-        <pre id="out_raf" class="out">—</pre>
-      </div>
-
-      <div class="card">
-        <div class="cardHead">
-          <h2 class="cardTitle">Diagonal</h2>
-          <button class="chipBtn" type="button" data-steps-open="steps-diag">Steps</button>
-        </div>
-
-        <div class="grid2">
-          <div class="field">
-            <label for="diag_a">A</label>
-            <input id="diag_a" inputmode="text" autocomplete="off" autocapitalize="off" autoccorrect="off" spellcheck="false"
-              placeholder="e.g., 8' 0&quot;" />
-          </div>
-          <div class="field">
-            <label for="diag_b">B</label>
-            <input id="diag_b" inputmode="text" autocomplete="off" autocapitalize="off" autoccorrect="off" spellcheck="false"
-              placeholder="e.g., 12' 0&quot;" />
-          </div>
-        </div>
-
-        <div class="btnRow wrap">
-          <button id="btn_diag_calc" type="button" class="btn primary">Calculate</button>
-          <button id="btn_diag_clear" type="button" class="btn ghost">Clear</button>
-        </div>
-
-        <pre id="out_diag" class="out">—</pre>
+        <pre class="out" id="roofOut">Enter roof dimensions + pitch to estimate area, squares, and bundles.</pre>
       </div>
     </section>
 
-    <!-- =========================
-         REFERENCE TAB
-    ========================== -->
-    <section id="tab-ref" class="tabPanel" aria-label="Reference" hidden>
-      <div class="stack">
-        <div class="card">
-          <h3 class="miniTitle">Stud Spacing</h3>
-          <ul class="bul">
-            <li><strong>16&quot; OC</strong> — Load-bearing, standard residential</li>
-            <li><strong>24&quot; OC</strong> — Engineered / non-bearing</li>
-          </ul>
-          <p class="muted">Rule: Load-bearing → 16&quot; | Non-bearing → 24&quot;</p>
+    <!-- REFERENCE -->
+    <section class="tabPanel" id="tab-reference" role="region" aria-label="Reference">
+      <div class="card">
+        <div class="cardTop">
+          <div>
+            <h2>Quick Reference</h2>
+            <p class="muted">Common conversions + reminders.</p>
+          </div>
         </div>
 
-        <div class="card">
-          <h3 class="miniTitle">Fastener Spacing</h3>
-          <ul class="bul">
-            <li><strong>Drywall walls:</strong> 16&quot; field / 8&quot; edges</li>
-            <li><strong>Drywall ceilings:</strong> 12&quot; field / 7&quot; edges</li>
-            <li><strong>Sheathing:</strong> 12&quot; field / 6&quot; edges</li>
-            <li><strong>Subfloor (common):</strong> 8&quot; field / 6&quot; edges</li>
-          </ul>
+        <div class="refGrid">
+          <div class="refItem">
+            <div class="refTitle">12 inches</div>
+            <div class="refBody">= 1 foot</div>
+          </div>
+          <div class="refItem">
+            <div class="refTitle">1 square</div>
+            <div class="refBody">= 100 sq ft (roofing)</div>
+          </div>
+          <div class="refItem">
+            <div class="refTitle">4×8 sheet</div>
+            <div class="refBody">= 32 sq ft</div>
+          </div>
+          <div class="refItem">
+            <div class="refTitle">4×12 sheet</div>
+            <div class="refBody">= 48 sq ft</div>
+          </div>
         </div>
 
-        <div class="card">
-          <h3 class="miniTitle">Roof Pitch</h3>
-          <ul class="bul">
-            <li>4/12 → 18.4°</li>
-            <li>6/12 → 26.6°</li>
-            <li>8/12 → 33.7°</li>
-            <li>12/12 → 45°</li>
-          </ul>
-        </div>
-
-        <div class="card">
-          <h3 class="miniTitle">Lumber Sizes (Actual)</h3>
-          <ul class="bul">
-            <li>2×4 → 1½&quot; × 3½&quot;</li>
-            <li>2×6 → 1½&quot; × 5½&quot;</li>
-            <li>2×8 → 1½&quot; × 7¼&quot;</li>
-          </ul>
-        </div>
-
-        <div class="card">
-          <h3 class="miniTitle">Sheet Goods</h3>
-          <ul class="bul">
-            <li>7/16&quot; OSB → 0.438&quot;</li>
-            <li>½&quot; → 0.5&quot;</li>
-            <li>5/8&quot; → 0.625&quot;</li>
-            <li>¾&quot; → 0.75&quot;</li>
+        <div class="card subCard">
+          <h3>Measurement Input Standard (App-wide)</h3>
+          <p class="muted">
+            This app accepts tape-measure format everywhere:
+          </p>
+          <ul class="bullets">
+            <li><code>7' 10 7/8"</code></li>
+            <li><code>12' 3/8"</code></li>
+            <li><code>7'</code></li>
+            <li><code>10 7/8"</code></li>
+            <li><code>3/8"</code></li>
           </ul>
         </div>
       </div>
     </section>
-
   </main>
 
-  <!-- =========================
-       Steps modal
-  ========================== -->
-  <div id="stepsModal" class="modal" aria-hidden="true" role="dialog" aria-label="Steps">
-    <div class="modalInner" role="document">
-      <div class="modalHead">
-        <div id="stepsTitle" class="modalTitle">Steps</div>
-        <button id="stepsClose" type="button" class="iconBtn" aria-label="Close">✕</button>
+  <!-- Steps Modal -->
+  <div class="modal" id="modal" aria-hidden="true">
+    <div class="modalInner" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <div class="modalTop">
+        <div class="modalTitle" id="modalTitle">Steps</div>
+        <button class="modalClose" id="modalClose" aria-label="Close">✕</button>
       </div>
-      <pre id="stepsBody" class="stepsPre">—</pre>
+      <div class="modalBody" id="modalBody"></div>
     </div>
+    <div class="modalBackdrop" id="modalBackdrop"></div>
   </div>
 
   <script src="./app.js"></script>
+  <script>
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", () => {
+        navigator.serviceWorker.register("./sw.js").catch(() => {});
+      });
+    }
+  </script>
 </body>
 </html>
