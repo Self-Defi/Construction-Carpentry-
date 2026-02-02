@@ -3,13 +3,11 @@
 /* =========================
    Build / PWA SW register (safe)
 ========================= */
-const BUILD_VERSION = "v6";
+const BUILD_VERSION = "v7";
 
 function updateBuildLine() {
   const el = document.getElementById("buildLine");
   if (!el) return;
-
-  // If there's a controlling SW, you're very likely in cached mode
   const cached = !!navigator.serviceWorker?.controller;
   el.textContent = `Build: ${BUILD_VERSION} • ${cached ? "Cached" : "Live"}`;
 }
@@ -18,37 +16,32 @@ if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
     navigator.serviceWorker.register("./sw.js").catch(() => {});
     updateBuildLine();
-
-    // If SW takes control after load, update label
-    navigator.serviceWorker.addEventListener("controllerchange", () => {
-      updateBuildLine();
-    });
+    navigator.serviceWorker.addEventListener("controllerchange", () => updateBuildLine());
   });
 } else {
   updateBuildLine();
 }
 
 /* =========================
-   Tabs (top nav) — HARD HIDE PANELS (fixes “scrolling 1 page”)
+   Tabs (top nav) — HARD HIDE PANELS
 ========================= */
 const tabPanels = {
   home: document.getElementById("tab-home"),
   layout: document.getElementById("tab-layout"),
+  subfloor: document.getElementById("tab-subfloor"),
   roofing: document.getElementById("tab-roofing"),
   ref: document.getElementById("tab-ref"),
 };
 
 function setActiveTab(key) {
-  // Hide all panels first (works even if CSS breaks)
   Object.entries(tabPanels).forEach(([k, el]) => {
     if (!el) return;
     const isOn = k === key;
-    el.hidden = !isOn;                      // <-- HARD HIDE
-    el.classList.toggle("isActive", isOn);  // <-- keep styling hook
+    el.hidden = !isOn;
+    el.classList.toggle("isActive", isOn);
     el.setAttribute("aria-hidden", String(!isOn));
   });
 
-  // Update nav button active state
   document.querySelectorAll(".navBtn").forEach(b => {
     b.classList.toggle("isActive", b.dataset.tab === key);
   });
@@ -56,12 +49,10 @@ function setActiveTab(key) {
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
-// Bind clicks
 document.querySelectorAll(".navBtn").forEach(btn => {
   btn.addEventListener("click", () => setActiveTab(btn.dataset.tab));
 });
 
-// Clean initial state
 setActiveTab("home");
 
 /* =========================
@@ -145,8 +136,6 @@ function toFeetInString(totalInches, denom = 16) {
 }
 
 function normalizeQuotes(s) {
-  // Critical iOS fix: normalize smart apostrophes ’ ‘ plus prime ′ into ASCII '
-  // and smart inch quotes “ ” plus double-prime ″ into ASCII "
   return String(s || "")
     .replace(/″|“|”/g, '"')
     .replace(/′|’|‘/g, "'")
@@ -156,7 +145,6 @@ function normalizeQuotes(s) {
 function parseMixedFraction(str) {
   if (!str) return NaN;
   const s = normalizeQuotes(str);
-
   const parts = s.split(/\s+/);
 
   if (parts.length === 2 && parts[1].includes("/")) {
@@ -178,11 +166,8 @@ function parseMixedFraction(str) {
 
 function parseFeetInches(str) {
   if (!str) return NaN;
-
-  // Normalize smart quotes FIRST (this fixes 24’ 0” parsing as 2' instead of 24')
   let s = normalizeQuotes(str);
 
-  // Optional hardening: support "ft/in" words
   s = s
     .replace(/\b(feet|foot|ft)\b/gi, "'")
     .replace(/\b(inches|inch|in)\b/gi, '"');
@@ -635,6 +620,165 @@ document.getElementById("btn_wall_to_auditor").addEventListener("click", () => {
 });
 
 /* =========================
+   SUBFLOOR: Estimator
+========================= */
+const sfLen = document.getElementById("sf_len");
+const sfWid = document.getElementById("sf_wid");
+const sfDir = document.getElementById("sf_joist_dir");
+const sfOc = document.getElementById("sf_joist_oc");
+const sfSheet = document.getElementById("sf_sheet");
+const sfWaste = document.getElementById("sf_waste");
+const sfMethod = document.getElementById("sf_method");
+const sfTubesPerSheet = document.getElementById("sf_tubes_per_sheet");
+const sfEdge = document.getElementById("sf_edge");
+const sfField = document.getElementById("sf_field");
+const outSf = document.getElementById("out_sf");
+
+let lastSfResult = null;
+
+function calcSubfloor() {
+  const L = parseFeetInches(sfLen?.value);
+  const W = parseFeetInches(sfWid?.value);
+
+  if (!isFinite(L) || !isFinite(W) || L <= 0 || W <= 0) {
+    outSf.textContent = "Enter valid floor length and width.";
+    lastSfResult = null;
+    return;
+  }
+
+  const oc = parseFloat(sfOc.value);
+  const waste = clamp(parseFloat(sfWaste.value || "0"), 0, 35) / 100;
+
+  const [sw, sh] = (sfSheet.value === "4x12") ? [48, 144] : [48, 96]; // inches
+  const sheetAreaSqFt = (sw * sh) / 144;
+
+  const areaSqFt = (L * W) / 144;
+  const baseSheets = Math.ceil(areaSqFt / sheetAreaSqFt);
+  const sheetsWithWaste = Math.ceil(baseSheets * (1 + waste));
+
+  // Joist count: depends on direction
+  // along_len => joists span length, spaced across width
+  // along_wid => joists span width, spaced across length
+  const spacingAxisIn = (sfDir.value === "along_len") ? W : L;
+  const spanAxisIn = (sfDir.value === "along_len") ? L : W;
+
+  const joists = Math.floor(spacingAxisIn / oc) + 1; // includes both ends
+  const rimLf = (2 * (L + W)) / 12;
+
+  // Fastener estimate per sheet (simple, consistent, editable)
+  const edge = clamp(parseFloat(sfEdge.value || "6"), 4, 12);
+  const field = clamp(parseFloat(sfField.value || "12"), 6, 24);
+
+  const linesPerSheet = Math.floor(sw / oc) + 1; // joist lines across 4'
+  const edgeLines = 2;
+  const fieldLines = Math.max(0, linesPerSheet - edgeLines);
+
+  const fastenersEdgeLine = Math.ceil(sh / edge) + 1;
+  const fastenersFieldLine = Math.ceil(sh / field) + 1;
+
+  const fastenersPerSheet = (edgeLines * fastenersEdgeLine) + (fieldLines * fastenersFieldLine);
+  const totalFasteners = Math.ceil(fastenersPerSheet * sheetsWithWaste);
+
+  // Adhesive
+  const tubesRate = clamp(parseFloat(sfTubesPerSheet.value || "0"), 0, 5);
+  const needsGlue = sfMethod.value.includes("adhesive");
+  const tubes = needsGlue ? Math.ceil(sheetsWithWaste * tubesRate) : 0;
+
+  // Labels
+  const useScrews = sfMethod.value.includes("screws");
+  const fastenerLabel = useScrews ? "subfloor screws" : "ring-shank nails";
+
+  outSf.textContent =
+`Floor: ${toFeetInString(L, 16)} × ${toFeetInString(W, 16)}
+Area: ${fmt(areaSqFt, 2)} sq ft
+
+Sheathing:
+- Sheet: ${sfSheet.value} (${sw}"×${sh}")
+- Base sheets: ${baseSheets}
+- Waste: ${Math.round(waste * 100)}%
+- Total sheets (waste included): ${sheetsWithWaste}
+
+Joists:
+- Direction: ${sfDir.value === "along_len" ? "run along LENGTH (spaced across width)" : "run along WIDTH (spaced across length)"}
+- Spacing: ${oc}" OC
+- Joist count (est): ${joists}
+- Approx span (est): ${toFeetInString(spanAxisIn, 16)}
+- Rim (perimeter): ${fmt(rimLf, 1)} lf
+
+Fasteners (editable schedule):
+- Method: ${sfMethod.options[sfMethod.selectedIndex].text}
+- Spacing: edges ${edge}" / field ${field}"
+- Estimated ${fastenerLabel}: ~${totalFasteners} pcs
+
+Adhesive:
+- Tubes per sheet: ${fmt(tubesRate, 2)}
+- Tubes (est): ${tubes || 0}
+
+Notes:
+- Strength axis perpendicular to joists
+- Stagger seams, avoid 4-corner joints
+- Glue on joists reduces squeaks`;
+
+  STEPS["steps-subfloor"].body =
+`Subfloor Estimator Steps
+
+Inputs
+- Length: ${sfLen.value.trim()} -> ${fmt(L, 3)} in
+- Width:  ${sfWid.value.trim()} -> ${fmt(W, 3)} in
+- Joist spacing: ${oc}" OC
+- Sheet: ${sfSheet.value} (${sw}"×${sh}")
+- Waste: ${Math.round(waste * 100)}%
+
+1) Area
+areaSqFt = (L * W) / 144 = ${fmt(areaSqFt, 3)}
+
+2) Sheets
+sheetAreaSqFt = (${sw} * ${sh}) / 144 = ${fmt(sheetAreaSqFt, 3)}
+baseSheets = ceil(areaSqFt / sheetAreaSqFt) = ${baseSheets}
+totalSheets = ceil(baseSheets * (1 + waste)) = ${sheetsWithWaste}
+
+3) Joists (estimate)
+spacingAxis = ${sfDir.value === "along_len" ? "width" : "length"}
+joists = floor(spacingAxisIn / OC) + 1 = ${joists}
+
+4) Fasteners (estimate)
+joistLinesPerSheet = floor(48 / OC) + 1 = ${linesPerSheet}
+fastenersPerEdgeLine = ceil(sheetLong/edge)+1
+fastenersPerFieldLine = ceil(sheetLong/field)+1
+fastenersPerSheet = edgeLines*edgeLine + fieldLines*fieldLine
+totalFasteners = fastenersPerSheet * totalSheets ≈ ${totalFasteners}
+
+5) Adhesive (if selected)
+tubes = ceil(totalSheets * tubesPerSheet) = ${tubes}`;
+
+  lastSfResult = { L, W, oc, sheet: sfSheet.value, sheetsWithWaste, joists, rimLf, totalFasteners, tubes, method: sfMethod.value };
+}
+
+document.getElementById("btn_sf_calc")?.addEventListener("click", calcSubfloor);
+
+document.getElementById("btn_sf_clear")?.addEventListener("click", () => {
+  outSf.textContent = "—";
+  lastSfResult = null;
+});
+
+document.getElementById("btn_sf_to_auditor")?.addEventListener("click", () => {
+  if (!lastSfResult) { outSf.textContent = "Calculate first, then add to Auditor."; return; }
+
+  const methodText = sfMethod.options[sfMethod.selectedIndex].text;
+  const useScrews = lastSfResult.method.includes("screws");
+  const fastenerLabel = useScrews ? "Subfloor screws (est)" : "Ring-shank nails (est)";
+
+  auditorAddLine({ item: `Subfloor sheathing ${lastSfResult.sheet}`, qty: lastSfResult.sheetsWithWaste, unit: "sheets", cost: "", notes: "waste included" });
+  auditorAddLine({ item: `Joists (est)`, qty: lastSfResult.joists, unit: "pcs", cost: "", notes: `${lastSfResult.oc}" OC` });
+  auditorAddLine({ item: `Rim/perimeter (est)`, qty: Number(lastSfResult.rimLf.toFixed(1)), unit: "lf", cost: "", notes: "rim/edge planning" });
+  auditorAddLine({ item: fastenerLabel, qty: lastSfResult.totalFasteners, unit: "pcs", cost: "", notes: methodText });
+  if (lastSfResult.tubes > 0) {
+    auditorAddLine({ item: `Construction adhesive (est)`, qty: lastSfResult.tubes, unit: "tubes", cost: "", notes: "subfloor glue" });
+  }
+  renderAuditor();
+});
+
+/* =========================
    ROOFING
 ========================= */
 const outPitch = document.getElementById("out_pitch");
@@ -709,6 +853,7 @@ const STEPS = {
   "steps-fracops": { title: "Steps — Fraction Operations", body: "Run an operation to populate steps." },
   "steps-feetdec": { title: "Steps — Inches ↔ Decimal Feet", body: "Run a conversion to populate steps." },
   "steps-wall": { title: "Steps — Wall Materials Estimator", body: "Tap Calculate to see the breakdown." },
+  "steps-subfloor": { title: "Steps — Subfloor Estimator", body: "Tap Calculate to see the breakdown." },
   "steps-auditor": {
     title: "Steps — Materials Auditor",
     body:
