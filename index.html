@@ -13,7 +13,7 @@
   <header class="appHeader">
     <div class="titleBlock">
       <h1 class="appTitle">Construction Carpentry</h1>
-      <div class="buildLine" id="buildLine">Build: v9 • Live</div>
+      <div class="buildLine" id="buildLine">Build: v10 • Live</div>
     </div>
 
     <nav class="topNav" aria-label="Primary">
@@ -79,7 +79,7 @@
           <label class="field">
             <span class="label">Wall Length</span>
             <input id="wallLen" type="text" placeholder='e.g. 12&#39; 6"' />
-            <span class="hint">Accepted: <code>12' 6"</code>, <code>12'</code>, <code>150 1/2"</code>, <code>150 1/2</code></span>
+            <span class="hint">Tape format supported: <code>12' 6"</code>, <code>12'</code>, <code>150 1/2"</code></span>
           </label>
 
           <label class="field">
@@ -173,7 +173,7 @@
           <label class="field">
             <span class="label">Edge Screw Spacing</span>
             <input id="sfEdge" type="text" placeholder='e.g. 6"' />
-            <span class="hint">Use the same format: <code>6"</code>, <code>6</code>, <code>5 1/2"</code></span>
+            <span class="hint">Same format: <code>6"</code>, <code>5 1/2"</code></span>
           </label>
 
           <label class="field">
@@ -204,26 +204,41 @@
       <div class="card">
         <div class="cardTop">
           <div>
-            <h2>Roof Area + Materials Estimator</h2>
-            <p class="muted">Inputs accept carpenter-native format. Pitch can be <code>6/12</code> or a number.</p>
+            <h2>Roof Area + Materials</h2>
+            <p class="muted">
+              Framer-ready quick estimate. Enter dimensions in tape format.
+              Pitch accepts <code>6/12</code>.
+            </p>
           </div>
           <button class="pill" data-steps="roofing">Steps</button>
         </div>
 
         <div class="formGrid">
           <label class="field">
-            <span class="label">Roof Length (eave)</span>
+            <span class="label">Eave Length</span>
             <input id="roofLen" type="text" placeholder='e.g. 40&#39; 0"' />
+            <span class="hint">Along the eave (outside edge).</span>
           </label>
 
           <label class="field">
-            <span class="label">Roof Width (ridge to eave)</span>
+            <span class="label">Ridge → Eave (run)</span>
             <input id="roofWid" type="text" placeholder='e.g. 18&#39; 6"' />
+            <span class="hint">One side (plan view). Slope factor applied from pitch.</span>
           </label>
 
           <label class="field">
             <span class="label">Pitch</span>
             <input id="roofPitch" type="text" placeholder="e.g. 6/12" />
+            <span class="hint">Rise per 12 run.</span>
+          </label>
+
+          <label class="field">
+            <span class="label">Both Planes?</span>
+            <select id="roofPlanes">
+              <option value="one" selected>One plane (single side)</option>
+              <option value="two">Both planes (typical gable)</option>
+            </select>
+            <span class="hint">If you want total roof coverage, choose both planes.</span>
           </label>
 
           <label class="field">
@@ -232,7 +247,7 @@
           </label>
 
           <label class="field">
-            <span class="label">Squares / Bundle</span>
+            <span class="label">Bundles per Square</span>
             <select id="roofBundlesPerSquare">
               <option value="3" selected>3 bundles = 1 square (most common)</option>
               <option value="4">4 bundles = 1 square</option>
@@ -245,7 +260,7 @@
           <button class="btnGhost" id="btnClearRoof">Clear</button>
         </div>
 
-        <pre class="out" id="roofOut">Enter roof dimensions + pitch to estimate area, squares, and bundles.</pre>
+        <pre class="out" id="roofOut">Enter roof dimensions + pitch to estimate square feet, squares, and bundles.</pre>
       </div>
     </section>
 
@@ -265,6 +280,10 @@
             <div class="refBody">= 1 foot</div>
           </div>
           <div class="refItem">
+            <div class="refTitle">144 sq in</div>
+            <div class="refBody">= 1 sq ft</div>
+          </div>
+          <div class="refItem">
             <div class="refTitle">1 square</div>
             <div class="refBody">= 100 sq ft (roofing)</div>
           </div>
@@ -272,17 +291,11 @@
             <div class="refTitle">4×8 sheet</div>
             <div class="refBody">= 32 sq ft</div>
           </div>
-          <div class="refItem">
-            <div class="refTitle">4×12 sheet</div>
-            <div class="refBody">= 48 sq ft</div>
-          </div>
         </div>
 
         <div class="card subCard">
           <h3>Measurement Input Standard (App-wide)</h3>
-          <p class="muted">
-            This app accepts tape-measure format everywhere:
-          </p>
+          <p class="muted">Tape-measure format supported everywhere:</p>
           <ul class="bullets">
             <li><code>7' 10 7/8"</code></li>
             <li><code>12' 3/8"</code></li>
