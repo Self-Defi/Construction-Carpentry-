@@ -1,5 +1,5 @@
 /* app.js — v13
-   App-wide measurement standardization + framer/finisher calculators.
+   App-wide measurement standardization + framer-ready outputs.
 */
 
 (function () {
@@ -16,6 +16,11 @@
   updateCacheStatus();
   navigator.serviceWorker?.addEventListener("controllerchange", updateCacheStatus);
 
+  // Register SW (safe if already registered)
+  if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.register("./sw.js").catch(() => {});
+  }
+
   // -----------------------------
   // Tabs
   // -----------------------------
@@ -26,7 +31,6 @@
     subfloor: document.getElementById("tab-subfloor"),
     roofing: document.getElementById("tab-roofing"),
     stairs: document.getElementById("tab-stairs"),
-    reference: document.getElementById("tab-reference"),
   };
 
   function setActiveTab(name) {
@@ -37,10 +41,6 @@
     });
     window.scrollTo({ top: 0, behavior: "instant" });
   }
-
-  // Ensure at least one panel is visible on load
-  const anyActive = Object.values(panels).some(el => el?.classList.contains("isActive"));
-  if (!anyActive) setActiveTab("home");
 
   tabButtons.forEach(btn => btn.addEventListener("click", () => setActiveTab(btn.dataset.tab)));
 
@@ -64,21 +64,21 @@
     "layout-wall": `
 <strong>Wall Materials Estimator</strong><br/>
 1) Enter wall length + height in tape format (feet/inches/fractions).<br/>
-2) Choose stud spacing and sheet size/direction.<br/>
+2) Choose stud spacing and sheet size.<br/>
 3) Tap Calculate for studs + sheets estimate (includes waste %).<br/>
 `,
     "subfloor": `
 <strong>Subfloor Estimator</strong><br/>
 1) Enter room length + width in tape format.<br/>
 2) Choose sheet size and waste %.<br/>
-3) Fastener spacing accepts the same format (e.g. <code>5 1/2"</code>).<br/>
+3) Fastener spacing accepts tape format (e.g. <code>5 1/2"</code>).<br/>
 4) Tap Calculate for sheets + rough fastener count + adhesive note.<br/>
 `,
     "roofing": `
 <strong>Roof Area + Materials (Framer-ready)</strong><br/>
 1) Enter Eave Length (outside edge).<br/>
 2) Enter Ridge→Eave (run) for ONE side (plan).<br/>
-3) Enter Pitch as <code>6/12</code>.<br/>
+3) Enter Pitch as <code>6/12</code> (or a number).<br/>
 4) Choose One plane vs Both planes (gable).<br/>
 5) Tap Calculate for: sq ft, squares, bundles (includes waste).<br/>
 `,
@@ -185,15 +185,12 @@
   }
 
   function roundToNearestFraction(value, denom) {
-    const sign = value < 0 ? -1 : 1;
     const v = Math.abs(value);
-
     const whole = Math.floor(v);
     const frac = v - whole;
     const num = Math.round(frac * denom);
-
-    if (num === denom) return { sign, whole: whole + 1, num: 0, den: denom };
-    return { sign, whole, num, den: denom };
+    if (num === denom) return { whole: whole + 1, num: 0, den: denom };
+    return { whole, num, den: denom };
   }
 
   function gcd(a, b) {
@@ -306,7 +303,7 @@
   });
 
   // =========================================================
-  // LAYOUT — Wall Materials Estimator (stud + drywall counter)
+  // LAYOUT — Wall Materials Estimator (studs + sheets)
   // =========================================================
   const wallLen = document.getElementById("wallLen");
   const wallHt = document.getElementById("wallHt");
@@ -319,6 +316,7 @@
   function calcWall() {
     const L_in = parseCarpenterMeasure(wallLen?.value);
     const H_in = parseCarpenterMeasure(wallHt?.value);
+
     if (L_in == null || H_in == null || L_in <= 0 || H_in <= 0) {
       wallOut.textContent = "Enter valid wall length and height (tape format).";
       return;
@@ -331,7 +329,7 @@
     const H_ft = H_in / 12;
     const wallArea = L_ft * H_ft;
 
-    // Simple stud count: studs along run incl both ends
+    // studs: ceil(length / spacing) + 1
     const studs = Math.ceil(L_in / spacing) + 1;
 
     const [sw, sh] = (sheetSize?.value === "4x12") ? [4, 12] : [4, 8];
@@ -343,14 +341,10 @@
       `Wall Length: ${formatInchesAsFeetInches(L_in)}\n` +
       `Wall Height: ${formatInchesAsFeetInches(H_in)}\n` +
       `Stud Spacing: ${spacing}" O.C.\n` +
-      `Hang: ${hangDir?.value || "—"}\n` +
       `Wall Area (one side): ${wallArea.toFixed(2)} sq ft\n\n` +
-      `MATERIAL COUNTS\n` +
-      `- Studs (est.): ${studs} pcs\n` +
-      `- Drywall sheets (${(sheetSize?.value || "").toUpperCase()}): ${sheets} pcs (incl. ${Math.round(waste * 100)}% waste)\n\n` +
-      `Notes:\n` +
-      `• Openings/corners/backing/blocking change counts.\n` +
-      `• This is a fast framer/finisher estimator.`;
+      `Studs (est.): ${studs} pcs\n` +
+      `Sheets (${(sheetSize?.value || "").toUpperCase()}): ${sheets} pcs (incl. ${Math.round(waste * 100)}% waste)\n\n` +
+      `Note: Openings/corners/backing change counts. This is a fast estimator.`;
   }
 
   document.getElementById("btnCalcWall")?.addEventListener("click", calcWall);
@@ -399,9 +393,16 @@
   sfPattern?.addEventListener("change", applyPatternDefaults);
   applyPatternDefaults();
 
+  function inchesOnlyLabel(inchesVal){
+    // show e.g. 6", 12", 5 1/2"
+    const s = formatInchesAsFeetInches(inchesVal);
+    return s.replace(/^\-?\d+'\s/, ""); // drop leading feet if "0' ..."
+  }
+
   function calcSubfloor() {
     const L_in = parseCarpenterMeasure(sfLen?.value);
     const W_in = parseCarpenterMeasure(sfWid?.value);
+
     if (L_in == null || W_in == null || L_in <= 0 || W_in <= 0) {
       subfloorOut.textContent = "Enter valid room length and width (tape format).";
       return;
@@ -416,24 +417,27 @@
 
     const edgeSpacing = parseCarpenterMeasure(sfEdge?.value);
     const fieldSpacing = parseCarpenterMeasure(sfField?.value);
+
     if (edgeSpacing == null || fieldSpacing == null || edgeSpacing <= 0 || fieldSpacing <= 0) {
-      subfloorOut.textContent = "Fastener spacing is invalid. Use format like 6\" or 5 1/2\".";
+      subfloorOut.textContent = 'Fastener spacing is invalid. Use format like 6" or 5 1/2".';
       return;
     }
 
+    // Rough screw count heuristic (kept intentionally simple)
     const baseEdge = 6;
     const baseField = 12;
     const factor = (baseEdge / edgeSpacing) * 0.55 + (baseField / fieldSpacing) * 0.45;
     const screwsPer4x8 = 50 * factor;
-    const screws = Math.ceil(screwsPer4x8 * sheets * (sfSheet?.value === "4x4" ? 0.55 : 1));
+    const sheetFactor = (sfSheet?.value === "4x4" ? 0.55 : 1);
+    const screws = Math.ceil(screwsPer4x8 * sheets * sheetFactor);
 
     subfloorOut.textContent =
       `Room: ${formatInchesAsFeetInches(L_in)} × ${formatInchesAsFeetInches(W_in)}\n` +
       `Area: ${area.toFixed(2)} sq ft\n` +
       `Sheets (${(sfSheet?.value || "").toUpperCase()}): ${sheets} pcs (incl. ${Math.round(waste * 100)}% waste)\n\n` +
       `Fasteners:\n` +
-      `- Edge spacing: ${formatInchesAsFeetInches(edgeSpacing).replace(/^\d+'\s/, "")}\n` +
-      `- Field spacing: ${formatInchesAsFeetInches(fieldSpacing).replace(/^\d+'\s/, "")}\n` +
+      `- Edge spacing: ${inchesOnlyLabel(edgeSpacing)}\n` +
+      `- Field spacing: ${inchesOnlyLabel(fieldSpacing)}\n` +
       `- Screws (rough est.): ${screws} pcs\n\n` +
       `Adhesive: ${sfAdhesive?.value === "yes" ? "YES (default)" : "NO"}\n` +
       `Note: Screw counts vary by layout/spec.`;
@@ -452,7 +456,7 @@
   });
 
   // =========================================================
-  // ROOFING — Framer-ready quick estimate
+  // ROOFING — Quick estimate
   // =========================================================
   const roofLen = document.getElementById("roofLen");
   const roofWid = document.getElementById("roofWid");
@@ -494,6 +498,7 @@
     const waste = Math.max(0, Number(roofWaste?.value || 0)) / 100;
     const bundlesPerSquare = Number(roofBundlesPerSquare?.value);
 
+    // slope factor = sqrt(12^2 + rise^2) / 12
     const slopeFactor = Math.sqrt(12 * 12 + pitchRisePer12 * pitchRisePer12) / 12;
     const planes = (roofPlanes?.value === "two") ? 2 : 1;
 
@@ -567,7 +572,8 @@
     const actualRiser = totalRiseIn / risers;
     const treads = Math.max(0, risers - 1);
     const totalRunIn = treads * treadDepthIn;
-    const stringerLenIn = Math.sqrt(Math.pow(totalRiseIn, 2) + Math.pow(totalRunIn, 2));
+
+    const stringerLenIn = Math.sqrt((totalRiseIn ** 2) + (totalRunIn ** 2));
 
     const riserOK = actualRiser >= 7 && actualRiser <= 7.75;
     const treadOK = treadDepthIn >= 10;
@@ -593,7 +599,7 @@ Tread Depth: ${treadOK ? "OK" : "CHECK CODE"}
 
 Note:
 • Stringer length is theoretical — verify with layout square
-• Nosing: ${stNosing?.value === "yes" ? "Yes" : "No"} (verify finish thickness)
+• Verify nosing + finish thickness before cutting
 • Confirm local code requirements
 `;
   });
