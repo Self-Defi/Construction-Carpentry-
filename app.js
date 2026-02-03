@@ -511,3 +511,71 @@
   });
 
 })();
+
+// ==== STAIRS TAB LOGIC (v11) ====
+
+const stTotalRise = document.getElementById("stTotalRise");
+const stRiserTarget = document.getElementById("stRiserTarget");
+const stTreadDepth = document.getElementById("stTreadDepth");
+const stNosing = document.getElementById("stNosing");
+const stairsOut = document.getElementById("stairsOut");
+
+document.getElementById("btnCalcStairs").addEventListener("click", () => {
+  const totalRiseIn = parseCarpenterMeasure(stTotalRise.value);
+  const riserTargetIn = parseCarpenterMeasure(stRiserTarget.value);
+  const treadDepthIn = parseCarpenterMeasure(stTreadDepth.value);
+
+  if (
+    totalRiseIn == null ||
+    riserTargetIn == null ||
+    treadDepthIn == null ||
+    totalRiseIn <= 0 ||
+    riserTargetIn <= 0 ||
+    treadDepthIn <= 0
+  ) {
+    stairsOut.textContent = "Enter valid stair measurements.";
+    return;
+  }
+
+  const risers = Math.round(totalRiseIn / riserTargetIn);
+  const actualRiser = totalRiseIn / risers;
+  const treads = risers - 1;
+  const totalRunIn = treads * treadDepthIn;
+  const stringerLenIn = Math.sqrt(
+    Math.pow(totalRiseIn, 2) + Math.pow(totalRunIn, 2)
+  );
+
+  const riserOK = actualRiser >= 7 && actualRiser <= 7.75;
+  const treadOK = treadDepthIn >= 10;
+
+  stairsOut.textContent =
+`STAIR LAYOUT RESULTS
+
+Total Rise: ${formatInchesAsFeetInches(totalRiseIn)}
+Number of Risers: ${risers}
+Actual Riser Height: ${formatInchesAsFeetInches(actualRiser)}
+
+Number of Treads: ${treads}
+Tread Depth: ${formatInchesAsFeetInches(treadDepthIn)}
+Total Run: ${formatInchesAsFeetInches(totalRunIn)}
+
+Stringer Length: ${formatInchesAsFeetInches(stringerLenIn)}
+
+CHECKS
+Riser Height: ${riserOK ? "OK" : "CHECK CODE"}
+Tread Depth: ${treadOK ? "OK" : "CHECK CODE"}
+
+Note:
+• Stringer length is theoretical — always verify with layout square
+• Verify nosing + finish thickness before cutting
+• Always confirm local code requirements
+`;
+});
+
+document.getElementById("btnClearStairs").addEventListener("click", () => {
+  stTotalRise.value = "";
+  stRiserTarget.value = "";
+  stTreadDepth.value = '10"';
+  stNosing.value = "yes";
+  stairsOut.textContent = "Enter total rise and target riser height.";
+});
