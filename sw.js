@@ -1,5 +1,5 @@
-/* sw.js — v11 */
-const CACHE_NAME = "construction-carpentry-v11";
+/* sw.js — v12 */
+const CACHE_NAME = "construction-carpentry-v12";
 
 const ASSETS = [
   "./",
