@@ -1,5 +1,5 @@
-/* app.js — v12
-   App-wide measurement standardization + framer-ready roofing output.
+/* app.js — v13
+   App-wide measurement standardization + framer/finisher calculators.
 */
 
 (function () {
@@ -10,7 +10,7 @@
 
   function updateCacheStatus() {
     const cached = !!navigator.serviceWorker?.controller;
-    if (buildLine) buildLine.textContent = `Build: v12 • ${cached ? "Cached" : "Live"}`;
+    if (buildLine) buildLine.textContent = `Build: v13 • ${cached ? "Cached" : "Live"}`;
   }
 
   updateCacheStatus();
@@ -37,6 +37,10 @@
     });
     window.scrollTo({ top: 0, behavior: "instant" });
   }
+
+  // Ensure at least one panel is visible on load
+  const anyActive = Object.values(panels).some(el => el?.classList.contains("isActive"));
+  if (!anyActive) setActiveTab("home");
 
   tabButtons.forEach(btn => btn.addEventListener("click", () => setActiveTab(btn.dataset.tab)));
 
@@ -89,8 +93,7 @@
 `,
   };
 
-  const stepsButtons = Array.from(document.querySelectorAll("[data-steps]"));
-  stepsButtons.forEach(btn => {
+  Array.from(document.querySelectorAll("[data-steps]")).forEach(btn => {
     btn.addEventListener("click", () => {
       const key = btn.getAttribute("data-steps");
       if (!modal || !modalBody) return;
@@ -235,7 +238,6 @@
     return `${sign}${feet}' ${inchStr}"`;
   }
 
-  // Optional debug exposure
   window.__MEASURE__ = { parseCarpenterMeasure, formatInchesAsFeetInches };
 
   // =========================================================
@@ -272,7 +274,6 @@
       `A − B = ${formatInchesAsFeetInches(res)}  (${res.toFixed(3)}")`;
   });
 
-  // sq in + sq ft
   document.getElementById("btnMul")?.addEventListener("click", () => {
     const ab = getAB();
     if (!ab) return (fracOut.textContent = "Enter valid A and B measurements.");
@@ -305,7 +306,7 @@
   });
 
   // =========================================================
-  // LAYOUT — Wall Materials Estimator
+  // LAYOUT — Wall Materials Estimator (stud + drywall counter)
   // =========================================================
   const wallLen = document.getElementById("wallLen");
   const wallHt = document.getElementById("wallHt");
@@ -330,6 +331,7 @@
     const H_ft = H_in / 12;
     const wallArea = L_ft * H_ft;
 
+    // Simple stud count: studs along run incl both ends
     const studs = Math.ceil(L_in / spacing) + 1;
 
     const [sw, sh] = (sheetSize?.value === "4x12") ? [4, 12] : [4, 8];
@@ -341,10 +343,14 @@
       `Wall Length: ${formatInchesAsFeetInches(L_in)}\n` +
       `Wall Height: ${formatInchesAsFeetInches(H_in)}\n` +
       `Stud Spacing: ${spacing}" O.C.\n` +
+      `Hang: ${hangDir?.value || "—"}\n` +
       `Wall Area (one side): ${wallArea.toFixed(2)} sq ft\n\n` +
-      `Studs (est.): ${studs} pcs\n` +
-      `Sheets (${(sheetSize?.value || "").toUpperCase()}): ${sheets} pcs (incl. ${Math.round(waste * 100)}% waste)\n\n` +
-      `Note: Openings/corners/backing change counts. This is a fast estimator.`;
+      `MATERIAL COUNTS\n` +
+      `- Studs (est.): ${studs} pcs\n` +
+      `- Drywall sheets (${(sheetSize?.value || "").toUpperCase()}): ${sheets} pcs (incl. ${Math.round(waste * 100)}% waste)\n\n` +
+      `Notes:\n` +
+      `• Openings/corners/backing/blocking change counts.\n` +
+      `• This is a fast framer/finisher estimator.`;
   }
 
   document.getElementById("btnCalcWall")?.addEventListener("click", calcWall);
@@ -587,7 +593,7 @@ Tread Depth: ${treadOK ? "OK" : "CHECK CODE"}
 
 Note:
 • Stringer length is theoretical — verify with layout square
-• Verify nosing + finish thickness before cutting
+• Nosing: ${stNosing?.value === "yes" ? "Yes" : "No"} (verify finish thickness)
 • Confirm local code requirements
 `;
   });
