@@ -1,5 +1,5 @@
-/* sw.js — v13 */
-const CACHE_NAME = "construction-carpentry-v13";
+/* sw.js — v14 */
+const CACHE_NAME = "construction-carpentry-v14";
 const CORE_ASSETS = [
   "./",
   "./index.html",
@@ -11,7 +11,6 @@ const CORE_ASSETS = [
 self.addEventListener("install", (event) => {
   event.waitUntil((async () => {
     const cache = await caches.open(CACHE_NAME);
-    // Precache core. If something fails (GitHub Pages quirks), still install.
     try { await cache.addAll(CORE_ASSETS); } catch (e) {}
     self.skipWaiting();
   })());
@@ -27,14 +26,11 @@ self.addEventListener("activate", (event) => {
   })());
 });
 
-// Cache-first for same-origin assets, network fallback
 self.addEventListener("fetch", (event) => {
   const req = event.request;
   if (req.method !== "GET") return;
 
   const url = new URL(req.url);
-
-  // Only handle same-origin (your GitHub Pages site)
   if (url.origin !== self.location.origin) return;
 
   event.respondWith((async () => {
@@ -44,11 +40,9 @@ self.addEventListener("fetch", (event) => {
 
     try {
       const fresh = await fetch(req);
-      // Cache successful responses
       if (fresh && fresh.ok) cache.put(req, fresh.clone());
       return fresh;
     } catch (e) {
-      // Offline fallback to index for navigations
       if (req.mode === "navigate") return cache.match("./index.html");
       throw e;
     }
