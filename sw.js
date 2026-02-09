@@ -1,5 +1,5 @@
-/* sw.js — v14 */
-const CACHE_NAME = "construction-carpentry-v14";
+// sw.js
+const CACHE_NAME = "construction-carpentry-v14-1";
 const CORE_ASSETS = [
   "./",
   "./index.html",
