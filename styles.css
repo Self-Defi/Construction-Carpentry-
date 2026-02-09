@@ -1,4 +1,4 @@
-/* styles.css — v13 */
+/* styles.css — v14 */
 :root{
   --bg0:#070b14;
   --bg1:#0b1220;
@@ -95,6 +95,12 @@ body{
 
 .tabPanel{ display:none; }
 .tabPanel.isActive{ display:block; }
+
+.stack{
+  display:flex;
+  flex-direction:column;
+  gap:16px;
+}
 
 .card{
   background:
