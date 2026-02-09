@@ -1,4 +1,4 @@
-<!-- index.html — v13 -->
+<!-- index.html — v14 -->
 <!doctype html>
 <html lang="en">
 <head>
@@ -15,7 +15,7 @@
   <header class="appHeader">
     <div class="titleBlock">
       <h1 class="appTitle">Construction Carpentry</h1>
-      <div class="buildLine" id="buildLine">Build: v13 • Live</div>
+      <div class="buildLine" id="buildLine">Build: v14 • Live</div>
     </div>
 
     <nav class="topNav" aria-label="Primary">
@@ -31,38 +31,78 @@
 
     <!-- HOME -->
     <section class="tabPanel isActive" id="tab-home">
-      <div class="card">
-        <div class="cardTop">
-          <div>
-            <h2>Fraction Operations</h2>
-            <p class="muted">Tape-format math. Normalized to nearest 1/16".</p>
+      <div class="stack">
+
+        <!-- Tape-format / Measurement Operations -->
+        <div class="card">
+          <div class="cardTop">
+            <div>
+              <h2>Measurement Operations</h2>
+              <p class="muted">Tape-format math. Normalized to nearest 1/16".</p>
+            </div>
+            <button class="pill" data-steps="home-measure" type="button">Steps</button>
           </div>
-          <button class="pill" data-steps="home-fractions" type="button">Steps</button>
+
+          <div class="formGrid">
+            <label class="field">
+              <span class="label">A</span>
+              <input id="fracA" type="text" placeholder='e.g. 7&#39; 10 7/8"' />
+              <span class="hint">Accepts: 12&#39; 0", 5 1/2", 96</span>
+            </label>
+
+            <label class="field">
+              <span class="label">B</span>
+              <input id="fracB" type="text" placeholder='e.g. 12&#39; 3/8"' />
+              <span class="hint">Same format as A</span>
+            </label>
+          </div>
+
+          <div class="btnRow">
+            <button class="btn" id="btnAdd" type="button">A + B</button>
+            <button class="btn" id="btnSub" type="button">A − B</button>
+            <button class="btn" id="btnMul" type="button">A × B</button>
+            <button class="btn" id="btnDiv" type="button">A ÷ B</button>
+            <button class="btnGhost" id="btnClearFrac" type="button">Clear</button>
+          </div>
+
+          <pre class="out" id="fracOut">Enter valid A and B measurements.</pre>
         </div>
 
-        <div class="formGrid">
-          <label class="field">
-            <span class="label">A</span>
-            <input id="fracA" type="text" placeholder='e.g. 7&#39; 10 7/8"' />
-            <span class="hint">Accepts: 12&#39; 0", 5 1/2", 96</span>
-          </label>
+        <!-- Pure Fraction Calculator -->
+        <div class="card">
+          <div class="cardTop">
+            <div>
+              <h2>Fraction Calculator</h2>
+              <p class="muted">Add / subtract / multiply / divide any fraction style (mixed, improper, decimals).</p>
+            </div>
+            <button class="pill" data-steps="home-fraction-calc" type="button">Steps</button>
+          </div>
 
-          <label class="field">
-            <span class="label">B</span>
-            <input id="fracB" type="text" placeholder='e.g. 12&#39; 3/8"' />
-            <span class="hint">Same format as A</span>
-          </label>
+          <div class="formGrid">
+            <label class="field">
+              <span class="label">A</span>
+              <input id="mathA" type="text" placeholder='e.g. 1 1/2  |  3/4  |  0.125  |  -2 3/8' />
+              <span class="hint">Formats: 3/4, 1 1/2, 5, 0.25, -7/8</span>
+            </label>
+
+            <label class="field">
+              <span class="label">B</span>
+              <input id="mathB" type="text" placeholder='e.g. 2/3  |  4  |  1.75' />
+              <span class="hint">Same formats as A</span>
+            </label>
+          </div>
+
+          <div class="btnRow">
+            <button class="btn" id="btnFAdd" type="button">A + B</button>
+            <button class="btn" id="btnFSub" type="button">A − B</button>
+            <button class="btn" id="btnFMul" type="button">A × B</button>
+            <button class="btn" id="btnFDiv" type="button">A ÷ B</button>
+            <button class="btnGhost" id="btnFClear" type="button">Clear</button>
+          </div>
+
+          <pre class="out" id="fracCalcOut">Enter valid fractions for A and B.</pre>
         </div>
 
-        <div class="btnRow">
-          <button class="btn" id="btnAdd" type="button">A + B</button>
-          <button class="btn" id="btnSub" type="button">A − B</button>
-          <button class="btn" id="btnMul" type="button">A × B</button>
-          <button class="btn" id="btnDiv" type="button">A ÷ B</button>
-          <button class="btnGhost" id="btnClearFrac" type="button">Clear</button>
-        </div>
-
-        <pre class="out" id="fracOut">Enter valid A and B measurements.</pre>
       </div>
     </section>
 
