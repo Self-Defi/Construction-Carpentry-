@@ -1,5 +1,5 @@
-/* app.js — v13
-   App-wide measurement standardization + framer-ready outputs.
+/* app.js — v14
+   App-wide measurement standardization + fraction calculator.
 */
 
 (function () {
@@ -10,13 +10,12 @@
 
   function updateCacheStatus() {
     const cached = !!navigator.serviceWorker?.controller;
-    if (buildLine) buildLine.textContent = `Build: v13 • ${cached ? "Cached" : "Live"}`;
+    if (buildLine) buildLine.textContent = `Build: v14 • ${cached ? "Cached" : "Live"}`;
   }
 
   updateCacheStatus();
   navigator.serviceWorker?.addEventListener("controllerchange", updateCacheStatus);
 
-  // Register SW (safe if already registered)
   if ("serviceWorker" in navigator) {
     navigator.serviceWorker.register("./sw.js").catch(() => {});
   }
@@ -53,13 +52,23 @@
   const modalBackdrop = document.getElementById("modalBackdrop");
 
   const STEPS = {
-    "home-fractions": `
-<strong>Fraction Operations</strong><br/>
+    "home-measure": `
+<strong>Measurement Operations</strong><br/>
 1) Enter A and B in tape format: <code>7' 10 7/8"</code>, <code>12' 3/8"</code><br/>
 2) Tap an operation.<br/>
 3) Output shows normalized tape format (nearest 1/16).<br/>
 <br/>
 <strong>Note:</strong> A × B returns area in square-inches and square-feet.
+`,
+    "home-fraction-calc": `
+<strong>Fraction Calculator</strong><br/>
+1) Enter A and B as any fraction style:<br/>
+&nbsp;&nbsp;• <code>3/4</code> (proper) &nbsp; • <code>9/4</code> (improper) &nbsp; • <code>1 1/2</code> (mixed)<br/>
+&nbsp;&nbsp;• <code>5</code> (whole) &nbsp; • <code>0.125</code> (decimal) &nbsp; • <code>-2 3/8</code> (negative mixed)<br/>
+2) Tap +, −, ×, or ÷.<br/>
+3) Output includes simplified fraction, mixed form, and decimal.<br/>
+<br/>
+<strong>Note:</strong> Division by zero is blocked.
 `,
     "layout-wall": `
 <strong>Wall Materials Estimator</strong><br/>
@@ -238,7 +247,7 @@
   window.__MEASURE__ = { parseCarpenterMeasure, formatInchesAsFeetInches };
 
   // =========================================================
-  // HOME — Fraction Operations
+  // HOME — Measurement Operations (Tape-format)
   // =========================================================
   const fracA = document.getElementById("fracA");
   const fracB = document.getElementById("fracB");
@@ -303,13 +312,168 @@
   });
 
   // =========================================================
+  // HOME — Fraction Calculator (Pure rational math)
+  // =========================================================
+  const mathA = document.getElementById("mathA");
+  const mathB = document.getElementById("mathB");
+  const fracCalcOut = document.getElementById("fracCalcOut");
+
+  function normalizeR(n, d) {
+    if (!isFinite(n) || !isFinite(d)) return null;
+    if (d === 0) return null;
+    if (d < 0) { n = -n; d = -d; }
+    const g = gcd(n, d);
+    return { n: n / g, d: d / g };
+  }
+
+  function decimalToFraction(s) {
+    // exact for finite decimals (string-based)
+    // supports: "-12.34", ".5", "0.125"
+    const t = s.trim();
+    const m = t.match(/^([+-])?(\d*)\.(\d+)$/);
+    if (!m) return null;
+
+    const sign = (m[1] === "-") ? -1 : 1;
+    const intPart = m[2] ? m[2] : "0";
+    const fracPart = m[3];
+
+    const den = 10 ** fracPart.length;
+    const numAbs = Number(intPart) * den + Number(fracPart);
+    const num = sign * numAbs;
+
+    return normalizeR(num, den);
+  }
+
+  function parseMathFraction(input) {
+    if (input == null) return null;
+    let s = cleanQuotes(String(input)).replace(/,/g, " ").replace(/\s+/g, " ").trim();
+    if (!s) return null;
+
+    // handle leading + sign
+    if (s.startsWith("+")) s = s.slice(1).trim();
+
+    // decimal
+    if (/^[+-]?(\d+)?\.\d+$/.test(s)) {
+      return decimalToFraction(s);
+    }
+
+    // whole number
+    if (/^[+-]?\d+$/.test(s)) {
+      return { n: Number(s), d: 1 };
+    }
+
+    // fraction a/b (optionally negative)
+    if (/^[+-]?\d+\s*\/\s*\d+$/.test(s)) {
+      const m = s.match(/^([+-])?(\d+)\s*\/\s*(\d+)$/);
+      if (!m) return null;
+      const sign = (m[1] === "-") ? -1 : 1;
+      const num = sign * Number(m[2]);
+      const den = Number(m[3]);
+      if (!den) return null;
+      return normalizeR(num, den);
+    }
+
+    // mixed number: -?W N/D
+    if (/^[+-]?\d+\s+\d+\s*\/\s*\d+$/.test(s)) {
+      const m = s.match(/^([+-])?(\d+)\s+(\d+)\s*\/\s*(\d+)$/);
+      if (!m) return null;
+      const sign = (m[1] === "-") ? -1 : 1;
+      const whole = Number(m[2]);
+      const num = Number(m[3]);
+      const den = Number(m[4]);
+      if (!den) return null;
+      const improperNum = sign * (whole * den + num);
+      return normalizeR(improperNum, den);
+    }
+
+    return null;
+  }
+
+  function toMixedString(r) {
+    const n = r.n, d = r.d;
+    if (d === 1) return `${n}`;
+    const sign = n < 0 ? "-" : "";
+    const a = Math.abs(n);
+    const whole = Math.floor(a / d);
+    const rem = a % d;
+
+    if (rem === 0) return `${sign}${whole}`;
+    if (whole === 0) return `${sign}${rem}/${d}`;
+    return `${sign}${whole} ${rem}/${d}`;
+  }
+
+  function toFracString(r) {
+    if (r.d === 1) return `${r.n}`;
+    return `${r.n}/${r.d}`;
+  }
+
+  function showFracResult(label, A, B, R) {
+    const aDec = (A.n / A.d);
+    const bDec = (B.n / B.d);
+    const rDec = (R.n / R.d);
+
+    fracCalcOut.textContent =
+      `A = ${toMixedString(A)}   (${toFracString(A)})   ≈ ${aDec.toFixed(6)}\n` +
+      `B = ${toMixedString(B)}   (${toFracString(B)})   ≈ ${bDec.toFixed(6)}\n\n` +
+      `${label}\n` +
+      `= ${toFracString(R)}\n` +
+      `= ${toMixedString(R)}\n` +
+      `≈ ${rDec.toFixed(6)}`;
+  }
+
+  function getMathAB() {
+    const A = parseMathFraction(mathA?.value);
+    const B = parseMathFraction(mathB?.value);
+    if (!A || !B) return null;
+    return { A, B };
+  }
+
+  document.getElementById("btnFAdd")?.addEventListener("click", () => {
+    const ab = getMathAB();
+    if (!ab) return (fracCalcOut.textContent = "Enter valid fractions for A and B.");
+    const R = normalizeR(ab.A.n * ab.B.d + ab.B.n * ab.A.d, ab.A.d * ab.B.d);
+    if (!R) return (fracCalcOut.textContent = "Math error.");
+    showFracResult("A + B", ab.A, ab.B, R);
+  });
+
+  document.getElementById("btnFSub")?.addEventListener("click", () => {
+    const ab = getMathAB();
+    if (!ab) return (fracCalcOut.textContent = "Enter valid fractions for A and B.");
+    const R = normalizeR(ab.A.n * ab.B.d - ab.B.n * ab.A.d, ab.A.d * ab.B.d);
+    if (!R) return (fracCalcOut.textContent = "Math error.");
+    showFracResult("A − B", ab.A, ab.B, R);
+  });
+
+  document.getElementById("btnFMul")?.addEventListener("click", () => {
+    const ab = getMathAB();
+    if (!ab) return (fracCalcOut.textContent = "Enter valid fractions for A and B.");
+    const R = normalizeR(ab.A.n * ab.B.n, ab.A.d * ab.B.d);
+    if (!R) return (fracCalcOut.textContent = "Math error.");
+    showFracResult("A × B", ab.A, ab.B, R);
+  });
+
+  document.getElementById("btnFDiv")?.addEventListener("click", () => {
+    const ab = getMathAB();
+    if (!ab) return (fracCalcOut.textContent = "Enter valid fractions for A and B.");
+    if (ab.B.n === 0) return (fracCalcOut.textContent = "B cannot be zero (division by zero).");
+    const R = normalizeR(ab.A.n * ab.B.d, ab.A.d * ab.B.n);
+    if (!R) return (fracCalcOut.textContent = "Math error.");
+    showFracResult("A ÷ B", ab.A, ab.B, R);
+  });
+
+  document.getElementById("btnFClear")?.addEventListener("click", () => {
+    if (mathA) mathA.value = "";
+    if (mathB) mathB.value = "";
+    if (fracCalcOut) fracCalcOut.textContent = "Enter valid fractions for A and B.";
+  });
+
+  // =========================================================
   // LAYOUT — Wall Materials Estimator (studs + sheets)
   // =========================================================
   const wallLen = document.getElementById("wallLen");
   const wallHt = document.getElementById("wallHt");
   const studSpacing = document.getElementById("studSpacing");
   const sheetSize = document.getElementById("sheetSize");
-  const hangDir = document.getElementById("hangDir");
   const wastePct = document.getElementById("wastePct");
   const wallOut = document.getElementById("wallOut");
 
@@ -329,7 +493,6 @@
     const H_ft = H_in / 12;
     const wallArea = L_ft * H_ft;
 
-    // studs: ceil(length / spacing) + 1
     const studs = Math.ceil(L_in / spacing) + 1;
 
     const [sw, sh] = (sheetSize?.value === "4x12") ? [4, 12] : [4, 8];
@@ -394,9 +557,8 @@
   applyPatternDefaults();
 
   function inchesOnlyLabel(inchesVal){
-    // show e.g. 6", 12", 5 1/2"
     const s = formatInchesAsFeetInches(inchesVal);
-    return s.replace(/^\-?\d+'\s/, ""); // drop leading feet if "0' ..."
+    return s.replace(/^\-?\d+'\s/, "");
   }
 
   function calcSubfloor() {
@@ -423,7 +585,6 @@
       return;
     }
 
-    // Rough screw count heuristic (kept intentionally simple)
     const baseEdge = 6;
     const baseField = 12;
     const factor = (baseEdge / edgeSpacing) * 0.55 + (baseField / fieldSpacing) * 0.45;
@@ -498,7 +659,6 @@
     const waste = Math.max(0, Number(roofWaste?.value || 0)) / 100;
     const bundlesPerSquare = Number(roofBundlesPerSquare?.value);
 
-    // slope factor = sqrt(12^2 + rise^2) / 12
     const slopeFactor = Math.sqrt(12 * 12 + pitchRisePer12 * pitchRisePer12) / 12;
     const planes = (roofPlanes?.value === "two") ? 2 : 1;
 
@@ -548,7 +708,6 @@
   const stTotalRise = document.getElementById("stTotalRise");
   const stRiserTarget = document.getElementById("stRiserTarget");
   const stTreadDepth = document.getElementById("stTreadDepth");
-  const stNosing = document.getElementById("stNosing");
   const stairsOut = document.getElementById("stairsOut");
 
   document.getElementById("btnCalcStairs")?.addEventListener("click", () => {
@@ -608,7 +767,6 @@ Note:
     if (stTotalRise) stTotalRise.value = "";
     if (stRiserTarget) stRiserTarget.value = "";
     if (stTreadDepth) stTreadDepth.value = '10"';
-    if (stNosing) stNosing.value = "yes";
     if (stairsOut) stairsOut.textContent = "Enter total rise and target riser height.";
   });
 
