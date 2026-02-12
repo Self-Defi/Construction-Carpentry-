@@ -1,4 +1,4 @@
-<!-- index.html — v14 -->
+<!-- index.html — v15 -->
 <!doctype html>
 <html lang="en">
 <head>
@@ -15,7 +15,7 @@
   <header class="appHeader">
     <div class="titleBlock">
       <h1 class="appTitle">Construction Carpentry</h1>
-      <div class="buildLine" id="buildLine">Build: v14 • Live</div>
+      <div class="buildLine" id="buildLine">Build: v15 • Live</div>
     </div>
 
     <nav class="topNav" aria-label="Primary">
@@ -24,6 +24,7 @@
       <button class="tabBtn" data-tab="subfloor" type="button">Subfloor</button>
       <button class="tabBtn" data-tab="roofing" type="button">Roofing</button>
       <button class="tabBtn" data-tab="stairs" type="button">Stairs</button>
+      <button class="tabBtn" data-tab="concrete" type="button">Concrete</button>
     </nav>
   </header>
 
@@ -343,6 +344,82 @@
         </div>
 
         <pre class="out" id="stairsOut">Enter total rise and target riser height.</pre>
+      </div>
+    </section>
+
+    <!-- CONCRETE -->
+    <section class="tabPanel" id="tab-concrete">
+      <div class="card">
+        <div class="cardTop">
+          <div>
+            <h2>Concrete Estimator</h2>
+            <p class="muted">Yards needed + bags + ordering guidance. Inputs accept tape format.</p>
+          </div>
+          <button class="pill" data-steps="concrete" type="button">Steps</button>
+        </div>
+
+        <div class="formGrid">
+          <label class="field">
+            <span class="label">Type</span>
+            <select id="concType">
+              <option value="slab" selected>Slab</option>
+              <option value="footing">Footing</option>
+              <option value="wall">Wall</option>
+            </select>
+            <span class="hint" id="concTypeHint">Slab = Length × Width × Thickness</span>
+          </label>
+
+          <label class="field">
+            <span class="label">Quantity</span>
+            <input id="concQty" type="number" min="1" step="1" value="1" />
+            <span class="hint">Multiply volume by number of identical pours.</span>
+          </label>
+
+          <label class="field">
+            <span class="label">Length</span>
+            <input id="concLen" type="text" placeholder='e.g. 12&#39; 0"' />
+          </label>
+
+          <label class="field" id="concWidthField">
+            <span class="label">Width</span>
+            <input id="concWid" type="text" placeholder='e.g. 10&#39; 0"  or  16"' />
+            <span class="hint">Footings often use inches (e.g. 16").</span>
+          </label>
+
+          <label class="field" id="concHeightField" style="display:none;">
+            <span class="label">Height</span>
+            <input id="concHt" type="text" placeholder='e.g. 8&#39; 0"' />
+          </label>
+
+          <label class="field">
+            <span class="label" id="concThkLabel">Thickness</span>
+            <input id="concThk" type="text" placeholder='e.g. 4"  or  5 1/2"' />
+            <span class="hint" id="concThkHint">Slabs typically 4" or more.</span>
+          </label>
+
+          <label class="field">
+            <span class="label">Waste %</span>
+            <input id="concWaste" type="number" min="0" step="1" value="10" />
+          </label>
+
+          <label class="field">
+            <span class="label">Round Order To</span>
+            <select id="concRound">
+              <option value="0">No rounding</option>
+              <option value="0.25" selected>0.25 yd³</option>
+              <option value="0.5">0.50 yd³</option>
+              <option value="1">1.00 yd³</option>
+            </select>
+            <span class="hint">Ordering is usually rounded up.</span>
+          </label>
+        </div>
+
+        <div class="btnRow">
+          <button class="btn" id="btnCalcConcrete" type="button">Calculate</button>
+          <button class="btnGhost" id="btnClearConcrete" type="button">Clear</button>
+        </div>
+
+        <pre class="out" id="concreteOut">Enter concrete dimensions to estimate cubic yards and materials.</pre>
       </div>
     </section>
 
