@@ -1,8 +1,10 @@
 /* app.js — v16
-   App-wide measurement standardization + fraction calculator + concrete tab + electrical tab.
+   App-wide measurement standardization + fraction calculator + concrete + electrical.
 */
 
 (function () {
+  const BUILD = "v16";
+
   // -----------------------------
   // Service worker "Cached/Live"
   // -----------------------------
@@ -10,7 +12,7 @@
 
   function updateCacheStatus() {
     const cached = !!navigator.serviceWorker?.controller;
-    if (buildLine) buildLine.textContent = `Build: v16 • ${cached ? "Cached" : "Live"}`;
+    if (buildLine) buildLine.textContent = `Build: ${BUILD} • ${cached ? "Cached" : "Live"}`;
   }
 
   updateCacheStatus();
@@ -97,7 +99,7 @@
 <strong>Stair Framing Assistant</strong><br/>
 1) Enter Total Rise (finished-to-finished if possible).<br/>
 2) Enter Desired Riser Height (e.g. <code>7 1/2"</code>).<br/>
-3) Enter Tread Depth (run) (typical: <code>10"</code>).<br/>
+3) Enter Tread Depth (run) (typical minimum: <code>10"</code>).<br/>
 4) Tap Calculate for riser count, exact riser, treads, total run, and stringer length.<br/>
 <br/>
 <strong>Note:</strong> Always verify local code + finish thickness before cutting.
@@ -115,13 +117,29 @@
 <br/>
 <strong>Output includes:</strong> ft³, yd³, yd³ w/ waste, rounded order, bag estimates, truck estimates.
 `,
-    "electrical": `
-<strong>Electrical — Quick Estimators</strong><br/>
-1) Use <strong>Load</strong> to estimate amps from watts at 120V/240V.<br/>
-2) Continuous loads follow the <strong>80% rule</strong> (breaker × 0.8).<br/>
-3) Use <strong>Wire Length</strong> to estimate how many feet of cable you’ll need per run + slack + waste.<br/>
+    "electrical-wire": `
+<strong>Wire Length Planner</strong><br/>
+1) Choose cable type for your notes (e.g. 12/2).<br/>
+2) Runs = number of similar pulls.<br/>
+3) Average run length is the typical distance per run (feet).<br/>
+4) Slack per box adds extra working length (feet).<br/>
+5) Waste % accounts for mistakes, routing, and extras.<br/>
 <br/>
-<strong>Note:</strong> Ampacity depends on insulation rating, temperature, bundling, and code. Use the reference table as a quick baseline — verify local code/spec.
+<strong>Output:</strong> base footage, slack footage, waste, and total.
+`,
+    "electrical-load": `
+<strong>Circuit Load Check (80% rule)</strong><br/>
+1) Choose voltage (120V or 240V).<br/>
+2) Choose breaker size (amps).<br/>
+3) Enter total watts (sum of loads).<br/>
+4) Calculates current draw and compares to 80% continuous limit.<br/>
+<br/>
+<strong>Note:</strong> Motors/startup loads can exceed steady-state watts.
+`,
+    "electrical-ampacity": `
+<strong>Wire Gauge Ampacity (Copper)</strong><br/>
+This is a quick jobsite reference only.<br/>
+Always verify NEC temperature column, insulation rating, termination limits, derating, and local code.
 `,
   };
 
@@ -787,7 +805,7 @@ Note:
   });
 
   // =========================================================
-  // CONCRETE — Estimator (yd³, bags, trucks) using tape-format inputs
+  // CONCRETE — Estimator (yd³, bags, trucks)
   // =========================================================
   const concType = document.getElementById("concType");
   const concTypeHint = document.getElementById("concTypeHint");
@@ -875,13 +893,8 @@ Note:
     }
 
     let volIn3 = 0;
-    if (t === "slab") {
-      volIn3 = L_in * W_in * T_in * qty;
-    } else if (t === "footing") {
-      volIn3 = L_in * W_in * T_in * qty;
-    } else {
-      volIn3 = L_in * H_in * T_in * qty;
-    }
+    if (t === "slab" || t === "footing") volIn3 = L_in * W_in * T_in * qty;
+    else volIn3 = L_in * H_in * T_in * qty;
 
     const volFt3 = volIn3 / 1728;
     const volYd3 = volFt3 / 27;
@@ -970,141 +983,102 @@ Note: Bag yields and truck capacities vary by product/supplier. Always verify mi
   });
 
   // =========================================================
-  // ELECTRICAL — Load + wire length + ampacity reference
+  // ELECTRICAL — Wire Length Planner
   // =========================================================
-  const elVoltage = document.getElementById("elVoltage");
-  const elBreaker = document.getElementById("elBreaker");
-  const elWatts = document.getElementById("elWatts");
-  const elContinuous = document.getElementById("elContinuous");
-  const loadOut = document.getElementById("loadOut");
-
-  function calcLoad() {
-    if (!loadOut) return;
-
-    const V = Number(elVoltage?.value || 0);
-    const breakerA = Number(elBreaker?.value || 0);
-    const watts = Number(elWatts?.value || 0);
-    const isCont = (elContinuous?.value || "yes") === "yes";
-
-    if (!V || V <= 0 || !watts || watts <= 0) {
-      loadOut.textContent = "Enter valid voltage and total watts.";
-      return;
-    }
-
-    const amps = watts / V;
-
-    let limitLine = "Breaker not provided (optional).";
-    let statusLine = "Status: —";
-
-    if (breakerA > 0) {
-      const limit = isCont ? breakerA * 0.80 : breakerA;
-      limitLine = `Breaker: ${breakerA} A\nAllowed ( ${isCont ? "continuous @ 80%" : "non-continuous @ 100%"} ): ${limit.toFixed(2)} A`;
-      statusLine = `Status: ${amps <= limit ? "WITHIN LIMIT" : "OVER LIMIT"}`;
-    }
-
-    loadOut.textContent =
-`LOAD (quick check)
-
-Voltage: ${V} V
-Watts: ${watts} W
-
-Amps = W ÷ V
-Amps = ${watts} ÷ ${V} = ${amps.toFixed(2)} A
-
-${limitLine}
-${statusLine}
-
-Note:
-• Continuous loads typically use the 80% rule.
-• Verify actual circuit, conductor, and code requirements.`;
-  }
-
-  document.getElementById("btnCalcLoad")?.addEventListener("click", calcLoad);
-  document.getElementById("btnClearLoad")?.addEventListener("click", () => {
-    if (elVoltage) elVoltage.value = "120";
-    if (elBreaker) elBreaker.value = "15";
-    if (elWatts) elWatts.value = "";
-    if (elContinuous) elContinuous.value = "yes";
-    if (loadOut) loadOut.textContent = "Enter voltage + watts to estimate amps and compare to breaker limit.";
-  });
-
+  const elCable = document.getElementById("elCable");
   const elRuns = document.getElementById("elRuns");
   const elRunLen = document.getElementById("elRunLen");
   const elSlack = document.getElementById("elSlack");
   const elWaste = document.getElementById("elWaste");
   const wireOut = document.getElementById("wireOut");
 
-  function calcWireLength() {
-    if (!wireOut) return;
-
+  function calcWire() {
     const runs = Math.max(1, Math.floor(Number(elRuns?.value || 1)));
-    const runLenFt = Number(elRunLen?.value || 0);
-    const slackFt = Number(elSlack?.value || 0);
-    const wastePct = Math.max(0, Number(elWaste?.value || 0));
+    const runLen = Math.max(0, Number(elRunLen?.value || 0));
+    const slack = Math.max(0, Number(elSlack?.value || 0));
+    const wastePct = Math.max(0, Number(elWaste?.value || 0)) / 100;
+    const cable = (elCable?.value || "").trim() || "—";
 
-    if (!runLenFt || runLenFt <= 0) {
-      wireOut.textContent = "Enter a valid run length (feet).";
-      return;
-    }
-
-    const base = runs * (runLenFt + slackFt);
-    const withWaste = base * (1 + wastePct / 100);
+    const base = runs * runLen;
+    const slackTotal = runs * slack;
+    const subTotal = base + slackTotal;
+    const waste = subTotal * wastePct;
+    const total = subTotal + waste;
 
     wireOut.textContent =
-`WIRE LENGTH (rough)
+`WIRE LENGTH PLAN
 
+Cable: ${cable}
 Runs: ${runs}
-Run length: ${runLenFt.toFixed(2)} ft
-Slack per run: ${slackFt.toFixed(2)} ft
-Waste: ${Math.round(wastePct)}%
+Avg run length: ${runLen.toFixed(1)} ft
+Slack per box: ${slack.toFixed(1)} ft
+Waste: ${Math.round(wastePct * 100)}%
 
-Total = runs × (run + slack)
-Total = ${runs} × (${runLenFt.toFixed(2)} + ${slackFt.toFixed(2)}) = ${base.toFixed(2)} ft
-Total w/ waste = ${withWaste.toFixed(2)} ft
+CALC
+Base = runs × runLen = ${base.toFixed(1)} ft
+Slack = runs × slack  = ${slackTotal.toFixed(1)} ft
+Subtotal             = ${subTotal.toFixed(1)} ft
+Waste                = ${waste.toFixed(1)} ft
 
-Recommendation:
-• Round UP to the next spool size.
-• Add extra for routing/obstacles/panel work.`;
+TOTAL (est.)         = ${total.toFixed(1)} ft
+
+Note: This is planning math. Routing, drilling, and detours change totals.
+`;
   }
 
-  document.getElementById("btnCalcWire")?.addEventListener("click", calcWireLength);
+  document.getElementById("btnCalcWire")?.addEventListener("click", calcWire);
   document.getElementById("btnClearWire")?.addEventListener("click", () => {
+    if (elCable) elCable.value = "12/2";
     if (elRuns) elRuns.value = 1;
-    if (elRunLen) elRunLen.value = "";
-    if (elSlack) elSlack.value = 5;
+    if (elRunLen) elRunLen.value = 50;
+    if (elSlack) elSlack.value = 3;
     if (elWaste) elWaste.value = 10;
-    if (wireOut) wireOut.textContent = "Enter runs + run length to estimate cable feet required.";
+    if (wireOut) wireOut.textContent = "Enter run details to estimate cable length.";
   });
 
-  // Optional: auto-render ampacity table if you include <tbody id="ampacityBody"></tbody>
-  const ampacityBody = document.getElementById("ampacityBody");
-  if (ampacityBody) {
-    // Typical copper THHN/THWN-2 style *quick reference* (varies by code/temp/bundling)
-    // Keep it conservative on purpose.
-    const rows = [
-      { awg: "14", amps60: "15", amps75: "20", amps90: "25" },
-      { awg: "12", amps60: "20", amps75: "25", amps90: "30" },
-      { awg: "10", amps60: "30", amps75: "35", amps90: "40" },
-      { awg: "8",  amps60: "40", amps75: "50", amps90: "55" },
-      { awg: "6",  amps60: "55", amps75: "65", amps90: "75" },
-      { awg: "4",  amps60: "70", amps75: "85", amps90: "95" },
-      { awg: "3",  amps60: "85", amps75: "100", amps90: "110" },
-      { awg: "2",  amps60: "95", amps75: "115", amps90: "130" },
-      { awg: "1",  amps60: "110", amps75: "130", amps90: "145" },
-      { awg: "1/0", amps60: "125", amps75: "150", amps90: "170" },
-      { awg: "2/0", amps60: "145", amps75: "175", amps90: "195" },
-      { awg: "3/0", amps60: "165", amps75: "200", amps90: "225" },
-      { awg: "4/0", amps60: "195", amps75: "230", amps90: "260" },
-    ];
+  // =========================================================
+  // ELECTRICAL — Circuit Load Check (80% rule)
+  // =========================================================
+  const elVoltage = document.getElementById("elVoltage");
+  const elBreaker = document.getElementById("elBreaker");
+  const elWatts = document.getElementById("elWatts");
+  const loadOut = document.getElementById("loadOut");
 
-    ampacityBody.innerHTML = rows.map(r => `
-      <tr>
-        <td>${r.awg}</td>
-        <td>${r.amps60}</td>
-        <td>${r.amps75}</td>
-        <td>${r.amps90}</td>
-      </tr>
-    `).join("");
+  function calcLoad() {
+    const V = Math.max(1, Number(elVoltage?.value || 120));
+    const breakerA = Math.max(1, Number(elBreaker?.value || 20));
+    const watts = Math.max(0, Number(elWatts?.value || 0));
+
+    const amps = watts / V;
+    const contLimit = breakerA * 0.80;
+    const ok = amps <= contLimit;
+
+    loadOut.textContent =
+`CIRCUIT LOAD CHECK
+
+Voltage: ${V} V
+Breaker: ${breakerA} A
+
+Load: ${watts.toFixed(0)} W
+Current = W ÷ V = ${amps.toFixed(2)} A
+
+80% Continuous Limit:
+${breakerA}A × 0.80 = ${contLimit.toFixed(2)} A
+
+Result: ${ok ? "OK (within 80% limit)" : "OVER (reduce load or use correct circuit)"}
+
+Note:
+• Continuous load rule is a common planning check.
+• Real design depends on code, device type, and installation.
+`;
   }
+
+  document.getElementById("btnCalcLoad")?.addEventListener("click", calcLoad);
+  document.getElementById("btnClearLoad")?.addEventListener("click", () => {
+    if (elVoltage) elVoltage.value = "120";
+    if (elBreaker) elBreaker.value = "20";
+    if (elWatts) elWatts.value = 0;
+    if (loadOut) loadOut.textContent = "Enter load to check breaker capacity.";
+  });
 
 })();
