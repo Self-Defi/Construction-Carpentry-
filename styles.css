@@ -1,4 +1,4 @@
-/* styles.css — v16 (Steps modal = HIGH contrast, forced stacking, solid card) */
+/* styles.css — v16 (High contrast modal, clean stacking, consistent cards) */
 :root{
   --bg0:#070b14;
   --bg1:#0b1220;
@@ -96,11 +96,10 @@ body{
 .tabPanel{ display:none; }
 .tabPanel.isActive{ display:block; }
 
-/* Stack helper (used on Home tab) */
+/* Stack of cards (important for Home + Electrical) */
 .stack{
-  display:flex;
-  flex-direction:column;
-  gap:22px;
+  display:grid;
+  gap:18px;
 }
 
 .card{
@@ -226,45 +225,6 @@ input:focus, select:focus{
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
 }
 
-/* Electrical reference block helpers */
-.refBlock{
-  margin-top:14px;
-  padding:14px;
-  border-radius: var(--radius2);
-  border: 1px solid rgba(255,255,255,.14);
-  background: rgba(0,0,0,.14);
-}
-.refTitle{
-  font-weight:900;
-  margin:0 0 8px;
-}
-.refNote{
-  color: rgba(255,255,255,.62);
-  font-size:13px;
-  margin:0 0 10px;
-  line-height:1.35;
-}
-.refTable{
-  width:100%;
-  border-collapse:collapse;
-  overflow:hidden;
-  border-radius:12px;
-  border:1px solid rgba(255,255,255,.12);
-}
-.refTable th,
-.refTable td{
-  padding:10px 10px;
-  border-bottom:1px solid rgba(255,255,255,.10);
-  text-align:left;
-  font-size:14px;
-}
-.refTable th{
-  color:#fff;
-  background: rgba(255,255,255,.06);
-  font-weight:800;
-}
-.refTable tr:last-child td{ border-bottom:none; }
-
 /* =========================================================
    MODAL (Steps) — FIXED READABILITY + STACKING (iOS-safe)
    ========================================================= */
@@ -278,7 +238,6 @@ input:focus, select:focus{
   overflow:auto;
   -webkit-overflow-scrolling: touch;
 }
-
 .modal.isOpen{ display:grid; }
 
 .modalBackdrop{
@@ -288,7 +247,6 @@ input:focus, select:focus{
   z-index:0;
 }
 
-/* Force card ABOVE backdrop on all browsers */
 .modalCard{
   position:relative;
   z-index:1;
@@ -301,7 +259,6 @@ input:focus, select:focus{
   overflow:hidden;
 }
 
-/* Slight header tint so it reads as a distinct bar */
 .modalTop{
   display:flex;
   justify-content:space-between;
