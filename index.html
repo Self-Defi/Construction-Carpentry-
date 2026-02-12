@@ -1,4 +1,4 @@
-<!-- index.html — v15 -->
+<!-- index.html — v16 
 <!doctype html>
 <html lang="en">
 <head>
@@ -7,7 +7,6 @@
   <title>Construction Carpentry</title>
   <meta name="description" content="Construction Carpentry — calculators, estimators, and references for class and jobsite." />
   <meta name="theme-color" content="#070b14" />
-
   <link rel="stylesheet" href="./styles.css" />
 </head>
 
@@ -15,7 +14,7 @@
   <header class="appHeader">
     <div class="titleBlock">
       <h1 class="appTitle">Construction Carpentry</h1>
-      <div class="buildLine" id="buildLine">Build: v15 • Live</div>
+      <div class="buildLine" id="buildLine">Build: v16 • Live</div>
     </div>
 
     <nav class="topNav" aria-label="Primary">
@@ -25,6 +24,7 @@
       <button class="tabBtn" data-tab="roofing" type="button">Roofing</button>
       <button class="tabBtn" data-tab="stairs" type="button">Stairs</button>
       <button class="tabBtn" data-tab="concrete" type="button">Concrete</button>
+      <button class="tabBtn" data-tab="electrical" type="button">Electrical</button>
     </nav>
   </header>
 
@@ -420,6 +420,138 @@
         </div>
 
         <pre class="out" id="concreteOut">Enter concrete dimensions to estimate cubic yards and materials.</pre>
+      </div>
+    </section>
+
+    <!-- ELECTRICAL -->
+    <section class="tabPanel" id="tab-electrical">
+      <div class="stack">
+
+        <!-- Wire Length Planner -->
+        <div class="card">
+          <div class="cardTop">
+            <div>
+              <h2>Wire Length Planner</h2>
+              <p class="muted">Estimate cable length including slack and waste.</p>
+            </div>
+            <button class="pill" data-steps="electrical-wire" type="button">Steps</button>
+          </div>
+
+          <div class="formGrid">
+            <label class="field">
+              <span class="label">Cable Type</span>
+              <select id="elCable">
+                <option>14/2</option>
+                <option selected>12/2</option>
+                <option>12/3</option>
+                <option>10/2</option>
+              </select>
+            </label>
+
+            <label class="field">
+              <span class="label">Runs</span>
+              <input id="elRuns" type="number" min="1" value="1" />
+            </label>
+
+            <label class="field">
+              <span class="label">Average Run Length (ft)</span>
+              <input id="elRunLen" type="number" min="0" value="50" />
+            </label>
+
+            <label class="field">
+              <span class="label">Slack per Box (ft)</span>
+              <input id="elSlack" type="number" min="0" value="3" />
+            </label>
+
+            <label class="field">
+              <span class="label">Waste %</span>
+              <input id="elWaste" type="number" min="0" value="10" />
+            </label>
+          </div>
+
+          <div class="btnRow">
+            <button class="btn" id="btnCalcWire" type="button">Calculate</button>
+            <button class="btnGhost" id="btnClearWire" type="button">Clear</button>
+          </div>
+
+          <pre class="out" id="wireOut">Enter run details to estimate cable length.</pre>
+        </div>
+
+        <!-- Circuit Load Check -->
+        <div class="card">
+          <div class="cardTop">
+            <div>
+              <h2>Circuit Load Check</h2>
+              <p class="muted">Quick breaker capacity check (80% rule).</p>
+            </div>
+            <button class="pill" data-steps="electrical-load" type="button">Steps</button>
+          </div>
+
+          <div class="formGrid">
+            <label class="field">
+              <span class="label">Voltage</span>
+              <select id="elVoltage">
+                <option value="120" selected>120V</option>
+                <option value="240">240V</option>
+              </select>
+            </label>
+
+            <label class="field">
+              <span class="label">Breaker Size</span>
+              <select id="elBreaker">
+                <option>15</option>
+                <option selected>20</option>
+                <option>30</option>
+                <option>40</option>
+              </select>
+            </label>
+
+            <label class="field">
+              <span class="label">Total Load (Watts)</span>
+              <input id="elWatts" type="number" min="0" value="0" />
+              <span class="hint">Add up device watts (or estimate). Motors/startup can spike.</span>
+            </label>
+          </div>
+
+          <div class="btnRow">
+            <button class="btn" id="btnCalcLoad" type="button">Calculate</button>
+            <button class="btnGhost" id="btnClearLoad" type="button">Clear</button>
+          </div>
+
+          <pre class="out" id="loadOut">Enter load to check breaker capacity.</pre>
+        </div>
+
+        <!-- Wire Gauge Ampacity Reference -->
+        <div class="card">
+          <div class="cardTop">
+            <div>
+              <h2>Wire Gauge Ampacity Reference (Copper)</h2>
+              <p class="muted">Quick reference. Always verify NEC temperature column + local code.</p>
+            </div>
+            <button class="pill" data-steps="electrical-ampacity" type="button">Steps</button>
+          </div>
+
+          <pre class="out" id="ampacityOut">14 AWG  — 15A
+12 AWG  — 20A
+10 AWG  — 30A
+8  AWG  — 40A
+6  AWG  — 55A
+4  AWG  — 70A
+3  AWG  — 85A
+2  AWG  — 95A
+1  AWG  — 110A
+1/0 AWG — 125A
+2/0 AWG — 145A
+3/0 AWG — 165A
+4/0 AWG — 195A
+
+Note:
+• Copper conductors (typical reference)
+• Breaker sizing and terminations matter
+• Verify NEC + local requirements
+</pre>
+        </div>
+
       </div>
     </section>
 
