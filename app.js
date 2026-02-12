@@ -1,5 +1,5 @@
-/* app.js — v14
-   App-wide measurement standardization + fraction calculator.
+/* app.js — v15
+   App-wide measurement standardization + fraction calculator + concrete tab.
 */
 
 (function () {
@@ -10,7 +10,7 @@
 
   function updateCacheStatus() {
     const cached = !!navigator.serviceWorker?.controller;
-    if (buildLine) buildLine.textContent = `Build: v14 • ${cached ? "Cached" : "Live"}`;
+    if (buildLine) buildLine.textContent = `Build: v15 • ${cached ? "Cached" : "Live"}`;
   }
 
   updateCacheStatus();
@@ -30,6 +30,7 @@
     subfloor: document.getElementById("tab-subfloor"),
     roofing: document.getElementById("tab-roofing"),
     stairs: document.getElementById("tab-stairs"),
+    concrete: document.getElementById("tab-concrete"),
   };
 
   function setActiveTab(name) {
@@ -99,6 +100,19 @@
 4) Tap Calculate for riser count, exact riser, treads, total run, and stringer length.<br/>
 <br/>
 <strong>Note:</strong> Always verify local code + finish thickness before cutting.
+`,
+    "concrete": `
+<strong>Concrete Estimator</strong><br/>
+1) Choose Type: Slab, Footing, or Wall.<br/>
+2) Enter dimensions in tape format.<br/>
+&nbsp;&nbsp;• Slab: Length, Width, Thickness<br/>
+&nbsp;&nbsp;• Footing: Length, Width (often inches), Depth<br/>
+&nbsp;&nbsp;• Wall: Length, Height, Thickness<br/>
+3) Quantity multiplies the pour (same dimensions repeated).<br/>
+4) Waste % adds extra volume to reduce shortages.<br/>
+5) Rounding rounds UP your order (common for ready-mix).<br/>
+<br/>
+<strong>Output includes:</strong> ft³, yd³, yd³ w/ waste, rounded order, bag estimates, truck estimates.
 `,
   };
 
@@ -327,8 +341,6 @@
   }
 
   function decimalToFraction(s) {
-    // exact for finite decimals (string-based)
-    // supports: "-12.34", ".5", "0.125"
     const t = s.trim();
     const m = t.match(/^([+-])?(\d*)\.(\d+)$/);
     if (!m) return null;
@@ -349,20 +361,16 @@
     let s = cleanQuotes(String(input)).replace(/,/g, " ").replace(/\s+/g, " ").trim();
     if (!s) return null;
 
-    // handle leading + sign
     if (s.startsWith("+")) s = s.slice(1).trim();
 
-    // decimal
     if (/^[+-]?(\d+)?\.\d+$/.test(s)) {
       return decimalToFraction(s);
     }
 
-    // whole number
     if (/^[+-]?\d+$/.test(s)) {
       return { n: Number(s), d: 1 };
     }
 
-    // fraction a/b (optionally negative)
     if (/^[+-]?\d+\s*\/\s*\d+$/.test(s)) {
       const m = s.match(/^([+-])?(\d+)\s*\/\s*(\d+)$/);
       if (!m) return null;
@@ -373,7 +381,6 @@
       return normalizeR(num, den);
     }
 
-    // mixed number: -?W N/D
     if (/^[+-]?\d+\s+\d+\s*\/\s*\d+$/.test(s)) {
       const m = s.match(/^([+-])?(\d+)\s+(\d+)\s*\/\s*(\d+)$/);
       if (!m) return null;
@@ -768,6 +775,197 @@ Note:
     if (stRiserTarget) stRiserTarget.value = "";
     if (stTreadDepth) stTreadDepth.value = '10"';
     if (stairsOut) stairsOut.textContent = "Enter total rise and target riser height.";
+  });
+
+  // =========================================================
+  // CONCRETE — Estimator (yd³, bags, trucks) using tape-format inputs
+  // =========================================================
+  const concType = document.getElementById("concType");
+  const concTypeHint = document.getElementById("concTypeHint");
+  const concLen = document.getElementById("concLen");
+  const concWid = document.getElementById("concWid");
+  const concHt = document.getElementById("concHt");
+  const concThk = document.getElementById("concThk");
+  const concQty = document.getElementById("concQty");
+  const concWaste = document.getElementById("concWaste");
+  const concRound = document.getElementById("concRound");
+  const concWidthField = document.getElementById("concWidthField");
+  const concHeightField = document.getElementById("concHeightField");
+  const concThkLabel = document.getElementById("concThkLabel");
+  const concThkHint = document.getElementById("concThkHint");
+  const concreteOut = document.getElementById("concreteOut");
+
+  function setConcreteUI() {
+    const t = concType?.value || "slab";
+
+    if (t === "slab") {
+      if (concWidthField) concWidthField.style.display = "";
+      if (concHeightField) concHeightField.style.display = "none";
+      if (concThkLabel) concThkLabel.textContent = "Thickness";
+      if (concThkHint) concThkHint.textContent = 'Typical slab thickness: 4" or more.';
+      if (concTypeHint) concTypeHint.textContent = "Slab = Length × Width × Thickness";
+    } else if (t === "footing") {
+      if (concWidthField) concWidthField.style.display = "";
+      if (concHeightField) concHeightField.style.display = "none";
+      if (concThkLabel) concThkLabel.textContent = "Depth";
+      if (concThkHint) concThkHint.textContent = 'Footing depth often 8"–24". Width often entered as inches (e.g. 16").';
+      if (concTypeHint) concTypeHint.textContent = "Footing = Length × Width × Depth";
+    } else {
+      if (concWidthField) concWidthField.style.display = "none";
+      if (concHeightField) concHeightField.style.display = "";
+      if (concThkLabel) concThkLabel.textContent = "Thickness";
+      if (concThkHint) concThkHint.textContent = 'Wall thickness often 6"–12" (verify spec).';
+      if (concTypeHint) concTypeHint.textContent = "Wall = Length × Height × Thickness";
+    }
+  }
+
+  concType?.addEventListener("change", () => {
+    setConcreteUI();
+    if (concreteOut) concreteOut.textContent = "Enter concrete dimensions to estimate cubic yards and materials.";
+  });
+
+  setConcreteUI();
+
+  function roundUpTo(x, inc){
+    const i = Number(inc);
+    if (!i) return x;
+    return Math.ceil(x / i) * i;
+  }
+
+  function calcConcrete() {
+    const t = concType?.value || "slab";
+    const qty = Math.max(1, Math.floor(Number(concQty?.value || 1)));
+    const wastePct = Math.max(0, Number(concWaste?.value || 0));
+    const roundInc = Number(concRound?.value || 0);
+
+    // All parsed to inches (since parseCarpenterMeasure returns inches)
+    const L_in = parseCarpenterMeasure(concLen?.value);
+    const W_in = parseCarpenterMeasure(concWid?.value);
+    const H_in = parseCarpenterMeasure(concHt?.value);
+    const T_in = parseCarpenterMeasure(concThk?.value);
+
+    // Validate based on type
+    if (L_in == null || L_in <= 0) {
+      concreteOut.textContent = "Enter a valid Length (tape format).";
+      return;
+    }
+
+    if (T_in == null || T_in <= 0) {
+      concreteOut.textContent = "Enter a valid Thickness/Depth (tape format, e.g. 4\").";
+      return;
+    }
+
+    if (t === "slab" || t === "footing") {
+      if (W_in == null || W_in <= 0) {
+        concreteOut.textContent = "Enter a valid Width (tape format).";
+        return;
+      }
+    } else {
+      if (H_in == null || H_in <= 0) {
+        concreteOut.textContent = "Enter a valid Height (tape format).";
+        return;
+      }
+    }
+
+    // Volume in cubic inches
+    let volIn3 = 0;
+    if (t === "slab") {
+      volIn3 = L_in * W_in * T_in * qty;
+    } else if (t === "footing") {
+      volIn3 = L_in * W_in * T_in * qty; // here T_in is depth
+    } else {
+      volIn3 = L_in * H_in * T_in * qty;
+    }
+
+    // Convert
+    const volFt3 = volIn3 / 1728;      // 12^3
+    const volYd3 = volFt3 / 27;
+
+    const wasteMult = 1 + (wastePct / 100);
+    const volFt3Waste = volFt3 * wasteMult;
+    const volYd3Waste = volYd3 * wasteMult;
+
+    const orderYd3 = roundUpTo(volYd3Waste, roundInc);
+
+    // Bag yields (ft³ per bag) — approximations
+    const Y80 = 0.60, Y60 = 0.45, Y50 = 0.375;
+    const bags80 = Math.ceil(volFt3Waste / Y80);
+    const bags60 = Math.ceil(volFt3Waste / Y60);
+    const bags50 = Math.ceil(volFt3Waste / Y50);
+
+    // Trucks (rounded order)
+    const trucks9 = Math.ceil(orderYd3 / 9);
+    const trucks10 = Math.ceil(orderYd3 / 10);
+
+    // Build output text (jobsite readable)
+    const Ls = formatInchesAsFeetInches(L_in);
+    const Ws = (W_in != null) ? formatInchesAsFeetInches(W_in) : "";
+    const Hs = (H_in != null) ? formatInchesAsFeetInches(H_in) : "";
+    const Ts = formatInchesAsFeetInches(T_in).replace(/^\-?\d+'\s/, ""); // show inches-only-ish
+
+    const typeLine =
+      (t === "slab") ? `SLAB` :
+      (t === "footing") ? `FOOTING` :
+      `WALL`;
+
+    const dimsLine =
+      (t === "wall")
+        ? `Length: ${Ls}\nHeight: ${Hs}\nThickness: ${Ts}`
+        : `Length: ${Ls}\nWidth: ${Ws}\n${t === "footing" ? "Depth" : "Thickness"}: ${Ts}`;
+
+    const roundingLine =
+      roundInc
+        ? `Order (rounded up to ${roundInc} yd³): ${orderYd3.toFixed(2)} yd³`
+        : `Order (no rounding): ${orderYd3.toFixed(3)} yd³`;
+
+    // Steps (for "show your work" inside the output)
+    const steps =
+      `STEPS\n` +
+      `1) Compute volume in inches³ (dims in inches).\n` +
+      `2) Convert: in³ ÷ 1728 = ft³\n` +
+      `3) Convert: ft³ ÷ 27 = yd³\n` +
+      `4) Apply waste: × (1 + waste%)\n` +
+      (roundInc ? `5) Round UP to order increment.\n` : "");
+
+    concreteOut.textContent =
+`${typeLine}
+
+${dimsLine}
+Quantity: ${qty}
+Waste: ${Math.round(wastePct)}%
+
+VOLUME
+- Cubic feet: ${volFt3.toFixed(3)} ft³
+- Cubic yards: ${volYd3.toFixed(3)} yd³
+- Yards w/ waste: ${volYd3Waste.toFixed(3)} yd³
+- ${roundingLine}
+
+BAGS (approx, includes waste)
+- 80 lb: ${bags80}
+- 60 lb: ${bags60}
+- 50 lb: ${bags50}
+
+READY-MIX TRUCKS (based on rounded order)
+- 9 yd³ / truck: ${trucks9}
+- 10 yd³ / truck: ${trucks10}
+
+${steps}
+Note: Bag yields and truck capacities vary by product/supplier. Always verify minimum delivery + slump/spec.
+`;
+  }
+
+  document.getElementById("btnCalcConcrete")?.addEventListener("click", calcConcrete);
+
+  document.getElementById("btnClearConcrete")?.addEventListener("click", () => {
+    if (concLen) concLen.value = "";
+    if (concWid) concWid.value = "";
+    if (concHt) concHt.value = "";
+    if (concThk) concThk.value = "";
+    if (concQty) concQty.value = 1;
+    if (concWaste) concWaste.value = 10;
+    if (concRound) concRound.value = "0.25";
+    setConcreteUI();
+    if (concreteOut) concreteOut.textContent = "Enter concrete dimensions to estimate cubic yards and materials.";
   });
 
 })();
