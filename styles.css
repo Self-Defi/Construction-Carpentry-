@@ -1,4 +1,4 @@
-/* styles.css — v14 (Steps modal = HIGH contrast, forced stacking, solid card) */
+/* styles.css — v15 (Steps modal = HIGH contrast, forced stacking, solid card) */
 :root{
   --bg0:#070b14;
   --bg1:#0b1220;
@@ -228,7 +228,7 @@ input:focus, select:focus{
   display:none;
   z-index:9999;
   padding: 18px 12px;
-  place-items: start center; /* top-ish like your screenshot */
+  place-items: start center;
   overflow:auto;
   -webkit-overflow-scrolling: touch;
 }
@@ -238,24 +238,22 @@ input:focus, select:focus{
 .modalBackdrop{
   position:fixed;
   inset:0;
-  background: rgba(0,0,0,.88); /* darker = less bleed-through */
+  background: rgba(0,0,0,.88);
   z-index:0;
 }
 
-/* Force card ABOVE backdrop on all browsers */
 .modalCard{
   position:relative;
   z-index:1;
   width:min(760px, calc(100% - 24px));
   margin: 34px auto 24px;
-  background: #070b14; /* SOLID (no transparency) */
+  background: #070b14;
   border:1px solid rgba(255,255,255,.22);
   border-radius: var(--radius);
   box-shadow: 0 40px 110px rgba(0,0,0,.80);
   overflow:hidden;
 }
 
-/* Slight header tint so it reads as a distinct bar */
 .modalTop{
   display:flex;
   justify-content:space-between;
@@ -286,19 +284,17 @@ input:focus, select:focus{
 
 .modalBody{
   padding: 18px 20px;
-  color:#fff;                 /* HARD WHITE */
+  color:#fff;
   line-height: 1.65;
   font-size: 15.5px;
-  text-shadow: 0 1px 0 rgba(0,0,0,.35); /* subtle lift on iOS */
+  text-shadow: 0 1px 0 rgba(0,0,0,.35);
 }
 
-/* Make step headings pop */
 .modalBody strong{
   color:#fff;
   font-weight:900;
 }
 
-/* Make inline code readable even on small screens */
 .modalBody code{
   background: rgba(0,0,0,.80);
   border:1px solid rgba(255,255,255,.22);
@@ -309,10 +305,8 @@ input:focus, select:focus{
   white-space: nowrap;
 }
 
-/* Give bullets / dots a bit of spacing if present */
 .modalBody br{ line-height: 1.85; }
 
-/* Mobile: more width, less margin */
 @media (max-width: 820px){
   .modalCard{
     width: calc(100% - 16px);
