@@ -1,4 +1,4 @@
-// sw.js — v15
+// sw.js — v16
 const CACHE_NAME = "construction-carpentry-v15-1";
 const CORE_ASSETS = [
   "./",
