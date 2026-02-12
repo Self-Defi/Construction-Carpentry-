@@ -1,5 +1,5 @@
-/* sw.js — v16 (simple, reliable cache for GitHub Pages) */
-const CACHE_NAME = "cc-v16";
+/* sw.js — v16 (cache refresh fix) */
+const CACHE_NAME = "cc-v16-fix1";
 const ASSETS = [
   "./",
   "./index.html",
@@ -27,14 +27,11 @@ self.addEventListener("activate", (event) => {
 
 self.addEventListener("fetch", (event) => {
   const req = event.request;
-
-  // Only handle GET
   if (req.method !== "GET") return;
 
   event.respondWith((async () => {
     const cache = await caches.open(CACHE_NAME);
 
-    // Network-first for HTML (so updates show quickly)
     const accept = req.headers.get("accept") || "";
     const isHTML = accept.includes("text/html");
 
@@ -49,7 +46,6 @@ self.addEventListener("fetch", (event) => {
       }
     }
 
-    // Cache-first for everything else
     const cached = await cache.match(req);
     if (cached) return cached;
 
