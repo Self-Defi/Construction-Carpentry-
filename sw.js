@@ -1,19 +1,18 @@
-// sw.js — v16
-const CACHE_NAME = "construction-carpentry-v15-1";
-const CORE_ASSETS = [
+/* sw.js — v16 (simple, reliable cache for GitHub Pages) */
+const CACHE_NAME = "cc-v16";
+const ASSETS = [
   "./",
   "./index.html",
   "./styles.css",
   "./app.js",
-  "./sw.js",
+  "./sw.js"
 ];
 
 self.addEventListener("install", (event) => {
-  event.waitUntil((async () => {
-    const cache = await caches.open(CACHE_NAME);
-    try { await cache.addAll(CORE_ASSETS); } catch (e) {}
-    self.skipWaiting();
-  })());
+  event.waitUntil(
+    caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS))
+  );
+  self.skipWaiting();
 });
 
 self.addEventListener("activate", (event) => {
@@ -22,29 +21,40 @@ self.addEventListener("activate", (event) => {
     await Promise.all(
       keys.map((k) => (k !== CACHE_NAME ? caches.delete(k) : Promise.resolve()))
     );
-    self.clients.claim();
+    await self.clients.claim();
   })());
 });
 
 self.addEventListener("fetch", (event) => {
   const req = event.request;
-  if (req.method !== "GET") return;
 
-  const url = new URL(req.url);
-  if (url.origin !== self.location.origin) return;
+  // Only handle GET
+  if (req.method !== "GET") return;
 
   event.respondWith((async () => {
     const cache = await caches.open(CACHE_NAME);
+
+    // Network-first for HTML (so updates show quickly)
+    const accept = req.headers.get("accept") || "";
+    const isHTML = accept.includes("text/html");
+
+    if (isHTML) {
+      try {
+        const fresh = await fetch(req);
+        cache.put(req, fresh.clone());
+        return fresh;
+      } catch {
+        const cached = await cache.match(req);
+        return cached || caches.match("./index.html");
+      }
+    }
+
+    // Cache-first for everything else
     const cached = await cache.match(req);
     if (cached) return cached;
 
-    try {
-      const fresh = await fetch(req);
-      if (fresh && fresh.ok) cache.put(req, fresh.clone());
-      return fresh;
-    } catch (e) {
-      if (req.mode === "navigate") return cache.match("./index.html");
-      throw e;
-    }
+    const fresh = await fetch(req);
+    cache.put(req, fresh.clone());
+    return fresh;
   })());
 });
