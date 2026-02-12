@@ -1,5 +1,5 @@
-/* app.js — v15
-   App-wide measurement standardization + fraction calculator + concrete tab.
+/* app.js — v16
+   App-wide measurement standardization + fraction calculator + concrete tab + electrical tab.
 */
 
 (function () {
@@ -10,7 +10,7 @@
 
   function updateCacheStatus() {
     const cached = !!navigator.serviceWorker?.controller;
-    if (buildLine) buildLine.textContent = `Build: v15 • ${cached ? "Cached" : "Live"}`;
+    if (buildLine) buildLine.textContent = `Build: v16 • ${cached ? "Cached" : "Live"}`;
   }
 
   updateCacheStatus();
@@ -31,6 +31,7 @@
     roofing: document.getElementById("tab-roofing"),
     stairs: document.getElementById("tab-stairs"),
     concrete: document.getElementById("tab-concrete"),
+    electrical: document.getElementById("tab-electrical"),
   };
 
   function setActiveTab(name) {
@@ -113,6 +114,14 @@
 5) Rounding rounds UP your order (common for ready-mix).<br/>
 <br/>
 <strong>Output includes:</strong> ft³, yd³, yd³ w/ waste, rounded order, bag estimates, truck estimates.
+`,
+    "electrical": `
+<strong>Electrical — Quick Estimators</strong><br/>
+1) Use <strong>Load</strong> to estimate amps from watts at 120V/240V.<br/>
+2) Continuous loads follow the <strong>80% rule</strong> (breaker × 0.8).<br/>
+3) Use <strong>Wire Length</strong> to estimate how many feet of cable you’ll need per run + slack + waste.<br/>
+<br/>
+<strong>Note:</strong> Ampacity depends on insulation rating, temperature, bundling, and code. Use the reference table as a quick baseline — verify local code/spec.
 `,
   };
 
@@ -838,13 +847,11 @@ Note:
     const wastePct = Math.max(0, Number(concWaste?.value || 0));
     const roundInc = Number(concRound?.value || 0);
 
-    // All parsed to inches (since parseCarpenterMeasure returns inches)
     const L_in = parseCarpenterMeasure(concLen?.value);
     const W_in = parseCarpenterMeasure(concWid?.value);
     const H_in = parseCarpenterMeasure(concHt?.value);
     const T_in = parseCarpenterMeasure(concThk?.value);
 
-    // Validate based on type
     if (L_in == null || L_in <= 0) {
       concreteOut.textContent = "Enter a valid Length (tape format).";
       return;
@@ -867,18 +874,16 @@ Note:
       }
     }
 
-    // Volume in cubic inches
     let volIn3 = 0;
     if (t === "slab") {
       volIn3 = L_in * W_in * T_in * qty;
     } else if (t === "footing") {
-      volIn3 = L_in * W_in * T_in * qty; // here T_in is depth
+      volIn3 = L_in * W_in * T_in * qty;
     } else {
       volIn3 = L_in * H_in * T_in * qty;
     }
 
-    // Convert
-    const volFt3 = volIn3 / 1728;      // 12^3
+    const volFt3 = volIn3 / 1728;
     const volYd3 = volFt3 / 27;
 
     const wasteMult = 1 + (wastePct / 100);
@@ -887,21 +892,18 @@ Note:
 
     const orderYd3 = roundUpTo(volYd3Waste, roundInc);
 
-    // Bag yields (ft³ per bag) — approximations
     const Y80 = 0.60, Y60 = 0.45, Y50 = 0.375;
     const bags80 = Math.ceil(volFt3Waste / Y80);
     const bags60 = Math.ceil(volFt3Waste / Y60);
     const bags50 = Math.ceil(volFt3Waste / Y50);
 
-    // Trucks (rounded order)
     const trucks9 = Math.ceil(orderYd3 / 9);
     const trucks10 = Math.ceil(orderYd3 / 10);
 
-    // Build output text (jobsite readable)
     const Ls = formatInchesAsFeetInches(L_in);
     const Ws = (W_in != null) ? formatInchesAsFeetInches(W_in) : "";
     const Hs = (H_in != null) ? formatInchesAsFeetInches(H_in) : "";
-    const Ts = formatInchesAsFeetInches(T_in).replace(/^\-?\d+'\s/, ""); // show inches-only-ish
+    const Ts = formatInchesAsFeetInches(T_in).replace(/^\-?\d+'\s/, "");
 
     const typeLine =
       (t === "slab") ? `SLAB` :
@@ -918,7 +920,6 @@ Note:
         ? `Order (rounded up to ${roundInc} yd³): ${orderYd3.toFixed(2)} yd³`
         : `Order (no rounding): ${orderYd3.toFixed(3)} yd³`;
 
-    // Steps (for "show your work" inside the output)
     const steps =
       `STEPS\n` +
       `1) Compute volume in inches³ (dims in inches).\n` +
@@ -967,5 +968,143 @@ Note: Bag yields and truck capacities vary by product/supplier. Always verify mi
     setConcreteUI();
     if (concreteOut) concreteOut.textContent = "Enter concrete dimensions to estimate cubic yards and materials.";
   });
+
+  // =========================================================
+  // ELECTRICAL — Load + wire length + ampacity reference
+  // =========================================================
+  const elVoltage = document.getElementById("elVoltage");
+  const elBreaker = document.getElementById("elBreaker");
+  const elWatts = document.getElementById("elWatts");
+  const elContinuous = document.getElementById("elContinuous");
+  const loadOut = document.getElementById("loadOut");
+
+  function calcLoad() {
+    if (!loadOut) return;
+
+    const V = Number(elVoltage?.value || 0);
+    const breakerA = Number(elBreaker?.value || 0);
+    const watts = Number(elWatts?.value || 0);
+    const isCont = (elContinuous?.value || "yes") === "yes";
+
+    if (!V || V <= 0 || !watts || watts <= 0) {
+      loadOut.textContent = "Enter valid voltage and total watts.";
+      return;
+    }
+
+    const amps = watts / V;
+
+    let limitLine = "Breaker not provided (optional).";
+    let statusLine = "Status: —";
+
+    if (breakerA > 0) {
+      const limit = isCont ? breakerA * 0.80 : breakerA;
+      limitLine = `Breaker: ${breakerA} A\nAllowed ( ${isCont ? "continuous @ 80%" : "non-continuous @ 100%"} ): ${limit.toFixed(2)} A`;
+      statusLine = `Status: ${amps <= limit ? "WITHIN LIMIT" : "OVER LIMIT"}`;
+    }
+
+    loadOut.textContent =
+`LOAD (quick check)
+
+Voltage: ${V} V
+Watts: ${watts} W
+
+Amps = W ÷ V
+Amps = ${watts} ÷ ${V} = ${amps.toFixed(2)} A
+
+${limitLine}
+${statusLine}
+
+Note:
+• Continuous loads typically use the 80% rule.
+• Verify actual circuit, conductor, and code requirements.`;
+  }
+
+  document.getElementById("btnCalcLoad")?.addEventListener("click", calcLoad);
+  document.getElementById("btnClearLoad")?.addEventListener("click", () => {
+    if (elVoltage) elVoltage.value = "120";
+    if (elBreaker) elBreaker.value = "15";
+    if (elWatts) elWatts.value = "";
+    if (elContinuous) elContinuous.value = "yes";
+    if (loadOut) loadOut.textContent = "Enter voltage + watts to estimate amps and compare to breaker limit.";
+  });
+
+  const elRuns = document.getElementById("elRuns");
+  const elRunLen = document.getElementById("elRunLen");
+  const elSlack = document.getElementById("elSlack");
+  const elWaste = document.getElementById("elWaste");
+  const wireOut = document.getElementById("wireOut");
+
+  function calcWireLength() {
+    if (!wireOut) return;
+
+    const runs = Math.max(1, Math.floor(Number(elRuns?.value || 1)));
+    const runLenFt = Number(elRunLen?.value || 0);
+    const slackFt = Number(elSlack?.value || 0);
+    const wastePct = Math.max(0, Number(elWaste?.value || 0));
+
+    if (!runLenFt || runLenFt <= 0) {
+      wireOut.textContent = "Enter a valid run length (feet).";
+      return;
+    }
+
+    const base = runs * (runLenFt + slackFt);
+    const withWaste = base * (1 + wastePct / 100);
+
+    wireOut.textContent =
+`WIRE LENGTH (rough)
+
+Runs: ${runs}
+Run length: ${runLenFt.toFixed(2)} ft
+Slack per run: ${slackFt.toFixed(2)} ft
+Waste: ${Math.round(wastePct)}%
+
+Total = runs × (run + slack)
+Total = ${runs} × (${runLenFt.toFixed(2)} + ${slackFt.toFixed(2)}) = ${base.toFixed(2)} ft
+Total w/ waste = ${withWaste.toFixed(2)} ft
+
+Recommendation:
+• Round UP to the next spool size.
+• Add extra for routing/obstacles/panel work.`;
+  }
+
+  document.getElementById("btnCalcWire")?.addEventListener("click", calcWireLength);
+  document.getElementById("btnClearWire")?.addEventListener("click", () => {
+    if (elRuns) elRuns.value = 1;
+    if (elRunLen) elRunLen.value = "";
+    if (elSlack) elSlack.value = 5;
+    if (elWaste) elWaste.value = 10;
+    if (wireOut) wireOut.textContent = "Enter runs + run length to estimate cable feet required.";
+  });
+
+  // Optional: auto-render ampacity table if you include <tbody id="ampacityBody"></tbody>
+  const ampacityBody = document.getElementById("ampacityBody");
+  if (ampacityBody) {
+    // Typical copper THHN/THWN-2 style *quick reference* (varies by code/temp/bundling)
+    // Keep it conservative on purpose.
+    const rows = [
+      { awg: "14", amps60: "15", amps75: "20", amps90: "25" },
+      { awg: "12", amps60: "20", amps75: "25", amps90: "30" },
+      { awg: "10", amps60: "30", amps75: "35", amps90: "40" },
+      { awg: "8",  amps60: "40", amps75: "50", amps90: "55" },
+      { awg: "6",  amps60: "55", amps75: "65", amps90: "75" },
+      { awg: "4",  amps60: "70", amps75: "85", amps90: "95" },
+      { awg: "3",  amps60: "85", amps75: "100", amps90: "110" },
+      { awg: "2",  amps60: "95", amps75: "115", amps90: "130" },
+      { awg: "1",  amps60: "110", amps75: "130", amps90: "145" },
+      { awg: "1/0", amps60: "125", amps75: "150", amps90: "170" },
+      { awg: "2/0", amps60: "145", amps75: "175", amps90: "195" },
+      { awg: "3/0", amps60: "165", amps75: "200", amps90: "225" },
+      { awg: "4/0", amps60: "195", amps75: "230", amps90: "260" },
+    ];
+
+    ampacityBody.innerHTML = rows.map(r => `
+      <tr>
+        <td>${r.awg}</td>
+        <td>${r.amps60}</td>
+        <td>${r.amps75}</td>
+        <td>${r.amps90}</td>
+      </tr>
+    `).join("");
+  }
 
 })();
