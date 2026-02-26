@@ -2,17 +2,12 @@
 :root{
   --bg0:#070b14;
   --bg1:#0b1220;
-  --card:#0c1730;
-  --card2:#0a142a;
 
   --stroke:rgba(255,255,255,.08);
   --stroke2:rgba(255,255,255,.12);
 
   --text:rgba(255,255,255,.92);
   --muted:rgba(255,255,255,.62);
-
-  --btn:#1d6fff;
-  --btn2:#0f3f9b;
 
   --shadow: 0 20px 60px rgba(0,0,0,.45);
   --radius:18px;
@@ -93,14 +88,14 @@ body{
   padding: 0 18px;
 }
 
+.stack{
+  display:flex;
+  flex-direction:column;
+  gap:18px;
+}
+
 .tabPanel{ display:none; }
 .tabPanel.isActive{ display:block; }
-
-/* Stack (missing before — used by Home/Electrical) */
-.stack{
-  display:grid;
-  gap:16px;
-}
 
 .card{
   background:
@@ -179,11 +174,12 @@ input, select, textarea{
   background: rgba(0,0,0,.20);
   color: var(--text);
   outline:none;
+  font: inherit;
 }
 
-textarea{
+textarea.ta{
   resize: vertical;
-  min-height: 108px;
+  min-height: 96px;
   line-height: 1.35;
 }
 
@@ -225,9 +221,9 @@ input:focus, select:focus, textarea:focus{
   border-radius: var(--radius2);
   border: 1px dashed rgba(255,255,255,.14);
   background: rgba(0,0,0,.18);
-  color: rgba(255,255,255,.90);
+  color: rgba(255,255,255,.86);
   white-space: pre-wrap;
-  line-height: 1.45;
+  line-height: 1.35;
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
 }
 
@@ -302,5 +298,5 @@ input:focus, select:focus, textarea:focus{
   padding:4px 8px;
   border-radius:8px;
   color:#fff;
-  font-weight:600;
+  font-weight:700;
 }
