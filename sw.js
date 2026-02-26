@@ -1,18 +1,19 @@
-/* sw.js — v16 (cache refresh fix) */
-const CACHE_NAME = "cc-v16-fix1";
-const ASSETS = [
+/* sw.js — v16 */
+const CACHE_NAME = "construction-carpentry-v16";
+const CORE_ASSETS = [
   "./",
   "./index.html",
   "./styles.css",
   "./app.js",
-  "./sw.js"
+  "./sw.js",
 ];
 
 self.addEventListener("install", (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS))
-  );
-  self.skipWaiting();
+  event.waitUntil((async () => {
+    const cache = await caches.open(CACHE_NAME);
+    try { await cache.addAll(CORE_ASSETS); } catch (e) {}
+    self.skipWaiting();
+  })());
 });
 
 self.addEventListener("activate", (event) => {
@@ -21,7 +22,7 @@ self.addEventListener("activate", (event) => {
     await Promise.all(
       keys.map((k) => (k !== CACHE_NAME ? caches.delete(k) : Promise.resolve()))
     );
-    await self.clients.claim();
+    self.clients.claim();
   })());
 });
 
@@ -29,28 +30,21 @@ self.addEventListener("fetch", (event) => {
   const req = event.request;
   if (req.method !== "GET") return;
 
+  const url = new URL(req.url);
+  if (url.origin !== self.location.origin) return;
+
   event.respondWith((async () => {
     const cache = await caches.open(CACHE_NAME);
-
-    const accept = req.headers.get("accept") || "";
-    const isHTML = accept.includes("text/html");
-
-    if (isHTML) {
-      try {
-        const fresh = await fetch(req);
-        cache.put(req, fresh.clone());
-        return fresh;
-      } catch {
-        const cached = await cache.match(req);
-        return cached || caches.match("./index.html");
-      }
-    }
-
     const cached = await cache.match(req);
     if (cached) return cached;
 
-    const fresh = await fetch(req);
-    cache.put(req, fresh.clone());
-    return fresh;
+    try {
+      const fresh = await fetch(req);
+      if (fresh && fresh.ok) cache.put(req, fresh.clone());
+      return fresh;
+    } catch (e) {
+      if (req.mode === "navigate") return cache.match("./index.html");
+      throw e;
+    }
   })());
 });
