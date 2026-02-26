@@ -104,6 +104,43 @@
           <pre class="out" id="fracCalcOut">Enter valid fractions for A and B.</pre>
         </div>
 
+        <!-- Decimal Converter -->
+        <div class="card">
+          <div class="cardTop">
+            <div>
+              <h2>Decimal Converter</h2>
+              <p class="muted">Convert tape-format to decimal inches, decimal feet, and mm.</p>
+            </div>
+            <button class="pill" data-steps="home-decimal" type="button">Steps</button>
+          </div>
+
+          <div class="formGrid">
+            <label class="field">
+              <span class="label">Measurement</span>
+              <input id="decIn" type="text" placeholder='e.g. 7&#39; 10 7/8"  |  96  |  5 1/2"' />
+              <span class="hint">Same tape format accepted app-wide.</span>
+            </label>
+
+            <label class="field">
+              <span class="label">Round</span>
+              <select id="decRound">
+                <option value="none" selected>No rounding</option>
+                <option value="0.001">0.001</option>
+                <option value="0.01">0.01</option>
+                <option value="0.1">0.1</option>
+              </select>
+              <span class="hint">Applies to decimal inches/feet/mm output.</span>
+            </label>
+          </div>
+
+          <div class="btnRow">
+            <button class="btn" id="btnDecConvert" type="button">Convert</button>
+            <button class="btnGhost" id="btnDecClear" type="button">Clear</button>
+          </div>
+
+          <pre class="out" id="decOut">Enter a measurement to convert.</pre>
+        </div>
+
       </div>
     </section>
 
@@ -113,7 +150,7 @@
         <div class="cardTop">
           <div>
             <h2>Wall Materials Estimator</h2>
-            <p class="muted">Fast studs + drywall sheets estimate for one wall face.</p>
+            <p class="muted">Studs + sheets + corners + headers (fast estimate). Default 16" O.C.</p>
           </div>
           <button class="pill" data-steps="layout-wall" type="button">Steps</button>
         </div>
@@ -135,6 +172,47 @@
               <option value="16" selected>16" O.C.</option>
               <option value="24">24" O.C.</option>
             </select>
+          </label>
+
+          <label class="field">
+            <span class="label">Corners (count)</span>
+            <input id="wallCorners" type="number" min="0" step="1" value="2" />
+            <span class="hint">Typical wall segment has 2 ends = 2 corners.</span>
+          </label>
+
+          <label class="field">
+            <span class="label">T-Intersections (count)</span>
+            <input id="wallTees" type="number" min="0" step="1" value="0" />
+            <span class="hint">Adds studs for tees/backing (estimate).</span>
+          </label>
+
+          <label class="field">
+            <span class="label">Openings (one per line)</span>
+            <textarea id="openingsList" rows="5" placeholder="D 3' 0&#34;
+W 4' 0&#34;
+W 2' 6&#34;"></textarea>
+            <span class="hint">Prefix: <b>D</b> door or <b>W</b> window. Width in tape format.</span>
+          </label>
+
+          <label class="field">
+            <span class="label">Header Stock</span>
+            <select id="hdrStock">
+              <option value="2x4">2x4</option>
+              <option value="2x6" selected>2x6</option>
+              <option value="2x8">2x8</option>
+              <option value="2x10">2x10</option>
+              <option value="2x12">2x12</option>
+            </select>
+            <span class="hint">Used for material labeling (linear feet).</span>
+          </label>
+
+          <label class="field">
+            <span class="label">Header Plies</span>
+            <select id="hdrPlies">
+              <option value="2" selected>2-ply</option>
+              <option value="3">3-ply</option>
+            </select>
+            <span class="hint">2-ply typical. Set 3 for heavier headers.</span>
           </label>
 
           <label class="field">
@@ -165,7 +243,7 @@
           <button class="btnGhost" id="btnClearWall" type="button">Clear</button>
         </div>
 
-        <pre class="out" id="wallOut">Enter wall length and height to estimate studs and sheets.</pre>
+        <pre class="out" id="wallOut">Enter wall length and height to estimate studs, sheets, corners, and headers.</pre>
       </div>
     </section>
 
