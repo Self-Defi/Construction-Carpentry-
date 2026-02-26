@@ -18,7 +18,7 @@
     </div>
 
     <nav class="topNav" aria-label="Primary">
-      <button class="tabBtn isActive" data-tab="home" type="button">Home</button>
+      <button class="tabBtn isActive" data-tab="measurements" type="button">Measurements</button>
       <button class="tabBtn" data-tab="layout" type="button">Layout</button>
       <button class="tabBtn" data-tab="subfloor" type="button">Subfloor</button>
       <button class="tabBtn" data-tab="roofing" type="button">Roofing</button>
@@ -30,115 +30,44 @@
 
   <main class="appMain">
 
-    <!-- HOME -->
-    <section class="tabPanel isActive" id="tab-home">
+    <!-- MEASUREMENTS -->
+    <section class="tabPanel isActive" id="tab-measurements">
       <div class="stack">
 
-        <!-- Tape-format / Measurement Operations -->
         <div class="card">
           <div class="cardTop">
             <div>
-              <h2>Measurement Operations</h2>
-              <p class="muted">Tape-format math. Normalized to nearest 1/16".</p>
+              <h2>Measurement Converter</h2>
+              <p class="muted">One input. Outputs decimal, fraction, and tape (nearest 1/16").</p>
             </div>
-            <button class="pill" data-steps="home-measure" type="button">Steps</button>
-          </div>
-
-          <div class="formGrid">
-            <label class="field">
-              <span class="label">A</span>
-              <input id="fracA" type="text" placeholder='e.g. 7&#39; 10 7/8"' />
-              <span class="hint">Accepts: 12&#39; 0", 5 1/2", 96</span>
-            </label>
-
-            <label class="field">
-              <span class="label">B</span>
-              <input id="fracB" type="text" placeholder='e.g. 12&#39; 3/8"' />
-              <span class="hint">Same format as A</span>
-            </label>
-          </div>
-
-          <div class="btnRow">
-            <button class="btn" id="btnAdd" type="button">A + B</button>
-            <button class="btn" id="btnSub" type="button">A − B</button>
-            <button class="btn" id="btnMul" type="button">A × B</button>
-            <button class="btn" id="btnDiv" type="button">A ÷ B</button>
-            <button class="btnGhost" id="btnClearFrac" type="button">Clear</button>
-          </div>
-
-          <pre class="out" id="fracOut">Enter valid A and B measurements.</pre>
-        </div>
-
-        <!-- Pure Fraction Calculator -->
-        <div class="card">
-          <div class="cardTop">
-            <div>
-              <h2>Fraction Calculator</h2>
-              <p class="muted">Add / subtract / multiply / divide any fraction style (mixed, improper, decimals).</p>
-            </div>
-            <button class="pill" data-steps="home-fraction-calc" type="button">Steps</button>
-          </div>
-
-          <div class="formGrid">
-            <label class="field">
-              <span class="label">A</span>
-              <input id="mathA" type="text" placeholder='e.g. 1 1/2  |  3/4  |  0.125  |  -2 3/8' />
-              <span class="hint">Formats: 3/4, 1 1/2, 5, 0.25, -7/8</span>
-            </label>
-
-            <label class="field">
-              <span class="label">B</span>
-              <input id="mathB" type="text" placeholder='e.g. 2/3  |  4  |  1.75' />
-              <span class="hint">Same formats as A</span>
-            </label>
-          </div>
-
-          <div class="btnRow">
-            <button class="btn" id="btnFAdd" type="button">A + B</button>
-            <button class="btn" id="btnFSub" type="button">A − B</button>
-            <button class="btn" id="btnFMul" type="button">A × B</button>
-            <button class="btn" id="btnFDiv" type="button">A ÷ B</button>
-            <button class="btnGhost" id="btnFClear" type="button">Clear</button>
-          </div>
-
-          <pre class="out" id="fracCalcOut">Enter valid fractions for A and B.</pre>
-        </div>
-
-        <!-- Decimal Converter -->
-        <div class="card">
-          <div class="cardTop">
-            <div>
-              <h2>Decimal Converter</h2>
-              <p class="muted">Convert tape-format to decimal inches, decimal feet, and mm.</p>
-            </div>
-            <button class="pill" data-steps="home-decimal" type="button">Steps</button>
+            <button class="pill" data-steps="measurements" type="button">Steps</button>
           </div>
 
           <div class="formGrid">
             <label class="field">
               <span class="label">Measurement</span>
-              <input id="decIn" type="text" placeholder='e.g. 7&#39; 10 7/8"  |  96  |  5 1/2"' />
-              <span class="hint">Same tape format accepted app-wide.</span>
+              <input id="measIn" type="text" placeholder='e.g. 7&#39; 10 7/8"  |  96  |  5 1/2"  |  1/4&#39;' />
+              <span class="hint">Accepts feet/inches, fractions, decimals. Examples: 12&#39; 0", 3 3/8", 0.125", 1/4&#39;.</span>
             </label>
 
             <label class="field">
-              <span class="label">Round</span>
-              <select id="decRound">
-                <option value="none" selected>No rounding</option>
-                <option value="0.001">0.001</option>
+              <span class="label">Round Decimals</span>
+              <select id="measRound">
+                <option value="0.001" selected>0.001</option>
                 <option value="0.01">0.01</option>
                 <option value="0.1">0.1</option>
+                <option value="1">1</option>
               </select>
-              <span class="hint">Applies to decimal inches/feet/mm output.</span>
+              <span class="hint">Tape output always rounds to nearest 1/16".</span>
             </label>
           </div>
 
           <div class="btnRow">
-            <button class="btn" id="btnDecConvert" type="button">Convert</button>
-            <button class="btnGhost" id="btnDecClear" type="button">Clear</button>
+            <button class="btn" id="btnMeasConvert" type="button">Convert</button>
+            <button class="btnGhost" id="btnMeasClear" type="button">Clear</button>
           </div>
 
-          <pre class="out" id="decOut">Enter a measurement to convert.</pre>
+          <pre class="out" id="measOut">Enter a measurement to convert.</pre>
         </div>
 
       </div>
@@ -146,104 +75,137 @@
 
     <!-- LAYOUT -->
     <section class="tabPanel" id="tab-layout">
-      <div class="card">
-        <div class="cardTop">
-          <div>
-            <h2>Wall Materials Estimator</h2>
-            <p class="muted">Studs + sheets + corners + headers (fast estimate). Default 16" O.C.</p>
+      <div class="stack">
+
+        <!-- PERIMETER -->
+        <div class="card">
+          <div class="cardTop">
+            <div>
+              <h2>Perimeter Calculator</h2>
+              <p class="muted">Room/perimeter quick math. Outputs feet, inches, and tape (1/16").</p>
+            </div>
+            <button class="pill" data-steps="layout-perimeter" type="button">Steps</button>
           </div>
-          <button class="pill" data-steps="layout-wall" type="button">Steps</button>
+
+          <div class="formGrid">
+            <label class="field">
+              <span class="label">Length</span>
+              <input id="perLen" type="text" placeholder='e.g. 24&#39; 0"' />
+            </label>
+
+            <label class="field">
+              <span class="label">Width</span>
+              <input id="perWid" type="text" placeholder='e.g. 12&#39; 0"' />
+            </label>
+          </div>
+
+          <div class="btnRow">
+            <button class="btn" id="btnCalcPerim" type="button">Calculate</button>
+            <button class="btnGhost" id="btnClearPerim" type="button">Clear</button>
+          </div>
+
+          <pre class="out" id="perimOut">Enter length and width to calculate total perimeter.</pre>
         </div>
 
-        <div class="formGrid">
-          <label class="field">
-            <span class="label">Wall Length</span>
-            <input id="wallLen" type="text" placeholder='e.g. 24&#39; 0"' />
-          </label>
+        <!-- WALL MATERIALS -->
+        <div class="card">
+          <div class="cardTop">
+            <div>
+              <h2>Wall Materials Estimator</h2>
+              <p class="muted">Studs + sheets + corners + headers (fast estimate). Default 16" O.C.</p>
+            </div>
+            <button class="pill" data-steps="layout-wall" type="button">Steps</button>
+          </div>
 
-          <label class="field">
-            <span class="label">Wall Height</span>
-            <input id="wallHt" type="text" placeholder='e.g. 8&#39; 0"' />
-          </label>
+          <div class="formGrid">
+            <label class="field">
+              <span class="label">Wall Length</span>
+              <input id="wallLen" type="text" placeholder='e.g. 24&#39; 0"' />
+            </label>
 
-          <label class="field">
-            <span class="label">Stud Spacing</span>
-            <select id="studSpacing">
-              <option value="16" selected>16" O.C.</option>
-              <option value="24">24" O.C.</option>
-            </select>
-          </label>
+            <label class="field">
+              <span class="label">Wall Height</span>
+              <input id="wallHt" type="text" placeholder='e.g. 8&#39; 0"' />
+            </label>
 
-          <label class="field">
-            <span class="label">Corners (count)</span>
-            <input id="wallCorners" type="number" min="0" step="1" value="2" />
-            <span class="hint">Typical wall segment has 2 ends = 2 corners.</span>
-          </label>
+            <label class="field">
+              <span class="label">Stud Spacing</span>
+              <select id="studSpacing">
+                <option value="16" selected>16" O.C.</option>
+                <option value="24">24" O.C.</option>
+              </select>
+            </label>
 
-          <label class="field">
-            <span class="label">T-Intersections (count)</span>
-            <input id="wallTees" type="number" min="0" step="1" value="0" />
-            <span class="hint">Adds studs for tees/backing (estimate).</span>
-          </label>
+            <label class="field">
+              <span class="label">Corners (count)</span>
+              <input id="cornerCount" type="number" min="0" step="1" value="2" />
+              <span class="hint">Typical wall segment has 2 ends = 2 corners.</span>
+            </label>
 
-          <label class="field">
-            <span class="label">Openings (one per line)</span>
-            <textarea id="openingsList" rows="5" placeholder="D 3' 0&#34;
-W 4' 0&#34;
-W 2' 6&#34;"></textarea>
-            <span class="hint">Prefix: <b>D</b> door or <b>W</b> window. Width in tape format.</span>
-          </label>
+            <label class="field">
+              <span class="label">T-Intersections (count)</span>
+              <input id="tCount" type="number" min="0" step="1" value="0" />
+              <span class="hint">Adds studs for tees/backing (estimate).</span>
+            </label>
 
-          <label class="field">
-            <span class="label">Header Stock</span>
-            <select id="hdrStock">
-              <option value="2x4">2x4</option>
-              <option value="2x6" selected>2x6</option>
-              <option value="2x8">2x8</option>
-              <option value="2x10">2x10</option>
-              <option value="2x12">2x12</option>
-            </select>
-            <span class="hint">Used for material labeling (linear feet).</span>
-          </label>
+            <label class="field">
+              <span class="label">Openings (one per line)</span>
+              <textarea id="openings" class="ta" rows="4" placeholder="D 3' 0&#10;W 4' 0&#10;W 2' 6"></textarea>
+              <span class="hint">Prefix: D door or W window. Width in tape format.</span>
+            </label>
 
-          <label class="field">
-            <span class="label">Header Plies</span>
-            <select id="hdrPlies">
-              <option value="2" selected>2-ply</option>
-              <option value="3">3-ply</option>
-            </select>
-            <span class="hint">2-ply typical. Set 3 for heavier headers.</span>
-          </label>
+            <label class="field">
+              <span class="label">Header Stock</span>
+              <select id="headerStock">
+                <option value="2x4">2x4</option>
+                <option value="2x6" selected>2x6</option>
+                <option value="2x8">2x8</option>
+                <option value="2x10">2x10</option>
+                <option value="2x12">2x12</option>
+              </select>
+              <span class="hint">Used for material labeling (linear feet).</span>
+            </label>
 
-          <label class="field">
-            <span class="label">Sheet Size</span>
-            <select id="sheetSize">
-              <option value="4x8" selected>4×8</option>
-              <option value="4x12">4×12</option>
-            </select>
-          </label>
+            <label class="field">
+              <span class="label">Header Plies</span>
+              <select id="headerPlies">
+                <option value="2" selected>2-ply</option>
+                <option value="3">3-ply</option>
+              </select>
+              <span class="hint">2-ply typical. Set 3 for heavier headers.</span>
+            </label>
 
-          <label class="field">
-            <span class="label">Hang Direction</span>
-            <select id="hangDir">
-              <option value="vertical" selected>Vertical</option>
-              <option value="horizontal">Horizontal</option>
-            </select>
-            <span class="hint">Used for notes only (openings/layout affect counts).</span>
-          </label>
+            <label class="field">
+              <span class="label">Sheet Size</span>
+              <select id="sheetSize">
+                <option value="4x8" selected>4×8</option>
+                <option value="4x12">4×12</option>
+              </select>
+            </label>
 
-          <label class="field">
-            <span class="label">Waste %</span>
-            <input id="wastePct" type="number" min="0" step="1" value="10" />
-          </label>
+            <label class="field">
+              <span class="label">Hang Direction</span>
+              <select id="hangDir">
+                <option value="vertical" selected>Vertical</option>
+                <option value="horizontal">Horizontal</option>
+              </select>
+              <span class="hint">Used for notes only (openings/layout affect counts).</span>
+            </label>
+
+            <label class="field">
+              <span class="label">Waste %</span>
+              <input id="wastePct" type="number" min="0" step="1" value="10" />
+            </label>
+          </div>
+
+          <div class="btnRow">
+            <button class="btn" id="btnCalcWall" type="button">Calculate</button>
+            <button class="btnGhost" id="btnClearWall" type="button">Clear</button>
+          </div>
+
+          <pre class="out" id="wallOut">Enter wall length and height to estimate studs, sheets, corners, and headers.</pre>
         </div>
 
-        <div class="btnRow">
-          <button class="btn" id="btnCalcWall" type="button">Calculate</button>
-          <button class="btnGhost" id="btnClearWall" type="button">Clear</button>
-        </div>
-
-        <pre class="out" id="wallOut">Enter wall length and height to estimate studs, sheets, corners, and headers.</pre>
       </div>
     </section>
 
@@ -505,7 +467,6 @@ W 2' 6&#34;"></textarea>
     <section class="tabPanel" id="tab-electrical">
       <div class="stack">
 
-        <!-- Wire Length Planner -->
         <div class="card">
           <div class="cardTop">
             <div>
@@ -555,7 +516,6 @@ W 2' 6&#34;"></textarea>
           <pre class="out" id="wireOut">Enter run details to estimate cable length.</pre>
         </div>
 
-        <!-- Circuit Load Check -->
         <div class="card">
           <div class="cardTop">
             <div>
@@ -599,7 +559,6 @@ W 2' 6&#34;"></textarea>
           <pre class="out" id="loadOut">Enter load to check breaker capacity.</pre>
         </div>
 
-        <!-- Wire Gauge Ampacity Reference -->
         <div class="card">
           <div class="cardTop">
             <div>
