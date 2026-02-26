@@ -1,4 +1,4 @@
-/* styles.css — v16 (High contrast modal, clean stacking, consistent cards) */
+/* styles.css — v16 */
 :root{
   --bg0:#070b14;
   --bg1:#0b1220;
@@ -96,10 +96,10 @@ body{
 .tabPanel{ display:none; }
 .tabPanel.isActive{ display:block; }
 
-/* Stack of cards (important for Home + Electrical) */
+/* Stack (missing before — used by Home/Electrical) */
 .stack{
   display:grid;
-  gap:18px;
+  gap:16px;
 }
 
 .card{
@@ -171,7 +171,7 @@ h2{
   margin-top:-2px;
 }
 
-input, select{
+input, select, textarea{
   width:100%;
   padding:12px 12px;
   border-radius: 12px;
@@ -181,7 +181,13 @@ input, select{
   outline:none;
 }
 
-input:focus, select:focus{
+textarea{
+  resize: vertical;
+  min-height: 108px;
+  line-height: 1.35;
+}
+
+input:focus, select:focus, textarea:focus{
   border-color: rgba(29,111,255,.55);
   box-shadow: 0 0 0 4px rgba(29,111,255,.14);
 }
@@ -219,43 +225,37 @@ input:focus, select:focus{
   border-radius: var(--radius2);
   border: 1px dashed rgba(255,255,255,.14);
   background: rgba(0,0,0,.18);
-  color: rgba(255,255,255,.86);
+  color: rgba(255,255,255,.90);
   white-space: pre-wrap;
-  line-height: 1.35;
+  line-height: 1.45;
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
 }
 
-/* =========================================================
-   MODAL (Steps) — FIXED READABILITY + STACKING (iOS-safe)
-   ========================================================= */
+/* Modal */
 .modal{
   position:fixed;
   inset:0;
   display:none;
-  z-index:9999;
-  padding: 18px 12px;
-  place-items: start center;
-  overflow:auto;
-  -webkit-overflow-scrolling: touch;
+  z-index:50;
 }
-.modal.isOpen{ display:grid; }
+
+.modal.isOpen{ display:block; }
 
 .modalBackdrop{
-  position:fixed;
+  position:absolute;
   inset:0;
-  background: rgba(0,0,0,.88);
-  z-index:0;
+  background: rgba(0,0,0,.78);
+  backdrop-filter: blur(2px);
 }
 
 .modalCard{
   position:relative;
-  z-index:1;
-  width:min(760px, calc(100% - 24px));
-  margin: 34px auto 24px;
-  background: #070b14;
-  border:1px solid rgba(255,255,255,.22);
+  width:min(720px, calc(100% - 24px));
+  margin: 70px auto;
+  background: linear-gradient(180deg, rgba(10,20,40,.96), rgba(6,12,26,.98));
+  border:1px solid rgba(255,255,255,.18);
   border-radius: var(--radius);
-  box-shadow: 0 40px 110px rgba(0,0,0,.80);
+  box-shadow: 0 30px 80px rgba(0,0,0,.65);
   overflow:hidden;
 }
 
@@ -264,61 +264,43 @@ input:focus, select:focus{
   justify-content:space-between;
   align-items:center;
   padding: 14px 16px;
-  background: linear-gradient(180deg, rgba(29,111,255,.12), rgba(0,0,0,.10));
   border-bottom:1px solid rgba(255,255,255,.14);
 }
 
 .modalTitle{
-  font-weight:900;
+  font-weight:800;
   letter-spacing:.2px;
-  color:#fff;
+  color: rgba(255,255,255,.96);
 }
 
 .modalClose{
-  border:1px solid rgba(255,255,255,.22);
-  background: rgba(255,255,255,.10);
-  color:#fff;
+  border:1px solid rgba(255,255,255,.18);
+  background: rgba(255,255,255,.08);
+  color: rgba(255,255,255,.96);
   border-radius: 12px;
   padding: 8px 10px;
   cursor:pointer;
 }
+
 .modalClose:hover{
-  border-color: rgba(255,255,255,.34);
-  background: rgba(255,255,255,.14);
+  border-color: rgba(255,255,255,.28);
+  background: rgba(255,255,255,.12);
 }
 
 .modalBody{
   padding: 18px 20px;
-  color:#fff;
-  line-height: 1.65;
-  font-size: 15.5px;
-  text-shadow: 0 1px 0 rgba(0,0,0,.35);
+  color: rgba(255,255,255,.96);
+  line-height: 1.55;
+  font-size: 15px;
 }
 
-.modalBody strong{
-  color:#fff;
-  font-weight:900;
-}
+.modalBody strong{ color:#fff; }
 
 .modalBody code{
-  background: rgba(0,0,0,.80);
-  border:1px solid rgba(255,255,255,.22);
+  background: rgba(0,0,0,.55);
+  border:1px solid rgba(255,255,255,.25);
   padding:4px 8px;
   border-radius:8px;
   color:#fff;
-  font-weight:700;
-  white-space: nowrap;
-}
-
-.modalBody br{ line-height: 1.85; }
-
-@media (max-width: 820px){
-  .modalCard{
-    width: calc(100% - 16px);
-    margin: 22px auto 18px;
-  }
-  .modalBody{
-    padding: 16px 16px;
-    font-size: 15px;
-  }
+  font-weight:600;
 }
