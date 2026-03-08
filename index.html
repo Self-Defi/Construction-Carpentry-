@@ -38,25 +38,25 @@
           <div class="cardTop">
             <div>
               <h2>Measurement Converter</h2>
-              <p class="muted">One input. Outputs decimal, fraction, and tape (nearest 1/16").</p>
+              <p class="muted">One input. Outputs tape (nearest 1/16"), fraction, and decimals.</p>
             </div>
-            <button class="pill" data-steps="measurements" type="button">Steps</button>
+            <button class="pill" data-steps="measurements-convert" type="button">Steps</button>
           </div>
 
           <div class="formGrid">
-            <label class="field">
+            <label class="field" style="grid-column:1/-1;">
               <span class="label">Measurement</span>
-              <input id="measIn" type="text" placeholder='e.g. 7&#39; 10 7/8"  |  96  |  5 1/2"  |  1/4&#39;' />
-              <span class="hint">Accepts feet/inches, fractions, decimals. Examples: 12&#39; 0", 3 3/8", 0.125", 1/4&#39;.</span>
+              <input id="measIn" type="text" placeholder='e.g. 3&#39; 3 1/2&quot;  |  96  |  5 1/2&quot;  |  1/4&#39;' />
+              <span class="hint">Accepts feet/inches, inches, fractions, decimals. Examples: 12' 0", 3 3/8", 0.125", 1/4'</span>
             </label>
 
             <label class="field">
               <span class="label">Round Decimals</span>
               <select id="measRound">
-                <option value="0.001" selected>0.001</option>
-                <option value="0.01">0.01</option>
+                <option value="none">No rounding</option>
+                <option value="0.001">0.001</option>
+                <option value="0.01" selected>0.01</option>
                 <option value="0.1">0.1</option>
-                <option value="1">1</option>
               </select>
               <span class="hint">Tape output always rounds to nearest 1/16".</span>
             </label>
@@ -67,7 +67,8 @@
             <button class="btnGhost" id="btnMeasClear" type="button">Clear</button>
           </div>
 
-          <pre class="out" id="measOut">Enter a measurement to convert.</pre>
+          <pre class="out" id="measOut">Enter a valid measurement.
+Examples: 7' 10 7/8"  |  5 1/2"  |  96  |  1/4'</pre>
         </div>
 
       </div>
@@ -77,7 +78,7 @@
     <section class="tabPanel" id="tab-layout">
       <div class="stack">
 
-        <!-- PERIMETER -->
+        <!-- Perimeter -->
         <div class="card">
           <div class="cardTop">
             <div>
@@ -90,12 +91,11 @@
           <div class="formGrid">
             <label class="field">
               <span class="label">Length</span>
-              <input id="perLen" type="text" placeholder='e.g. 24&#39; 0"' />
+              <input id="perimLen" type="text" placeholder='e.g. 40&#39; 0&quot;' />
             </label>
-
             <label class="field">
               <span class="label">Width</span>
-              <input id="perWid" type="text" placeholder='e.g. 12&#39; 0"' />
+              <input id="perimWid" type="text" placeholder='e.g. 24&#39; 0&quot;' />
             </label>
           </div>
 
@@ -104,10 +104,10 @@
             <button class="btnGhost" id="btnClearPerim" type="button">Clear</button>
           </div>
 
-          <pre class="out" id="perimOut">Enter length and width to calculate total perimeter.</pre>
+          <pre class="out" id="perimOut">Enter valid length and width (tape format). Example: 24' 0" and 12' 0".</pre>
         </div>
 
-        <!-- WALL MATERIALS -->
+        <!-- Wall Materials -->
         <div class="card">
           <div class="cardTop">
             <div>
@@ -120,12 +120,12 @@
           <div class="formGrid">
             <label class="field">
               <span class="label">Wall Length</span>
-              <input id="wallLen" type="text" placeholder='e.g. 24&#39; 0"' />
+              <input id="wallLen" type="text" placeholder='e.g. 24&#39; 0&quot;' />
             </label>
 
             <label class="field">
               <span class="label">Wall Height</span>
-              <input id="wallHt" type="text" placeholder='e.g. 8&#39; 0"' />
+              <input id="wallHt" type="text" placeholder='e.g. 8&#39; 0&quot;' />
             </label>
 
             <label class="field">
@@ -138,37 +138,36 @@
 
             <label class="field">
               <span class="label">Corners (count)</span>
-              <input id="cornerCount" type="number" min="0" step="1" value="2" />
+              <input id="wallCorners" type="number" min="0" step="1" value="2" />
               <span class="hint">Typical wall segment has 2 ends = 2 corners.</span>
             </label>
 
             <label class="field">
               <span class="label">T-Intersections (count)</span>
-              <input id="tCount" type="number" min="0" step="1" value="0" />
+              <input id="wallTees" type="number" min="0" step="1" value="0" />
               <span class="hint">Adds studs for tees/backing (estimate).</span>
             </label>
 
-            <label class="field">
+            <label class="field" style="grid-column:1/-1;">
               <span class="label">Openings (one per line)</span>
-              <textarea id="openings" class="ta" rows="4" placeholder="D 3' 0&#10;W 4' 0&#10;W 2' 6"></textarea>
+              <textarea id="openingsList" rows="4" placeholder="D 3' 0&quot;&#10;W 4' 0&quot;&#10;W 2' 6&quot;"></textarea>
               <span class="hint">Prefix: D door or W window. Width in tape format.</span>
             </label>
 
             <label class="field">
               <span class="label">Header Stock</span>
-              <select id="headerStock">
+              <select id="hdrStock">
                 <option value="2x4">2x4</option>
                 <option value="2x6" selected>2x6</option>
                 <option value="2x8">2x8</option>
                 <option value="2x10">2x10</option>
-                <option value="2x12">2x12</option>
               </select>
-              <span class="hint">Used for material labeling (linear feet).</span>
+              <span class="hint">Used for labeling (linear feet).</span>
             </label>
 
             <label class="field">
               <span class="label">Header Plies</span>
-              <select id="headerPlies">
+              <select id="hdrPlies">
                 <option value="2" selected>2-ply</option>
                 <option value="3">3-ply</option>
               </select>
@@ -223,12 +222,12 @@
         <div class="formGrid">
           <label class="field">
             <span class="label">Room Length</span>
-            <input id="sfLen" type="text" placeholder='e.g. 24&#39; 0"' />
+            <input id="sfLen" type="text" placeholder='e.g. 24&#39; 0&quot;' />
           </label>
 
           <label class="field">
             <span class="label">Room Width</span>
-            <input id="sfWid" type="text" placeholder='e.g. 12&#39; 0"' />
+            <input id="sfWid" type="text" placeholder='e.g. 12&#39; 0&quot;' />
           </label>
 
           <label class="field">
@@ -295,12 +294,12 @@
         <div class="formGrid">
           <label class="field">
             <span class="label">Roof Length (eave)</span>
-            <input id="roofLen" type="text" placeholder='e.g. 24&#39; 0"' />
+            <input id="roofLen" type="text" placeholder='e.g. 24&#39; 0&quot;' />
           </label>
 
           <label class="field">
             <span class="label">Roof Width (ridge to eave run)</span>
-            <input id="roofWid" type="text" placeholder='e.g. 14&#39; 0"' />
+            <input id="roofWid" type="text" placeholder='e.g. 14&#39; 0&quot;' />
           </label>
 
           <label class="field">
@@ -353,13 +352,13 @@
         <div class="formGrid">
           <label class="field">
             <span class="label">Total Rise (finished floor to floor)</span>
-            <input id="stTotalRise" type="text" placeholder='e.g. 9&#39; 1 1/2"' />
+            <input id="stTotalRise" type="text" placeholder='e.g. 9&#39; 1 1/2&quot;' />
             <span class="hint">Measure finished-to-finished if possible.</span>
           </label>
 
           <label class="field">
             <span class="label">Desired Riser Height</span>
-            <input id="stRiserTarget" type="text" placeholder='e.g. 7 1/2"' />
+            <input id="stRiserTarget" type="text" placeholder='e.g. 7 1/2&quot;' />
             <span class="hint">Typical: 7" – 7 3/4"</span>
           </label>
 
@@ -417,23 +416,23 @@
 
           <label class="field">
             <span class="label">Length</span>
-            <input id="concLen" type="text" placeholder='e.g. 12&#39; 0"' />
+            <input id="concLen" type="text" placeholder='e.g. 12&#39; 0&quot;' />
           </label>
 
           <label class="field" id="concWidthField">
             <span class="label">Width</span>
-            <input id="concWid" type="text" placeholder='e.g. 10&#39; 0"  or  16"' />
+            <input id="concWid" type="text" placeholder='e.g. 10&#39; 0&quot;  or  16&quot;' />
             <span class="hint">Footings often use inches (e.g. 16").</span>
           </label>
 
           <label class="field" id="concHeightField" style="display:none;">
             <span class="label">Height</span>
-            <input id="concHt" type="text" placeholder='e.g. 8&#39; 0"' />
+            <input id="concHt" type="text" placeholder='e.g. 8&#39; 0&quot;' />
           </label>
 
           <label class="field">
             <span class="label" id="concThkLabel">Thickness</span>
-            <input id="concThk" type="text" placeholder='e.g. 4"  or  5 1/2"' />
+            <input id="concThk" type="text" placeholder='e.g. 4&quot;  or  5 1/2&quot;' />
             <span class="hint" id="concThkHint">Slabs typically 4" or more.</span>
           </label>
 
@@ -568,7 +567,7 @@
             <button class="pill" data-steps="electrical-ampacity" type="button">Steps</button>
           </div>
 
-          <pre class="out" id="ampacityOut">14 AWG  — 15A
+<pre class="out" id="ampacityOut">14 AWG  — 15A
 12 AWG  — 20A
 10 AWG  — 30A
 8  AWG  — 40A
