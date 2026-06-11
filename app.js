@@ -59,7 +59,8 @@
   }
 
   tabButtons.forEach((btn) => btn.addEventListener("click", () => setActiveTab(btn.dataset.tab)));
-
+setActiveTab("measurements");
+   
   // -----------------------------
   // Modal Steps
   // -----------------------------
@@ -81,7 +82,7 @@ Perimeter = 2 × (Length + Width).
 `,
     "layout-wall": `
 <strong>Wall Materials Estimator</strong><br/>
-Openings: one per line. Example: <code>D 3' 0"</code> or <code>W 4' 0"</code>.
+Openings: one per line.
 `,
     "subfloor": `
 <strong>Subfloor Estimator</strong><br/>
@@ -129,13 +130,12 @@ Quick copper reference only. Verify NEC + local code.
   };
 
   Array.from(document.querySelectorAll("[data-steps]")).forEach((btn) => {
-    btn.addEventListener("click", () => {
-      const key = btn.getAttribute("data-steps");
-      if (!modal || !modalBody) return;
-      modalBody.innerHTML = STEPS[key] || "No steps.";
-      modal.classList.add("isOpen");
-      modal.setAttribute("aria-hidden", "false");
-    });
+  btn.addEventListener("click", () => {
+    const key = btn.getAttribute("data-steps");
+    if (!modal || !modalBody) return;
+    modalBody.innerHTML = STEPS[key] || "No steps.";
+    modal.classList.add("isOpen");
+    modal.setAttribute("aria-hidden", "false");
   });
 
   function closeModal() {
