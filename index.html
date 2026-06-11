@@ -1,4 +1,4 @@
-<!-- index.html — v16 -->
+<!-- index.html — v17 -->
 <!doctype html>
 <html lang="en">
 <head>
@@ -14,7 +14,7 @@
   <header class="appHeader">
     <div class="titleBlock">
       <h1 class="appTitle">Construction Carpentry</h1>
-      <div class="buildLine" id="buildLine">Build: v16 • Live</div>
+      <div class="buildLine" id="buildLine">Build: v17 • Live</div>
     </div>
 
     <nav class="topNav" aria-label="Primary">
@@ -465,7 +465,99 @@ Examples: 7' 10 7/8"  |  5 1/2"  |  96  |  1/4'</pre>
     <!-- ELECTRICAL -->
     <section class="tabPanel" id="tab-electrical">
       <div class="stack">
+<div class="card">
+  <div class="cardTop">
+    <div>
+      <h2>Ohm's Law Calculator</h2>
+      <p class="muted">Solve Voltage, Current, Resistance, Power, and Voltage Drop.</p>
+    </div>
+    <button class="pill" data-steps="electrical-ohms" type="button">Steps</button>
+  </div>
 
+  <div class="formGrid">
+    <label class="field">
+      <span class="label">Voltage (E)</span>
+      <input id="ohmE" type="number" step="any" />
+    </label>
+
+    <label class="field">
+      <span class="label">Current (I / A)</span>
+      <input id="ohmI" type="number" step="any" />
+    </label>
+
+    <label class="field">
+      <span class="label">Resistance (R)</span>
+      <input id="ohmR" type="number" step="any" />
+    </label>
+
+    <label class="field">
+      <span class="label">Power (P / W)</span>
+      <input id="ohmP" type="number" step="any" />
+    </label>
+  </div>
+
+  <div class="btnRow">
+    <button class="btn" id="btnCalcOhms" type="button">Calculate Ohm's Law</button>
+    <button class="btnGhost" id="btnClearOhms" type="button">Clear</button>
+  </div>
+
+  <pre class="out" id="ohmsOut">Enter any two values.</pre>
+
+  <hr style="border:0;border-top:1px solid rgba(255,255,255,.10);margin:18px 0;">
+
+  <div class="formGrid">
+
+    <label class="field">
+      <span class="label">System Voltage</span>
+      <input id="vdVoltage" type="number" value="120" />
+    </label>
+
+    <label class="field">
+      <span class="label">Load Amps</span>
+      <input id="vdAmps" type="number" />
+    </label>
+
+    <label class="field">
+      <span class="label">One-Way Distance (ft)</span>
+      <input id="vdDistance" type="number" />
+    </label>
+
+    <label class="field">
+      <span class="label">Conductor</span>
+      <select id="vdMaterial">
+        <option value="12.9" selected>Copper</option>
+        <option value="21.2">Aluminum</option>
+      </select>
+    </label>
+
+    <label class="field">
+      <span class="label">Wire Size</span>
+      <select id="vdWire">
+        <option value="4110">14 AWG</option>
+        <option value="6530" selected>12 AWG</option>
+        <option value="10380">10 AWG</option>
+        <option value="16510">8 AWG</option>
+        <option value="26240">6 AWG</option>
+        <option value="41740">4 AWG</option>
+        <option value="52620">3 AWG</option>
+        <option value="66360">2 AWG</option>
+        <option value="83690">1 AWG</option>
+        <option value="105600">1/0 AWG</option>
+        <option value="133100">2/0 AWG</option>
+        <option value="167800">3/0 AWG</option>
+        <option value="211600">4/0 AWG</option>
+      </select>
+    </label>
+
+  </div>
+
+  <div class="btnRow">
+    <button class="btn" id="btnCalcVD" type="button">Calculate Voltage Drop</button>
+    <button class="btnGhost" id="btnClearVD" type="button">Clear</button>
+  </div>
+
+  <pre class="out" id="vdOut">Enter values to calculate voltage drop.</pre>
+</div>
         <div class="card">
           <div class="cardTop">
             <div>
