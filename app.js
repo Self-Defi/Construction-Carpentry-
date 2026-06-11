@@ -137,6 +137,7 @@ Quick copper reference only. Verify NEC + local code.
     modal.classList.add("isOpen");
     modal.setAttribute("aria-hidden", "false");
   });
+});
 
   function closeModal() {
     if (!modal) return;
