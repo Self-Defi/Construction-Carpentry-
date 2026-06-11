@@ -1,4 +1,4 @@
-/* app.js — v16 (patched)
+/* app.js — v17 (patched) */
    Fixes:
    - No-crash guards (missing IDs won't kill the app)
    - Measurements tab: ONE input converter (tape, fraction, decimal, mm)
@@ -25,8 +25,7 @@
 
   function updateCacheStatus() {
     const cached = !!navigator.serviceWorker?.controller;
-    if (buildLine) buildLine.textContent = `Build: v16 • ${cached ? "Cached" : "Live"}`;
-  }
+    if (buildLine) buildLine.textContent = `Build: v17 • ${cached ? "Cached" : "Live"}`;
 
   updateCacheStatus();
   navigator.serviceWorker?.addEventListener("controllerchange", updateCacheStatus);
@@ -114,6 +113,21 @@ Pick type, enter dimensions, waste, and rounding.
     "electrical-wire": `
 <strong>Wire Planner</strong><br/>
 Estimate total cable based on runs, slack, and waste.
+`,
+     "electrical-ohms": `
+<strong>Ohm's Law Calculator</strong><br/>
+Enter any two known values.
+
+<ul>
+<li>E = I × R</li>
+<li>I = E ÷ R</li>
+<li>R = E ÷ I</li>
+<li>P = E × I</li>
+<li>I = P ÷ E</li>
+</ul>
+
+Voltage Drop:
+VD = (2 × K × I × D) ÷ CM
 `,
     "electrical-load": `
 <strong>Load Check</strong><br/>
@@ -1008,4 +1022,146 @@ RESULT
     setOut(loadOut, "Enter load to check breaker capacity.");
   });
 
+     // =========================================================
+// ELECTRICAL — OHM'S LAW + VOLTAGE DROP
+// =========================================================
+const ohmE = $("ohmE");
+const ohmI = $("ohmI");
+const ohmR = $("ohmR");
+const ohmP = $("ohmP");
+const ohmsOut = $("ohmsOut");
+
+function numOrNull(el) {
+  const v = Number(el?.value);
+  return isFinite(v) && v > 0 ? v : null;
+}
+
+$("btnCalcOhms")?.addEventListener("click", () => {
+  let E = numOrNull(ohmE);
+  let I = numOrNull(ohmI);
+  let R = numOrNull(ohmR);
+  let P = numOrNull(ohmP);
+
+  let changed = true;
+  let loops = 0;
+
+  while (changed && loops < 10) {
+    changed = false;
+    loops++;
+
+    if (E == null && I != null && R != null) { E = I * R; changed = true; }
+    if (I == null && E != null && R != null) { I = E / R; changed = true; }
+    if (R == null && E != null && I != null) { R = E / I; changed = true; }
+
+    if (P == null && E != null && I != null) { P = E * I; changed = true; }
+    if (E == null && P != null && I != null) { E = P / I; changed = true; }
+    if (I == null && P != null && E != null) { I = P / E; changed = true; }
+
+    if (P != null && R != null && I == null) { I = Math.sqrt(P / R); changed = true; }
+    if (P != null && R != null && E == null) { E = Math.sqrt(P * R); changed = true; }
+    if (E != null && P != null && R == null) { R = (E * E) / P; changed = true; }
+    if (I != null && R != null && P == null) { P = I * I * R; changed = true; }
+  }
+
+  if (E == null || I == null || R == null || P == null) {
+    setOut(ohmsOut, `Enter any two compatible values.
+
+Examples:
+- E + I → finds R and P
+- E + R → finds I and P
+- I + R → finds E and P
+- P + E → finds I and R
+- P + R → finds E and I`);
+    return;
+  }
+
+  setOut(ohmsOut,
+`OHM'S LAW RESULTS
+
+E / Voltage:
+- ${E.toFixed(2)} V
+
+I / A / Current:
+- ${I.toFixed(2)} A
+
+R / Resistance:
+- ${R.toFixed(2)} Ω
+
+P / W / Power:
+- ${P.toFixed(2)} W
+
+FORMULAS USED
+- E = I × R
+- I = E ÷ R
+- R = E ÷ I
+- P/W = E × I
+- A = W ÷ E`
+  );
+});
+
+$("btnClearOhms")?.addEventListener("click", () => {
+  if (ohmE) ohmE.value = "";
+  if (ohmI) ohmI.value = "";
+  if (ohmR) ohmR.value = "";
+  if (ohmP) ohmP.value = "";
+  setOut(ohmsOut, "Enter any two values.");
+});
+
+const vdVoltage = $("vdVoltage");
+const vdAmps = $("vdAmps");
+const vdDistance = $("vdDistance");
+const vdMaterial = $("vdMaterial");
+const vdWire = $("vdWire");
+const vdOut = $("vdOut");
+
+$("btnCalcVD")?.addEventListener("click", () => {
+  const V = Number(vdVoltage?.value || 0);
+  const I = Number(vdAmps?.value || 0);
+  const D = Number(vdDistance?.value || 0);
+  const K = Number(vdMaterial?.value || 12.9);
+  const CM = Number(vdWire?.value || 6530);
+
+  if (V <= 0 || I <= 0 || D <= 0 || K <= 0 || CM <= 0) {
+    setOut(vdOut, "Enter valid voltage, amps, distance, material, and wire size.");
+    return;
+  }
+
+  const drop = (2 * K * I * D) / CM;
+  const endVoltage = V - drop;
+  const dropPct = (drop / V) * 100;
+
+  let status = "OK";
+  if (dropPct > 5) status = "HIGH — check wire size/distance/load";
+  else if (dropPct > 3) status = "ACCEPTABLE BUT WATCH — over 3%";
+
+  setOut(vdOut,
+`VOLTAGE DROP RESULTS
+
+INPUTS
+- Voltage: ${V.toFixed(1)} V
+- Load: ${I.toFixed(2)} A
+- One-way distance: ${D.toFixed(1)} ft
+- K constant: ${K}
+- Circular mils: ${CM}
+
+CALC
+- Voltage drop: ${drop.toFixed(2)} V
+- Voltage at load: ${endVoltage.toFixed(2)} V
+- Drop percentage: ${dropPct.toFixed(2)}%
+
+RESULT
+- Status: ${status}
+
+FORMULA
+VD = (2 × K × I × D) ÷ CM`
+  );
+});
+
+$("btnClearVD")?.addEventListener("click", () => {
+  if (vdVoltage) vdVoltage.value = 120;
+  if (vdAmps) vdAmps.value = "";
+  if (vdDistance) vdDistance.value = "";
+  if (vdMaterial) vdMaterial.value = "12.9";
+  if (vdWire) vdWire.value = "6530";
+  setOut(vdOut, "Enter values to calculate voltage drop.");
 })();
