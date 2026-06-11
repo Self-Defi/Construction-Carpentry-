@@ -1,5 +1,5 @@
-// sw.js — v16 (cache-bust)
-const CACHE = "construction-carpentry-v16-2";
+// sw.js — v17 (cache-bust)
+const CACHE = "construction-carpentry-v17-1";
 const ASSETS = [
   "./",
   "./index.html",
