@@ -1,10 +1,10 @@
-/* app.js — v17 (patched) */
+/* app.js — v17 (patched)
    Fixes:
-   - No-crash guards (missing IDs won't kill the app)
-   - Measurements tab: ONE input converter (tape, fraction, decimal, mm)
-   - Supports: 3' 3 1/2", 96, 5 1/2", 0.125", 1/4'
-   - Layout: adds Perimeter Calculator
-   - Wall estimator retained with bearing rule: <=5' +3", >5' +6"
+   - No-crash guards
+   - Measurements tab converter
+   - Layout perimeter calculator
+   - Wall estimator retained
+   - Electrical Ohm's Law + Voltage Drop calculator added
 */
 
 (function () {
@@ -26,6 +26,7 @@
   function updateCacheStatus() {
     const cached = !!navigator.serviceWorker?.controller;
     if (buildLine) buildLine.textContent = `Build: v17 • ${cached ? "Cached" : "Live"}`;
+  }
 
   updateCacheStatus();
   navigator.serviceWorker?.addEventListener("controllerchange", updateCacheStatus);
@@ -49,7 +50,7 @@
   };
 
   function setActiveTab(name) {
-    tabButtons.forEach(btn => btn.classList.toggle("isActive", btn.dataset.tab === name));
+    tabButtons.forEach((btn) => btn.classList.toggle("isActive", btn.dataset.tab === name));
     Object.entries(panels).forEach(([k, el]) => {
       if (!el) return;
       el.classList.toggle("isActive", k === name);
@@ -57,7 +58,7 @@
     window.scrollTo(0, 0);
   }
 
-  tabButtons.forEach(btn => btn.addEventListener("click", () => setActiveTab(btn.dataset.tab)));
+  tabButtons.forEach((btn) => btn.addEventListener("click", () => setActiveTab(btn.dataset.tab)));
 
   // -----------------------------
   // Modal Steps
@@ -70,37 +71,25 @@
   const STEPS = {
     "measurements-convert": `
 <strong>Measurement Converter</strong><br/>
-1) Enter one measurement (feet/inches, inches, decimals, or fractions). Examples:<br/>
-<ul>
-  <li><code>3' 3 1/2"</code></li>
-  <li><code>96</code> (inches)</li>
-  <li><code>5 1/2"</code></li>
-  <li><code>0.125"</code></li>
-  <li><code>1/4'</code> (fractional feet)</li>
-</ul>
+1) Enter one measurement.<br/>
 2) Tap <strong>Convert</strong>.<br/>
-3) Outputs: tape (nearest 1/16"), fraction inches, decimal inches/feet, and mm.
+3) Outputs tape, fraction inches, decimal inches/feet, and mm.
 `,
     "layout-perimeter": `
 <strong>Perimeter Calculator</strong><br/>
-Perimeter = 2 × (Length + Width).<br/>
-Outputs in feet, inches, and tape (nearest 1/16").
+Perimeter = 2 × (Length + Width).
 `,
     "layout-wall": `
 <strong>Wall Materials Estimator</strong><br/>
-- Stud spacing default: <code>16" O.C.</code><br/>
-- Openings: one per line: <code>D 3' 0"</code> or <code>W 4' 0"</code><br/>
-- Headers bearing rule (total):<br/>
-  • Opening ≤ 5' → +<strong>3"</strong><br/>
-  • Opening > 5' → +<strong>6"</strong><br/>
+Openings: one per line. Example: <code>D 3' 0"</code> or <code>W 4' 0"</code>.
 `,
     "subfloor": `
 <strong>Subfloor Estimator</strong><br/>
-Enter room length/width, pick sheet size, waste, and fastener pattern.
+Enter room length/width, sheet size, waste, and fastener pattern.
 `,
     "roofing": `
 <strong>Roofing</strong><br/>
-Enter eave length, ridge-to-eave run, and pitch (e.g. 6/12).
+Enter eave length, ridge-to-eave run, and pitch.
 `,
     "stairs": `
 <strong>Stairs</strong><br/>
@@ -114,7 +103,7 @@ Pick type, enter dimensions, waste, and rounding.
 <strong>Wire Planner</strong><br/>
 Estimate total cable based on runs, slack, and waste.
 `,
-     "electrical-ohms": `
+    "electrical-ohms": `
 <strong>Ohm's Law Calculator</strong><br/>
 Enter any two known values.
 
@@ -126,7 +115,7 @@ Enter any two known values.
 <li>I = P ÷ E</li>
 </ul>
 
-Voltage Drop:
+Voltage Drop:<br/>
 VD = (2 × K × I × D) ÷ CM
 `,
     "electrical-load": `
@@ -139,7 +128,7 @@ Quick copper reference only. Verify NEC + local code.
 `,
   };
 
-  Array.from(document.querySelectorAll("[data-steps]")).forEach(btn => {
+  Array.from(document.querySelectorAll("[data-steps]")).forEach((btn) => {
     btn.addEventListener("click", () => {
       const key = btn.getAttribute("data-steps");
       if (!modal || !modalBody) return;
@@ -162,17 +151,15 @@ Quick copper reference only. Verify NEC + local code.
   });
 
   // =========================================================
-  // MEASUREMENT PARSING + FORMATTING (robust)
+  // MEASUREMENT PARSING + FORMATTING
   // =========================================================
   function cleanQuotes(s) {
-    return String(s)
-      .replace(/[“”]/g, '"')
-      .replace(/[‘’]/g, "'")
-      .trim();
+    return String(s).replace(/[“”]/g, '"').replace(/[‘’]/g, "'").trim();
   }
 
   function gcd(a, b) {
-    a = Math.abs(a); b = Math.abs(b);
+    a = Math.abs(a);
+    b = Math.abs(b);
     while (b) [a, b] = [b, a % b];
     return a || 1;
   }
@@ -207,22 +194,17 @@ Quick copper reference only. Verify NEC + local code.
       const v = parseFractionToken(tokens[0]);
       return v == null ? null : v;
     }
+
     if (tokens.length === 2) {
       const whole = parseFractionToken(tokens[0]);
       const frac = parseFractionToken(tokens[1]);
       if (whole == null || frac == null) return null;
       return whole + frac;
     }
+
     return null;
   }
 
-  // Parse ANY length into inches
-  // Supports:
-  //  - 3' 3 1/2"
-  //  - 5 1/2"
-  //  - 96
-  //  - 0.125"
-  //  - 1/4'   (fractional feet)
   function parseLengthToInches(input) {
     if (input == null) return null;
     let s = cleanQuotes(input);
@@ -230,7 +212,6 @@ Quick copper reference only. Verify NEC + local code.
 
     s = s.replace(/,/g, " ").replace(/\s+/g, " ").trim();
 
-    // Handle fractional feet like "1/4'"
     if (s.endsWith("'") && !s.includes('"')) {
       const feetStr = s.slice(0, -1).trim();
       const ft = parseFractionToken(feetStr);
@@ -238,13 +219,10 @@ Quick copper reference only. Verify NEC + local code.
       return ft * 12;
     }
 
-    // If contains feet mark, parse feet + remaining inches
     if (s.includes("'")) {
       const parts = s.split("'");
-      if (parts.length < 2) return null;
-
       const feetStr = parts[0].trim();
-      // allow integer feet only here
+
       if (!/^\-?\d+$/.test(feetStr)) return null;
       const feet = Number(feetStr);
 
@@ -255,7 +233,6 @@ Quick copper reference only. Verify NEC + local code.
       return feet * 12 + inches;
     }
 
-    // If ends with inches quote, remove it; otherwise treat as inches anyway
     const inches = parseInchesPart(s);
     if (inches == null) return null;
     return inches;
@@ -291,8 +268,7 @@ Quick copper reference only. Verify NEC + local code.
     let inchStr = `${wholeIn}`;
     if (num !== 0) {
       const simp = simplifyFraction(num, den);
-      if (wholeIn === 0) inchStr = `${simp.num}/${simp.den}`;
-      else inchStr = `${wholeIn} ${simp.num}/${simp.den}`;
+      inchStr = wholeIn === 0 ? `${simp.num}/${simp.den}` : `${wholeIn} ${simp.num}/${simp.den}`;
     }
 
     return `${sign}${feet}' ${inchStr}"`;
@@ -303,19 +279,15 @@ Quick copper reference only. Verify NEC + local code.
     const sign = inchesFloat < 0 ? "-" : "";
     const total = Math.abs(inchesFloat);
 
-    const whole = Math.floor(total);
     const r = roundToNearestFraction(total, fracDen);
-    let w = r.whole;
-    let num = r.num;
-    let den = r.den;
+    const w = r.whole;
+    const num = r.num;
+    const den = r.den;
 
-    // r.whole already includes integer inches
-    // num/den is fractional part
     if (num === 0) return `${sign}${w}"`;
 
     const simp = simplifyFraction(num, den);
-    if (w === 0) return `${sign}${simp.num}/${simp.den}"`;
-    return `${sign}${w} ${simp.num}/${simp.den}"`;
+    return w === 0 ? `${sign}${simp.num}/${simp.den}"` : `${sign}${w} ${simp.num}/${simp.den}"`;
   }
 
   function roundMaybe(x, stepStr) {
@@ -327,7 +299,7 @@ Quick copper reference only. Verify NEC + local code.
   }
 
   // =========================================================
-  // MEASUREMENTS — One input converter
+  // MEASUREMENTS
   // =========================================================
   const measIn = $("measIn");
   const measRound = $("measRound");
@@ -335,6 +307,7 @@ Quick copper reference only. Verify NEC + local code.
 
   $("btnMeasConvert")?.addEventListener("click", () => {
     const inches = parseLengthToInches(measIn?.value);
+
     if (inches == null || !isFinite(inches)) {
       setOut(measOut, `Enter a valid measurement.
 Examples: 7' 10 7/8"  |  5 1/2"  |  96  |  1/4'`);
@@ -347,18 +320,15 @@ Examples: 7' 10 7/8"  |  5 1/2"  |  96  |  1/4'`);
     const decFeet = roundMaybe(inches / 12, r);
     const mm = roundMaybe(inches * 25.4, r);
 
-    setOut(measOut,
-      `INPUT
-- Parsed inches (raw): ${inches.toFixed(6)}
+    setOut(measOut, `INPUT
+- Parsed inches: ${inches.toFixed(6)}
 
 OUTPUTS
-- Tape (nearest 1/16"): ${formatInchesAsFeetInches(inches, 16)}
-- Fraction inches:       ${formatInchesAsFraction(inches, 16)}
-- Decimal inches:        ${decInches.toFixed(6)}
-- Decimal feet:          ${decFeet.toFixed(6)}
-- Millimeters:           ${mm.toFixed(3)} mm
-`
-    );
+- Tape:           ${formatInchesAsFeetInches(inches)}
+- Fraction inch:  ${formatInchesAsFraction(inches)}
+- Decimal inches: ${decInches.toFixed(6)}
+- Decimal feet:   ${decFeet.toFixed(6)}
+- Millimeters:    ${mm.toFixed(3)} mm`);
   });
 
   $("btnMeasClear")?.addEventListener("click", () => {
@@ -369,7 +339,7 @@ Examples: 7' 10 7/8"  |  5 1/2"  |  96  |  1/4'`);
   });
 
   // =========================================================
-  // LAYOUT — Perimeter Calculator
+  // LAYOUT — PERIMETER
   // =========================================================
   const perimLen = $("perimLen");
   const perimWid = $("perimWid");
@@ -380,34 +350,30 @@ Examples: 7' 10 7/8"  |  5 1/2"  |  96  |  1/4'`);
     const W = parseLengthToInches(perimWid?.value);
 
     if (L == null || W == null || L <= 0 || W <= 0) {
-      setOut(perimOut, `Enter valid length and width (tape format). Example: 24' 0" and 12' 0".`);
+      setOut(perimOut, `Enter valid length and width. Example: 24' 0" and 12' 0".`);
       return;
     }
 
     const P = 2 * (L + W);
-    const Pft = P / 12;
 
-    setOut(perimOut,
-      `INPUTS
+    setOut(perimOut, `INPUTS
 - Length: ${formatInchesAsFeetInches(L)}
 - Width:  ${formatInchesAsFeetInches(W)}
 
 PERIMETER
 - Inches: ${P.toFixed(2)}"
-- Feet:   ${Pft.toFixed(2)} ft
-- Tape:   ${formatInchesAsFeetInches(P)}
-`
-    );
+- Feet:   ${(P / 12).toFixed(2)} ft
+- Tape:   ${formatInchesAsFeetInches(P)}`);
   });
 
   $("btnClearPerim")?.addEventListener("click", () => {
     if (perimLen) perimLen.value = "";
     if (perimWid) perimWid.value = "";
-    setOut(perimOut, `Enter valid length and width (tape format). Example: 24' 0" and 12' 0".`);
+    setOut(perimOut, `Enter valid length and width. Example: 24' 0" and 12' 0".`);
   });
 
   // =========================================================
-  // LAYOUT — Wall Materials Estimator
+  // LAYOUT — WALL MATERIALS
   // =========================================================
   const wallLen = $("wallLen");
   const wallHt = $("wallHt");
@@ -423,49 +389,48 @@ PERIMETER
   const wallOut = $("wallOut");
 
   function parseOpenings(text) {
-    const lines = String(text || "").split("\n").map(s => s.trim()).filter(Boolean);
+    const lines = String(text || "").split("\n").map((s) => s.trim()).filter(Boolean);
     const out = [];
+
     for (const line of lines) {
       const m = line.match(/^([DW])\s+(.+)$/i);
       if (!m) continue;
+
       const type = m[1].toUpperCase();
       const widthIn = parseLengthToInches(m[2]);
+
       if (widthIn == null || widthIn <= 0) continue;
       out.push({ type, widthIn, raw: line });
     }
+
     return out;
   }
 
   function bearingAllowanceTotal(widthIn) {
-    return (widthIn <= 60) ? 3 : 6; // total bearing
+    return widthIn <= 60 ? 3 : 6;
   }
 
-  function calcWall() {
+  $("btnCalcWall")?.addEventListener("click", () => {
     const L_in = parseLengthToInches(wallLen?.value);
     const H_in = parseLengthToInches(wallHt?.value);
 
     if (L_in == null || H_in == null || L_in <= 0 || H_in <= 0) {
-      setOut(wallOut, "Enter valid wall length and height (tape format).");
+      setOut(wallOut, "Enter valid wall length and height.");
       return;
     }
 
     const spacing = Number(studSpacing?.value || 16);
     const waste = Math.max(0, Number(wastePct?.value || 0)) / 100;
-
     const corners = Math.max(0, Math.floor(Number(wallCorners?.value || 0)));
     const tees = Math.max(0, Math.floor(Number(wallTees?.value || 0)));
+    const plies = Math.max(1, Number(hdrPlies?.value || 2));
 
     const L_ft = L_in / 12;
     const H_ft = H_in / 12;
     const wallArea = L_ft * H_ft;
-
     const baseStuds = Math.ceil(L_in / spacing) + 1;
-
-    const cornerStuds = 3;
-    const cornerAdds = corners * Math.max(0, cornerStuds - 1);
-
+    const cornerAdds = corners * 2;
     const teeAdds = tees * 2;
-
     const openings = parseOpenings(openingsList?.value);
 
     let removedInterior = 0;
@@ -477,20 +442,13 @@ PERIMETER
     let cripplesAbove = 0;
     let cripplesBelow = 0;
 
-    const plies = Math.max(1, Number(hdrPlies?.value || 2));
-
     for (const op of openings) {
-      const w = op.widthIn;
-
-      const interior = Math.max(0, Math.ceil(w / spacing) - 1);
+      const interior = Math.max(0, Math.ceil(op.widthIn / spacing) - 1);
       removedInterior += interior;
-
       kingStuds += 2;
       jackStuds += 2;
 
-      const bearing = bearingAllowanceTotal(w);
-      const headerLenIn = w + bearing;
-
+      const headerLenIn = op.widthIn + bearingAllowanceTotal(op.widthIn);
       headerLF += headerLenIn / 12;
       headerBoardLF += (headerLenIn / 12) * plies;
 
@@ -502,23 +460,16 @@ PERIMETER
       }
     }
 
-    const studsTotal = Math.max(
-      0,
-      baseStuds - removedInterior + kingStuds + jackStuds + cornerAdds + teeAdds
-    );
+    const studsTotal = Math.max(0, baseStuds - removedInterior + kingStuds + jackStuds + cornerAdds + teeAdds);
+    const [sw, sh] = sheetSize?.value === "4x12" ? [4, 12] : [4, 8];
+    const sheets = Math.ceil((wallArea / (sw * sh)) * (1 + waste));
 
-    const [sw, sh] = (sheetSize?.value === "4x12") ? [4, 12] : [4, 8];
-    const sheetArea = sw * sh;
-    const sheets = Math.ceil((wallArea / sheetArea) * (1 + waste));
-
-    const hdrLabel = `${hdrStock?.value || "2x6"} (${plies}-ply)`;
     const openingsSummary =
       openings.length === 0
         ? "None"
-        : openings.map(o => `${o.type} ${formatInchesAsFeetInches(o.widthIn)}`).join(", ");
+        : openings.map((o) => `${o.type} ${formatInchesAsFeetInches(o.widthIn)}`).join(", ");
 
-    setOut(wallOut,
-      `INPUTS
+    setOut(wallOut, `INPUTS
 - Wall Length: ${formatInchesAsFeetInches(L_in)}
 - Wall Height: ${formatInchesAsFeetInches(H_in)}
 - Stud Spacing: ${spacing}" O.C.
@@ -528,37 +479,30 @@ PERIMETER
 - Waste: ${Math.round(waste * 100)}%
 
 AREA + SHEETS
-- Wall Area (one side): ${wallArea.toFixed(2)} sq ft
-- Sheets (${(sheetSize?.value || "").toUpperCase()}): ${sheets} pcs (incl. waste)
+- Wall Area: ${wallArea.toFixed(2)} sq ft
+- Sheets: ${sheets} pcs
 
-STUDS (FAST ESTIMATE)
-- Base studs along length: ${baseStuds}
-- Removed interior (openings): ${removedInterior}
-- King studs (openings): ${kingStuds}
-- Jack studs (openings): ${jackStuds}
-- Corner adds (3-stud corner model): ${cornerAdds}
+STUDS
+- Base studs: ${baseStuds}
+- Removed at openings: ${removedInterior}
+- King studs: ${kingStuds}
+- Jack studs: ${jackStuds}
+- Corner adds: ${cornerAdds}
 - Tee adds: ${teeAdds}
-= TOTAL STUDS (est.): ${studsTotal} pcs
+= TOTAL STUDS: ${studsTotal}
 
-HEADERS + OPENING PARTS
-- Bearing rule used:
-  • ≤ 5' opening → +3" total bearing
-  • > 5' opening → +6" total bearing
-- Header LF (one header length each): ${headerLF.toFixed(2)} lf
-- Header material: ${hdrLabel}
-- Header stock LF (plies included): ${headerBoardLF.toFixed(2)} lf
+HEADERS
+- Header LF: ${headerLF.toFixed(2)} lf
+- Header material: ${hdrStock?.value || "2x6"} (${plies}-ply)
+- Header stock LF: ${headerBoardLF.toFixed(2)} lf
 - Window sills: ${sillCount}
-- Cripples above headers (rough): ${cripplesAbove}
-- Cripples below sills (rough): ${cripplesBelow}
+- Cripples above: ${cripplesAbove}
+- Cripples below: ${cripplesBelow}
 
 NOTES
-- Fast estimator — verify against drawings/load path/code.
-- Hang direction selected: ${(hangDir?.value || "vertical").toUpperCase()}
-`
-    );
-  }
-
-  $("btnCalcWall")?.addEventListener("click", calcWall);
+- Hang direction: ${(hangDir?.value || "vertical").toUpperCase()}
+- Fast estimate only. Verify drawings/code.`);
+  });
 
   $("btnClearWall")?.addEventListener("click", () => {
     if (wallLen) wallLen.value = "";
@@ -613,58 +557,44 @@ NOTES
   sfPattern?.addEventListener("change", applyPatternDefaults);
   applyPatternDefaults();
 
-  function inchesOnlyLabel(inchesVal) {
-    const s = formatInchesAsFeetInches(inchesVal);
-    return s.replace(/^\-?\d+'\s/, "");
-  }
-
-  function calcSubfloor() {
+  $("btnCalcSubfloor")?.addEventListener("click", () => {
     const L_in = parseLengthToInches(sfLen?.value);
     const W_in = parseLengthToInches(sfWid?.value);
 
     if (L_in == null || W_in == null || L_in <= 0 || W_in <= 0) {
-      setOut(subfloorOut, "Enter valid room length and width (tape format).");
+      setOut(subfloorOut, "Enter valid room length and width.");
       return;
     }
 
     const waste = Math.max(0, Number(sfWaste?.value || 0)) / 100;
-    const [sw, sh] = (sfSheet?.value === "4x4") ? [4, 4] : [4, 8];
-    const sheetArea = sw * sh;
-
+    const [sw, sh] = sfSheet?.value === "4x4" ? [4, 4] : [4, 8];
     const area = (L_in / 12) * (W_in / 12);
-    const sheets = Math.ceil((area / sheetArea) * (1 + waste));
+    const sheets = Math.ceil((area / (sw * sh)) * (1 + waste));
 
     const edgeSpacing = parseLengthToInches(sfEdge?.value);
     const fieldSpacing = parseLengthToInches(sfField?.value);
 
     if (edgeSpacing == null || fieldSpacing == null || edgeSpacing <= 0 || fieldSpacing <= 0) {
-      setOut(subfloorOut, 'Fastener spacing is invalid. Use format like 6" or 5 1/2".');
+      setOut(subfloorOut, `Fastener spacing is invalid. Use format like 6".`);
       return;
     }
 
-    const baseEdge = 6;
-    const baseField = 12;
-    const factor = (baseEdge / edgeSpacing) * 0.55 + (baseField / fieldSpacing) * 0.45;
-    const screwsPer4x8 = 50 * factor;
-    const sheetFactor = (sfSheet?.value === "4x4" ? 0.55 : 1);
-    const screws = Math.ceil(screwsPer4x8 * sheets * sheetFactor);
+    const factor = (6 / edgeSpacing) * 0.55 + (12 / fieldSpacing) * 0.45;
+    const sheetFactor = sfSheet?.value === "4x4" ? 0.55 : 1;
+    const screws = Math.ceil(50 * factor * sheets * sheetFactor);
 
-    setOut(subfloorOut,
-      `Room: ${formatInchesAsFeetInches(L_in)} × ${formatInchesAsFeetInches(W_in)}
+    setOut(subfloorOut, `Room: ${formatInchesAsFeetInches(L_in)} × ${formatInchesAsFeetInches(W_in)}
 Area: ${area.toFixed(2)} sq ft
-Sheets (${(sfSheet?.value || "").toUpperCase()}): ${sheets} pcs (incl. ${Math.round(waste * 100)}% waste)
+Sheets: ${sheets} pcs
 
 Fasteners:
-- Edge spacing: ${inchesOnlyLabel(edgeSpacing)}
-- Field spacing: ${inchesOnlyLabel(fieldSpacing)}
-- Screws (rough est.): ${screws} pcs
+- Edge spacing: ${formatInchesAsFraction(edgeSpacing)}
+- Field spacing: ${formatInchesAsFraction(fieldSpacing)}
+- Screws rough estimate: ${screws}
 
-Adhesive: ${sfAdhesive?.value === "yes" ? "YES (default)" : "NO"}
-Note: Screw counts vary by layout/spec.`
-    );
-  }
+Adhesive: ${sfAdhesive?.value === "yes" ? "YES" : "NO"}`);
+  });
 
-  $("btnCalcSubfloor")?.addEventListener("click", calcSubfloor);
   $("btnClearSubfloor")?.addEventListener("click", () => {
     if (sfLen) sfLen.value = "";
     if (sfWid) sfWid.value = "";
@@ -688,7 +618,7 @@ Note: Screw counts vary by layout/spec.`
   const roofOut = $("roofOut");
 
   function parsePitch(p) {
-    const s = (p || "").trim();
+    const s = String(p || "").trim();
     if (!s) return null;
 
     const m = s.match(/^(\d+(\.\d+)?)\s*\/\s*12$/);
@@ -706,52 +636,39 @@ Note: Screw counts vary by layout/spec.`
     return null;
   }
 
-  function calcRoof() {
+  $("btnCalcRoof")?.addEventListener("click", () => {
     const L_in = parseLengthToInches(roofLen?.value);
     const W_in = parseLengthToInches(roofWid?.value);
     const pitchRisePer12 = parsePitch(roofPitch?.value);
 
-    if (L_in == null || W_in == null || L_in <= 0 || W_in <= 0 || pitchRisePer12 == null || pitchRisePer12 < 0) {
-      setOut(roofOut, "Enter valid roof length, ridge→eave run, and pitch (e.g. 6/12).");
+    if (L_in == null || W_in == null || pitchRisePer12 == null || L_in <= 0 || W_in <= 0) {
+      setOut(roofOut, "Enter valid roof length, run, and pitch.");
       return;
     }
 
     const waste = Math.max(0, Number(roofWaste?.value || 0)) / 100;
     const bundlesPerSquare = Number(roofBundlesPerSquare?.value || 3);
+    const slopeFactor = Math.sqrt(144 + pitchRisePer12 * pitchRisePer12) / 12;
+    const planes = roofPlanes?.value === "two" ? 2 : 1;
 
-    const slopeFactor = Math.sqrt(12 * 12 + pitchRisePer12 * pitchRisePer12) / 12;
-    const planes = (roofPlanes?.value === "two") ? 2 : 1;
-
-    const L_ft = L_in / 12;
-    const run_ft = W_in / 12;
-    const slopeWidth_ft = run_ft * slopeFactor;
-
-    const planeArea = L_ft * slopeWidth_ft;
-    const totalArea = planeArea * planes;
-    const totalAreaWithWaste = totalArea * (1 + waste);
-
-    const squares = totalAreaWithWaste / 100;
+    const area = (L_in / 12) * (W_in / 12) * slopeFactor * planes;
+    const areaWaste = area * (1 + waste);
+    const squares = areaWaste / 100;
     const bundles = Math.ceil(squares * bundlesPerSquare);
 
-    setOut(roofOut,
-      `INPUTS
+    setOut(roofOut, `INPUTS
 - Eave length: ${formatInchesAsFeetInches(L_in)}
-- Ridge→eave run: ${formatInchesAsFeetInches(W_in)} (${run_ft.toFixed(2)} ft)
+- Run: ${formatInchesAsFeetInches(W_in)}
 - Pitch: ${pitchRisePer12.toFixed(2)}/12
 - Planes: ${planes}
-- Waste: ${Math.round(waste * 100)}%
 
 AREA + MATERIALS
-- Total area (no waste): ${totalArea.toFixed(2)} sq ft
-- Total area (+waste): ${totalAreaWithWaste.toFixed(2)} sq ft
+- Area no waste: ${area.toFixed(2)} sq ft
+- Area with waste: ${areaWaste.toFixed(2)} sq ft
 - Squares: ${squares.toFixed(2)}
-- Bundles (@ ${bundlesPerSquare}/square): ${bundles}
+- Bundles: ${bundles}`);
+  });
 
-Note: Valleys/hips/details increase materials.`
-    );
-  }
-
-  $("btnCalcRoof")?.addEventListener("click", calcRoof);
   $("btnClearRoof")?.addEventListener("click", () => {
     if (roofLen) roofLen.value = "";
     if (roofWid) roofWid.value = "";
@@ -776,10 +693,7 @@ Note: Valleys/hips/details increase materials.`
     const riserTargetIn = parseLengthToInches(stRiserTarget?.value);
     const treadDepthIn = parseLengthToInches(stTreadDepth?.value);
 
-    if (
-      totalRiseIn == null || riserTargetIn == null || treadDepthIn == null ||
-      totalRiseIn <= 0 || riserTargetIn <= 0 || treadDepthIn <= 0
-    ) {
+    if (totalRiseIn == null || riserTargetIn == null || treadDepthIn == null || totalRiseIn <= 0 || riserTargetIn <= 0 || treadDepthIn <= 0) {
       setOut(stairsOut, "Enter valid stair measurements.");
       return;
     }
@@ -788,13 +702,9 @@ Note: Valleys/hips/details increase materials.`
     const actualRiser = totalRiseIn / risers;
     const treads = Math.max(0, risers - 1);
     const totalRunIn = treads * treadDepthIn;
-    const stringerLenIn = Math.sqrt((totalRiseIn ** 2) + (totalRunIn ** 2));
+    const stringerLenIn = Math.sqrt(totalRiseIn ** 2 + totalRunIn ** 2);
 
-    const riserOK = actualRiser >= 7 && actualRiser <= 7.75;
-    const treadOK = treadDepthIn >= 10;
-
-    setOut(stairsOut,
-`STAIR LAYOUT RESULTS
+    setOut(stairsOut, `STAIR LAYOUT RESULTS
 
 Total Rise: ${formatInchesAsFeetInches(totalRiseIn)}
 Number of Risers: ${risers}
@@ -806,24 +716,19 @@ Total Run: ${formatInchesAsFeetInches(totalRunIn)}
 
 Stringer Length: ${formatInchesAsFeetInches(stringerLenIn)}
 
-CHECKS
-Riser Height: ${riserOK ? "OK" : "CHECK CODE"}
-Tread Depth: ${treadOK ? "OK" : "CHECK CODE"}
-
-Note: Verify code + finish thickness before cutting.`
-    );
+Note: Verify code + finish thickness before cutting.`);
   });
 
   $("btnClearStairs")?.addEventListener("click", () => {
     if (stTotalRise) stTotalRise.value = "";
     if (stRiserTarget) stRiserTarget.value = "";
-    if (stTreadDepth) stTreadDepth.value = '10"';
+    if (stTreadDepth) stTreadDepth.value = `10"`;
     if (stNosing) stNosing.value = "yes";
     setOut(stairsOut, "Enter total rise and target riser height.");
   });
 
   // =========================================================
-  // CONCRETE (unchanged logic, guarded)
+  // CONCRETE
   // =========================================================
   const concType = $("concType");
   const concTypeHint = $("concTypeHint");
@@ -849,19 +754,19 @@ Note: Verify code + finish thickness before cutting.`
       if (concWidthField) concWidthField.style.display = "";
       if (concHeightField) concHeightField.style.display = "none";
       if (concThkLabel) concThkLabel.textContent = "Thickness";
-      if (concThkHint) concThkHint.textContent = 'Slabs typically 4" or more.';
+      if (concThkHint) concThkHint.textContent = `Slabs typically 4" or more.`;
     } else if (t === "footing") {
       concTypeHint.textContent = "Footing = Length × Width × Depth";
       if (concWidthField) concWidthField.style.display = "";
       if (concHeightField) concHeightField.style.display = "none";
       if (concThkLabel) concThkLabel.textContent = "Depth";
-      if (concThkHint) concThkHint.textContent = 'Footings often use inches (e.g. 16").';
+      if (concThkHint) concThkHint.textContent = `Footings often use inches.`;
     } else {
       concTypeHint.textContent = "Wall = Length × Height × Thickness";
       if (concWidthField) concWidthField.style.display = "none";
       if (concHeightField) concHeightField.style.display = "";
       if (concThkLabel) concThkLabel.textContent = "Thickness";
-      if (concThkHint) concThkHint.textContent = 'Walls: thickness is usually inches.';
+      if (concThkHint) concThkHint.textContent = "Walls: thickness is usually inches.";
     }
   }
 
@@ -903,32 +808,21 @@ Note: Verify code + finish thickness before cutting.`
 
     volIn3 *= qty;
 
-    const yd3 = volIn3 / (36 ** 3);
+    const yd3 = volIn3 / 46656;
     const yd3Waste = yd3 * (1 + waste);
-    const ordered = (roundStep > 0) ? roundUpTo(yd3Waste, roundStep) : yd3Waste;
-
+    const ordered = roundStep > 0 ? roundUpTo(yd3Waste, roundStep) : yd3Waste;
     const ft3 = yd3Waste * 27;
-    const bags80 = Math.ceil(ft3 / 0.60);
+    const bags80 = Math.ceil(ft3 / 0.6);
     const bags60 = Math.ceil(ft3 / 0.45);
 
-    setOut(concreteOut,
-      `INPUTS
-- Type: ${t.toUpperCase()}
-- Quantity: ${qty}
-- Waste: ${Math.round(waste * 100)}%
+    setOut(concreteOut, `VOLUME
+- Cubic yards raw: ${yd3.toFixed(3)} yd³
+- Cubic yards with waste: ${yd3Waste.toFixed(3)} yd³
+- Order rounded: ${ordered.toFixed(3)} yd³
 
-VOLUME
-- Cubic yards (raw): ${yd3.toFixed(3)} yd³
-- Cubic yards (+waste): ${yd3Waste.toFixed(3)} yd³
-- Order (rounded): ${ordered.toFixed(3)} yd³
-
-BAG ESTIMATES (approx)
+BAG ESTIMATES
 - 80 lb bags: ${bags80}
-- 60 lb bags: ${bags60}
-
-NOTE
-- Bag yields vary by mix & water. Ready-mix is better for larger pours.`
-    );
+- 60 lb bags: ${bags60}`);
   });
 
   $("btnClearConcrete")?.addEventListener("click", () => {
@@ -945,7 +839,7 @@ NOTE
   });
 
   // =========================================================
-  // ELECTRICAL
+  // ELECTRICAL — WIRE LENGTH
   // =========================================================
   const elCable = $("elCable");
   const elRuns = $("elRuns");
@@ -964,8 +858,7 @@ NOTE
     const slackTotal = runs * slack;
     const total = (base + slackTotal) * (1 + waste);
 
-    setOut(wireOut,
-      `CABLE
+    setOut(wireOut, `CABLE
 - Type: ${elCable?.value || ""}
 - Runs: ${runs}
 
@@ -973,8 +866,7 @@ LENGTH
 - Base: ${base.toFixed(1)} ft
 - Slack: ${slackTotal.toFixed(1)} ft
 - Waste: ${Math.round(waste * 100)}%
-= TOTAL: ${total.toFixed(1)} ft`
-    );
+= TOTAL: ${total.toFixed(1)} ft`);
   });
 
   $("btnClearWire")?.addEventListener("click", () => {
@@ -986,6 +878,9 @@ LENGTH
     setOut(wireOut, "Enter run details to estimate cable length.");
   });
 
+  // =========================================================
+  // ELECTRICAL — LOAD CHECK
+  // =========================================================
   const elVoltage = $("elVoltage");
   const elBreaker = $("elBreaker");
   const elWatts = $("elWatts");
@@ -996,23 +891,21 @@ LENGTH
     const breaker = Number(elBreaker?.value || 20);
     const watts = Math.max(0, Number(elWatts?.value || 0));
 
-    const amps = (V > 0) ? watts / V : 0;
-    const maxContinuous = breaker * 0.80;
+    const amps = V > 0 ? watts / V : 0;
+    const maxContinuous = breaker * 0.8;
     const ok = amps <= maxContinuous;
 
-    setOut(loadOut,
-      `INPUTS
+    setOut(loadOut, `INPUTS
 - Voltage: ${V}V
 - Breaker: ${breaker}A
 - Load: ${watts.toFixed(0)} W
 
 CALC
 - Current draw: ${amps.toFixed(2)} A
-- 80% limit:    ${maxContinuous.toFixed(2)} A
+- 80% limit: ${maxContinuous.toFixed(2)} A
 
 RESULT
-- Status: ${ok ? "OK (within 80%)" : "OVER (reduce load or upsize circuit)"}`
-    );
+- Status: ${ok ? "OK" : "OVER"}`);
   });
 
   $("btnClearLoad")?.addEventListener("click", () => {
@@ -1022,49 +915,49 @@ RESULT
     setOut(loadOut, "Enter load to check breaker capacity.");
   });
 
-     // =========================================================
-// ELECTRICAL — OHM'S LAW + VOLTAGE DROP
-// =========================================================
-const ohmE = $("ohmE");
-const ohmI = $("ohmI");
-const ohmR = $("ohmR");
-const ohmP = $("ohmP");
-const ohmsOut = $("ohmsOut");
+  // =========================================================
+  // ELECTRICAL — OHM'S LAW + VOLTAGE DROP
+  // =========================================================
+  const ohmE = $("ohmE");
+  const ohmI = $("ohmI");
+  const ohmR = $("ohmR");
+  const ohmP = $("ohmP");
+  const ohmsOut = $("ohmsOut");
 
-function numOrNull(el) {
-  const v = Number(el?.value);
-  return isFinite(v) && v > 0 ? v : null;
-}
-
-$("btnCalcOhms")?.addEventListener("click", () => {
-  let E = numOrNull(ohmE);
-  let I = numOrNull(ohmI);
-  let R = numOrNull(ohmR);
-  let P = numOrNull(ohmP);
-
-  let changed = true;
-  let loops = 0;
-
-  while (changed && loops < 10) {
-    changed = false;
-    loops++;
-
-    if (E == null && I != null && R != null) { E = I * R; changed = true; }
-    if (I == null && E != null && R != null) { I = E / R; changed = true; }
-    if (R == null && E != null && I != null) { R = E / I; changed = true; }
-
-    if (P == null && E != null && I != null) { P = E * I; changed = true; }
-    if (E == null && P != null && I != null) { E = P / I; changed = true; }
-    if (I == null && P != null && E != null) { I = P / E; changed = true; }
-
-    if (P != null && R != null && I == null) { I = Math.sqrt(P / R); changed = true; }
-    if (P != null && R != null && E == null) { E = Math.sqrt(P * R); changed = true; }
-    if (E != null && P != null && R == null) { R = (E * E) / P; changed = true; }
-    if (I != null && R != null && P == null) { P = I * I * R; changed = true; }
+  function numOrNull(el) {
+    const v = Number(el?.value);
+    return isFinite(v) && v > 0 ? v : null;
   }
 
-  if (E == null || I == null || R == null || P == null) {
-    setOut(ohmsOut, `Enter any two compatible values.
+  $("btnCalcOhms")?.addEventListener("click", () => {
+    let E = numOrNull(ohmE);
+    let I = numOrNull(ohmI);
+    let R = numOrNull(ohmR);
+    let P = numOrNull(ohmP);
+
+    let changed = true;
+    let loops = 0;
+
+    while (changed && loops < 10) {
+      changed = false;
+      loops++;
+
+      if (E == null && I != null && R != null) { E = I * R; changed = true; }
+      if (I == null && E != null && R != null) { I = E / R; changed = true; }
+      if (R == null && E != null && I != null) { R = E / I; changed = true; }
+
+      if (P == null && E != null && I != null) { P = E * I; changed = true; }
+      if (E == null && P != null && I != null) { E = P / I; changed = true; }
+      if (I == null && P != null && E != null) { I = P / E; changed = true; }
+
+      if (P != null && R != null && I == null) { I = Math.sqrt(P / R); changed = true; }
+      if (P != null && R != null && E == null) { E = Math.sqrt(P * R); changed = true; }
+      if (E != null && P != null && R == null) { R = (E * E) / P; changed = true; }
+      if (I != null && R != null && P == null) { P = I * I * R; changed = true; }
+    }
+
+    if (E == null || I == null || R == null || P == null) {
+      setOut(ohmsOut, `Enter any two compatible values.
 
 Examples:
 - E + I → finds R and P
@@ -1072,11 +965,10 @@ Examples:
 - I + R → finds E and P
 - P + E → finds I and R
 - P + R → finds E and I`);
-    return;
-  }
+      return;
+    }
 
-  setOut(ohmsOut,
-`OHM'S LAW RESULTS
+    setOut(ohmsOut, `OHM'S LAW RESULTS
 
 E / Voltage:
 - ${E.toFixed(2)} V
@@ -1095,47 +987,45 @@ FORMULAS USED
 - I = E ÷ R
 - R = E ÷ I
 - P/W = E × I
-- A = W ÷ E`
-  );
-});
+- A = W ÷ E`);
+  });
 
-$("btnClearOhms")?.addEventListener("click", () => {
-  if (ohmE) ohmE.value = "";
-  if (ohmI) ohmI.value = "";
-  if (ohmR) ohmR.value = "";
-  if (ohmP) ohmP.value = "";
-  setOut(ohmsOut, "Enter any two values.");
-});
+  $("btnClearOhms")?.addEventListener("click", () => {
+    if (ohmE) ohmE.value = "";
+    if (ohmI) ohmI.value = "";
+    if (ohmR) ohmR.value = "";
+    if (ohmP) ohmP.value = "";
+    setOut(ohmsOut, "Enter any two values.");
+  });
 
-const vdVoltage = $("vdVoltage");
-const vdAmps = $("vdAmps");
-const vdDistance = $("vdDistance");
-const vdMaterial = $("vdMaterial");
-const vdWire = $("vdWire");
-const vdOut = $("vdOut");
+  const vdVoltage = $("vdVoltage");
+  const vdAmps = $("vdAmps");
+  const vdDistance = $("vdDistance");
+  const vdMaterial = $("vdMaterial");
+  const vdWire = $("vdWire");
+  const vdOut = $("vdOut");
 
-$("btnCalcVD")?.addEventListener("click", () => {
-  const V = Number(vdVoltage?.value || 0);
-  const I = Number(vdAmps?.value || 0);
-  const D = Number(vdDistance?.value || 0);
-  const K = Number(vdMaterial?.value || 12.9);
-  const CM = Number(vdWire?.value || 6530);
+  $("btnCalcVD")?.addEventListener("click", () => {
+    const V = Number(vdVoltage?.value || 0);
+    const I = Number(vdAmps?.value || 0);
+    const D = Number(vdDistance?.value || 0);
+    const K = Number(vdMaterial?.value || 12.9);
+    const CM = Number(vdWire?.value || 6530);
 
-  if (V <= 0 || I <= 0 || D <= 0 || K <= 0 || CM <= 0) {
-    setOut(vdOut, "Enter valid voltage, amps, distance, material, and wire size.");
-    return;
-  }
+    if (V <= 0 || I <= 0 || D <= 0 || K <= 0 || CM <= 0) {
+      setOut(vdOut, "Enter valid voltage, amps, distance, material, and wire size.");
+      return;
+    }
 
-  const drop = (2 * K * I * D) / CM;
-  const endVoltage = V - drop;
-  const dropPct = (drop / V) * 100;
+    const drop = (2 * K * I * D) / CM;
+    const endVoltage = V - drop;
+    const dropPct = (drop / V) * 100;
 
-  let status = "OK";
-  if (dropPct > 5) status = "HIGH — check wire size/distance/load";
-  else if (dropPct > 3) status = "ACCEPTABLE BUT WATCH — over 3%";
+    let status = "OK";
+    if (dropPct > 5) status = "HIGH — check wire size/distance/load";
+    else if (dropPct > 3) status = "ACCEPTABLE BUT WATCH — over 3%";
 
-  setOut(vdOut,
-`VOLTAGE DROP RESULTS
+    setOut(vdOut, `VOLTAGE DROP RESULTS
 
 INPUTS
 - Voltage: ${V.toFixed(1)} V
@@ -1153,15 +1043,15 @@ RESULT
 - Status: ${status}
 
 FORMULA
-VD = (2 × K × I × D) ÷ CM`
-  );
-});
+VD = (2 × K × I × D) ÷ CM`);
+  });
 
-$("btnClearVD")?.addEventListener("click", () => {
-  if (vdVoltage) vdVoltage.value = 120;
-  if (vdAmps) vdAmps.value = "";
-  if (vdDistance) vdDistance.value = "";
-  if (vdMaterial) vdMaterial.value = "12.9";
-  if (vdWire) vdWire.value = "6530";
-  setOut(vdOut, "Enter values to calculate voltage drop.");
+  $("btnClearVD")?.addEventListener("click", () => {
+    if (vdVoltage) vdVoltage.value = 120;
+    if (vdAmps) vdAmps.value = "";
+    if (vdDistance) vdDistance.value = "";
+    if (vdMaterial) vdMaterial.value = "12.9";
+    if (vdWire) vdWire.value = "6530";
+    setOut(vdOut, "Enter values to calculate voltage drop.");
+  });
 })();
