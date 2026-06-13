@@ -40,15 +40,15 @@
   // -----------------------------
   const tabButtons = Array.from(document.querySelectorAll(".tabBtn"));
   const panels = {
-    measurements: $("tab-measurements"),
-    layout: $("tab-layout"),
-    subfloor: $("tab-subfloor"),
-    roofing: $("tab-roofing"),
-    stairs: $("tab-stairs"),
-    concrete: $("tab-concrete"),
-    electrical: $("tab-electrical"),
-  };
-
+  measurements: $("tab-measurements"),
+  layout: $("tab-layout"),
+  subfloor: $("tab-subfloor"),
+  roofing: $("tab-roofing"),
+  stairs: $("tab-stairs"),
+  concrete: $("tab-concrete"),
+  electrical: $("tab-electrical"),
+  eft: $("tab-eft"),
+};
   function setActiveTab(name) {
     tabButtons.forEach((btn) => btn.classList.toggle("isActive", btn.dataset.tab === name));
     Object.entries(panels).forEach(([k, el]) => {
