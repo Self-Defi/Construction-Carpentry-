@@ -829,7 +829,78 @@ Note:
   <pre class="out" id="emtOut">Enter bend details to calculate EMT layout.</pre>
 </div>
 
-    <!-- Box Fill Calculator Card -->
+    <div class="card">
+  <div class="cardTop">
+    <div>
+      <h2>Box Fill Calculator</h2>
+      <p class="muted">Estimate box cubic inches using conductor counts, devices, grounds, and clamps.</p>
+    </div>
+    <button class="pill" data-steps="eft-box-fill" type="button">Steps</button>
+  </div>
+
+  <div class="formGrid">
+    <label class="field">
+      <span class="label">#14 Conductors</span>
+      <input id="bf14" type="number" min="0" step="1" value="0" />
+    </label>
+
+    <label class="field">
+      <span class="label">#12 Conductors</span>
+      <input id="bf12" type="number" min="0" step="1" value="0" />
+    </label>
+
+    <label class="field">
+      <span class="label">#10 Conductors</span>
+      <input id="bf10" type="number" min="0" step="1" value="0" />
+    </label>
+
+    <label class="field">
+      <span class="label">Device Yokes</span>
+      <input id="bfDevices" type="number" min="0" step="1" value="1" />
+      <span class="hint">Switches/receptacles mounted in the box.</span>
+    </label>
+
+    <label class="field">
+      <span class="label">Ground Wires Present?</span>
+      <select id="bfGround">
+        <option value="yes" selected>Yes</option>
+        <option value="no">No</option>
+      </select>
+      <span class="hint">All grounds together count as one conductor volume.</span>
+    </label>
+
+    <label class="field">
+      <span class="label">Largest Wire Size in Box</span>
+      <select id="bfLargest">
+        <option value="14">#14</option>
+        <option value="12" selected>#12</option>
+        <option value="10">#10</option>
+      </select>
+      <span class="hint">Used for devices, grounds, and clamps.</span>
+    </label>
+
+    <label class="field">
+      <span class="label">Internal Cable Clamps?</span>
+      <select id="bfClamps">
+        <option value="no" selected>No</option>
+        <option value="yes">Yes</option>
+      </select>
+    </label>
+
+    <label class="field">
+      <span class="label">Box Volume Available</span>
+      <input id="bfBoxVolume" type="number" min="0" step="0.1" placeholder="e.g. 22.5" />
+      <span class="hint">Optional. Enter cubic inches stamped on the box.</span>
+    </label>
+  </div>
+
+  <div class="btnRow">
+    <button class="btn" id="btnCalcBoxFill" type="button">Calculate Box Fill</button>
+    <button class="btnGhost" id="btnClearBoxFill" type="button">Clear</button>
+  </div>
+
+  <pre class="out" id="boxFillOut">Enter box fill details to calculate required cubic inches.</pre>
+</div>
 
     <!-- Conduit Fill Calculator Card -->
 
