@@ -149,6 +149,27 @@ Common dwelling wall rule:<br/><br/>
 </ul>
 Use separate wall segments when broken by doors, fireplaces, large openings, or fixed cabinets.
 `,
+     "eft-box-fill": `
+<strong>Box Fill Calculator</strong><br/>
+Estimates required cubic inches for outlet/switch boxes.<br/><br/>
+
+Common conductor volume allowances:<br/>
+<ul>
+  <li>#14 = 2.00 cu in</li>
+  <li>#12 = 2.25 cu in</li>
+  <li>#10 = 2.50 cu in</li>
+</ul>
+
+General field rules:<br/>
+<ul>
+  <li>Each insulated conductor entering the box counts once.</li>
+  <li>All equipment grounds together count as one conductor volume.</li>
+  <li>Each device yoke counts as two conductor volumes of the largest wire connected to it.</li>
+  <li>Internal clamps count as one conductor volume.</li>
+</ul>
+
+Always verify NEC/local code and box markings.
+`,
      "eft-emt-bend": `
 <strong>EMT Bend Calculator</strong><br/>
 Supports quick 90° stub-up and offset bend layout.<br/><br/>
@@ -1413,5 +1434,112 @@ $("btnClearEMT")?.addEventListener("click", () => {
   if (emtRise) emtRise.value = "";
   if (emtAngle) emtAngle.value = "30";
   setOut(emtOut, "Enter bend details to calculate EMT layout.");
+});
+
+   // =========================================================
+// EFT — BOX FILL CALCULATOR
+// =========================================================
+const bf14 = $("bf14");
+const bf12 = $("bf12");
+const bf10 = $("bf10");
+const bfDevices = $("bfDevices");
+const bfGround = $("bfGround");
+const bfLargest = $("bfLargest");
+const bfClamps = $("bfClamps");
+const bfBoxVolume = $("bfBoxVolume");
+const boxFillOut = $("boxFillOut");
+
+$("btnCalcBoxFill")?.addEventListener("click", () => {
+  const count14 = Math.max(0, Math.floor(Number(bf14?.value || 0)));
+  const count12 = Math.max(0, Math.floor(Number(bf12?.value || 0)));
+  const count10 = Math.max(0, Math.floor(Number(bf10?.value || 0)));
+  const devices = Math.max(0, Math.floor(Number(bfDevices?.value || 0)));
+  const hasGround = (bfGround?.value || "yes") === "yes";
+  const largest = bfLargest?.value || "12";
+  const hasClamps = (bfClamps?.value || "no") === "yes";
+  const boxVolume = Number(bfBoxVolume?.value || 0);
+
+  const volumeMap = {
+    "14": 2.00,
+    "12": 2.25,
+    "10": 2.50
+  };
+
+  const v14 = volumeMap["14"];
+  const v12 = volumeMap["12"];
+  const v10 = volumeMap["10"];
+  const largestVol = volumeMap[largest] || 2.25;
+
+  const conductorVolume =
+    (count14 * v14) +
+    (count12 * v12) +
+    (count10 * v10);
+
+  const deviceEquiv = devices * 2;
+  const deviceVolume = deviceEquiv * largestVol;
+
+  const groundEquiv = hasGround ? 1 : 0;
+  const groundVolume = groundEquiv * largestVol;
+
+  const clampEquiv = hasClamps ? 1 : 0;
+  const clampVolume = clampEquiv * largestVol;
+
+  const totalRequired = conductorVolume + deviceVolume + groundVolume + clampVolume;
+
+  let status = "Box volume not entered.";
+  if (boxVolume > 0) {
+    status = boxVolume >= totalRequired
+      ? "OK — box volume appears sufficient."
+      : "TOO SMALL — use a larger box or reduce fill.";
+  }
+
+  setOut(boxFillOut, `BOX FILL CALCULATOR
+
+INPUTS
+- #14 insulated conductors: ${count14}
+- #12 insulated conductors: ${count12}
+- #10 insulated conductors: ${count10}
+- Device yokes: ${devices}
+- Grounds present: ${hasGround ? "YES" : "NO"}
+- Internal clamps: ${hasClamps ? "YES" : "NO"}
+- Largest wire size used for devices/grounds/clamps: #${largest}
+- Box volume available: ${boxVolume > 0 ? boxVolume.toFixed(2) + " cu in" : "Not entered"}
+
+CONDUCTOR VOLUME
+- #14: ${count14} × ${v14.toFixed(2)} = ${(count14 * v14).toFixed(2)} cu in
+- #12: ${count12} × ${v12.toFixed(2)} = ${(count12 * v12).toFixed(2)} cu in
+- #10: ${count10} × ${v10.toFixed(2)} = ${(count10 * v10).toFixed(2)} cu in
+= Conductors subtotal: ${conductorVolume.toFixed(2)} cu in
+
+DEVICE / GROUND / CLAMP VOLUME
+- Devices: ${devices} yoke(s) × 2 = ${deviceEquiv} conductor volumes
+- Device volume: ${deviceEquiv} × ${largestVol.toFixed(2)} = ${deviceVolume.toFixed(2)} cu in
+- Ground volume: ${groundEquiv} × ${largestVol.toFixed(2)} = ${groundVolume.toFixed(2)} cu in
+- Clamp volume: ${clampEquiv} × ${largestVol.toFixed(2)} = ${clampVolume.toFixed(2)} cu in
+
+RESULT
+- Total required box volume: ${totalRequired.toFixed(2)} cu in
+- Status: ${status}
+
+FIELD NOTE
+- Count each insulated conductor that enters and terminates/splices in the box.
+- Pigtails originating inside the box usually do not count.
+- All grounds together count as one conductor volume.
+- Each device yoke counts as two conductor volumes.
+
+VERIFY
+- Field calculator only. Confirm NEC/local code and stamped box volume.`);
+});
+
+$("btnClearBoxFill")?.addEventListener("click", () => {
+  if (bf14) bf14.value = 0;
+  if (bf12) bf12.value = 0;
+  if (bf10) bf10.value = 0;
+  if (bfDevices) bfDevices.value = 1;
+  if (bfGround) bfGround.value = "yes";
+  if (bfLargest) bfLargest.value = "12";
+  if (bfClamps) bfClamps.value = "no";
+  if (bfBoxVolume) bfBoxVolume.value = "";
+  setOut(boxFillOut, "Enter box fill details to calculate required cubic inches.");
 });
 })();
