@@ -149,6 +149,27 @@ Common dwelling wall rule:<br/><br/>
 </ul>
 Use separate wall segments when broken by doors, fireplaces, large openings, or fixed cabinets.
 `,
+     "eft-emt-bend": `
+<strong>EMT Bend Calculator</strong><br/>
+Supports quick 90° stub-up and offset bend layout.<br/><br/>
+
+<strong>90° Stub-Up</strong><br/>
+Mark = Stub Height - Take-Up<br/><br/>
+
+<strong>Offset Bend</strong><br/>
+Distance Between Marks = Offset Rise × Multiplier<br/><br/>
+
+Common multipliers:<br/>
+<ul>
+  <li>10° = 6.0</li>
+  <li>22.5° = 2.6</li>
+  <li>30° = 2.0</li>
+  <li>45° = 1.4</li>
+  <li>60° = 1.2</li>
+</ul>
+
+Always verify with the actual bender markings and field conditions.
+`,
   };
 
   Array.from(document.querySelectorAll("[data-steps]")).forEach((btn) => {
@@ -1246,4 +1267,151 @@ $("btnClearWireSize")?.addEventListener("click", () => {
   if (wsDistance) wsDistance.value = "";
   setOut(wireSizeOut, "Select amperage and material to estimate wire size.");
 });   
+
+   // =========================================================
+// EFT — EMT BEND CALCULATOR
+// =========================================================
+const emtBendType = $("emtBendType");
+const emtSize = $("emtSize");
+const emtRise = $("emtRise");
+const emtAngle = $("emtAngle");
+const emtOut = $("emtOut");
+
+$("btnCalcEMT")?.addEventListener("click", () => {
+  const bendType = emtBendType?.value || "stub";
+  const size = emtSize?.value || "0.5";
+  const riseIn = parseLengthToInches(emtRise?.value);
+  const angle = Number(emtAngle?.value || 30);
+
+  if (riseIn == null || riseIn <= 0) {
+    setOut(emtOut, `Enter a valid stub height or offset rise.
+
+Examples:
+- 24"
+- 2' 0"
+- 6"`);
+    return;
+  }
+
+  const takeUpMap = {
+    "0.5": 5,
+    "0.75": 6,
+    "1": 8,
+    "1.25": 11
+  };
+
+  const sizeLabelMap = {
+    "0.5": '1/2" EMT',
+    "0.75": '3/4" EMT',
+    "1": '1" EMT',
+    "1.25": '1-1/4" EMT'
+  };
+
+  const multiplierMap = {
+    10: 6.0,
+    22.5: 2.6,
+    30: 2.0,
+    45: 1.4,
+    60: 1.2
+  };
+
+  const shrinkPerInchMap = {
+    10: 0.063,
+    22.5: 0.188,
+    30: 0.25,
+    45: 0.375,
+    60: 0.5
+  };
+
+  const sizeLabel = sizeLabelMap[size] || "EMT";
+  const takeUp = takeUpMap[size] || 5;
+
+  if (bendType === "stub") {
+    const mark = riseIn - takeUp;
+
+    if (mark <= 0) {
+      setOut(emtOut, `EMT 90° STUB-UP
+
+INPUTS
+- Conduit: ${sizeLabel}
+- Desired stub height: ${formatInchesAsFeetInches(riseIn)}
+- Take-up: ${takeUp}"
+
+RESULT
+- Mark is zero or negative.
+- Desired stub is too short for this conduit/bender take-up.
+
+FORMULA
+Mark = Stub Height - Take-Up
+
+VERIFY
+- Use actual bender take-up mark.`);
+      return;
+    }
+
+    setOut(emtOut, `EMT 90° STUB-UP
+
+INPUTS
+- Conduit: ${sizeLabel}
+- Desired stub height: ${formatInchesAsFeetInches(riseIn)}
+- Take-up: ${takeUp}"
+
+CALC
+- Mark = Stub Height - Take-Up
+- Mark = ${formatInchesAsFeetInches(riseIn)} - ${takeUp}"
+
+RESULT
+- Place arrow at: ${formatInchesAsFeetInches(mark)}
+- Bend to: 90°
+
+FIELD NOTE
+- Keep the measured end toward the hook.
+- Align arrow on the bender with your mark.
+- Bend until conduit is vertical.
+
+VERIFY
+- Take-up varies by bender. Confirm markings on your actual tool.`);
+    return;
+  }
+
+  const multiplier = multiplierMap[angle] || 2.0;
+  const shrinkPerInch = shrinkPerInchMap[angle] || 0.25;
+  const distanceBetweenMarks = riseIn * multiplier;
+  const shrink = riseIn * shrinkPerInch;
+
+  setOut(emtOut, `EMT OFFSET BEND
+
+INPUTS
+- Conduit: ${sizeLabel}
+- Offset rise: ${formatInchesAsFeetInches(riseIn)}
+- Bend angle: ${angle}°
+- Multiplier: ${multiplier}
+
+CALC
+- Distance between marks = Offset Rise × Multiplier
+- Distance = ${formatInchesAsFeetInches(riseIn)} × ${multiplier}
+- Shrink estimate = Offset Rise × ${shrinkPerInch.toFixed(3)}
+
+RESULT
+- Distance between bend marks: ${formatInchesAsFeetInches(distanceBetweenMarks)}
+- Shrink estimate: ${formatInchesAsFeetInches(shrink)}
+
+FIELD NOTE
+- Mark first bend.
+- Measure distance between marks.
+- Bend first mark, rotate conduit 180°, bend second mark same angle.
+- Keep bends in the same plane.
+
+VERIFY
+- Multipliers are field approximations.
+- Confirm with actual bender and job conditions.`);
+});
+
+$("btnClearEMT")?.addEventListener("click", () => {
+  if (emtBendType) emtBendType.value = "stub";
+  if (emtSize) emtSize.value = "0.5";
+  if (emtRise) emtRise.value = "";
+  if (emtAngle) emtAngle.value = "30";
+  setOut(emtOut, "Enter bend details to calculate EMT layout.");
+});
 })();
