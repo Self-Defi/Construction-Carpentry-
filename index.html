@@ -688,7 +688,36 @@ Note:
 <section class="tabPanel" id="tab-eft">
   <div class="stack">
 
-    <!-- Receptacle Spacing Card -->
+    <div class="card">
+  <div class="cardTop">
+    <div>
+      <h2>Receptacle Spacing Calculator</h2>
+      <p class="muted">Dwelling wall spacing using the common 6/12 rule.</p>
+    </div>
+    <button class="pill" data-steps="eft-receptacles" type="button">Steps</button>
+  </div>
+
+  <div class="formGrid">
+    <label class="field">
+      <span class="label">Wall Length</span>
+      <input id="recWallLen" type="text" placeholder="e.g. 18' 0&quot;" />
+      <span class="hint">Enter one uninterrupted wall segment.</span>
+    </label>
+
+    <label class="field">
+      <span class="label">Existing Receptacles</span>
+      <input id="recExisting" type="number" min="0" step="1" value="0" />
+      <span class="hint">Use 0 for new layout.</span>
+    </label>
+  </div>
+
+  <div class="btnRow">
+    <button class="btn" id="btnCalcReceptacles" type="button">Calculate</button>
+    <button class="btnGhost" id="btnClearReceptacles" type="button">Clear</button>
+  </div>
+
+  <pre class="out" id="receptacleOut">Enter wall length to estimate receptacle spacing.</pre>
+</div>
 
     <!-- Wire Size Selector Card -->
 
