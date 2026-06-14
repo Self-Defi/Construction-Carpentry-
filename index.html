@@ -719,7 +719,60 @@ Note:
   <pre class="out" id="receptacleOut">Enter wall length to estimate receptacle spacing.</pre>
 </div>
 
-    <!-- Wire Size Selector Card -->
+  <div class="card">
+  <div class="cardTop">
+    <div>
+      <h2>Wire Size Selector</h2>
+      <p class="muted">Quick copper/aluminum conductor reference by breaker/load size.</p>
+    </div>
+    <button class="pill" data-steps="eft-wire-size" type="button">Steps</button>
+  </div>
+
+  <div class="formGrid">
+    <label class="field">
+      <span class="label">Breaker / Load Amps</span>
+      <select id="wsAmps">
+        <option value="15">15A</option>
+        <option value="20" selected>20A</option>
+        <option value="30">30A</option>
+        <option value="40">40A</option>
+        <option value="50">50A</option>
+        <option value="60">60A</option>
+        <option value="70">70A</option>
+        <option value="100">100A</option>
+      </select>
+    </label>
+
+    <label class="field">
+      <span class="label">Conductor Material</span>
+      <select id="wsMaterial">
+        <option value="copper" selected>Copper</option>
+        <option value="aluminum">Aluminum</option>
+      </select>
+    </label>
+
+    <label class="field">
+      <span class="label">Voltage</span>
+      <select id="wsVoltage">
+        <option value="120" selected>120V</option>
+        <option value="240">240V</option>
+      </select>
+    </label>
+
+    <label class="field">
+      <span class="label">One-Way Distance (optional)</span>
+      <input id="wsDistance" type="number" min="0" step="1" placeholder="e.g. 75" />
+      <span class="hint">Used only as a voltage drop warning flag.</span>
+    </label>
+  </div>
+
+  <div class="btnRow">
+    <button class="btn" id="btnCalcWireSize" type="button">Select Wire Size</button>
+    <button class="btnGhost" id="btnClearWireSize" type="button">Clear</button>
+  </div>
+
+  <pre class="out" id="wireSizeOut">Select amperage and material to estimate wire size.</pre>
+</div>
 
     <!-- EMT Bend Calculator Card -->
 
