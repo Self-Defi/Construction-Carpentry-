@@ -774,7 +774,60 @@ Note:
   <pre class="out" id="wireSizeOut">Select amperage and material to estimate wire size.</pre>
 </div>
 
-    <!-- EMT Bend Calculator Card -->
+    <div class="card">
+  <div class="cardTop">
+    <div>
+      <h2>EMT Bend Calculator</h2>
+      <p class="muted">Quick 90° stub-up and offset bend helper.</p>
+    </div>
+    <button class="pill" data-steps="eft-emt-bend" type="button">Steps</button>
+  </div>
+
+  <div class="formGrid">
+    <label class="field">
+      <span class="label">Bend Type</span>
+      <select id="emtBendType">
+        <option value="stub" selected>90° Stub-Up</option>
+        <option value="offset">Offset Bend</option>
+      </select>
+    </label>
+
+    <label class="field">
+      <span class="label">Conduit Size</span>
+      <select id="emtSize">
+        <option value="0.5" selected>1/2&quot; EMT</option>
+        <option value="0.75">3/4&quot; EMT</option>
+        <option value="1">1&quot; EMT</option>
+        <option value="1.25">1-1/4&quot; EMT</option>
+      </select>
+    </label>
+
+    <label class="field">
+      <span class="label">Stub Height / Offset Rise</span>
+      <input id="emtRise" type="text" placeholder='e.g. 24&quot; or 2&#39; 0&quot;' />
+      <span class="hint">For stub-up: finished stub height. For offset: obstacle height.</span>
+    </label>
+
+    <label class="field">
+      <span class="label">Offset Bend Angle</span>
+      <select id="emtAngle">
+        <option value="10">10°</option>
+        <option value="22.5">22.5°</option>
+        <option value="30" selected>30°</option>
+        <option value="45">45°</option>
+        <option value="60">60°</option>
+      </select>
+      <span class="hint">Used only for offset bends.</span>
+    </label>
+  </div>
+
+  <div class="btnRow">
+    <button class="btn" id="btnCalcEMT" type="button">Calculate EMT Bend</button>
+    <button class="btnGhost" id="btnClearEMT" type="button">Clear</button>
+  </div>
+
+  <pre class="out" id="emtOut">Enter bend details to calculate EMT layout.</pre>
+</div>
 
     <!-- Box Fill Calculator Card -->
 
