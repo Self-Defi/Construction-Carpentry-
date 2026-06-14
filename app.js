@@ -1065,4 +1065,79 @@ VD = (2 × K × I × D) ÷ CM`);
     if (vdWire) vdWire.value = "6530";
     setOut(vdOut, "Enter values to calculate voltage drop.");
   });
+
+   // =========================================================
+// EFT — RECEPTACLE SPACING
+// =========================================================
+const recWallLen = $("recWallLen");
+const recExisting = $("recExisting");
+const receptacleOut = $("receptacleOut");
+
+$("btnCalcReceptacles")?.addEventListener("click", () => {
+  const wallIn = parseLengthToInches(recWallLen?.value);
+  const existing = Math.max(0, Math.floor(Number(recExisting?.value || 0)));
+
+  if (wallIn == null || wallIn <= 0) {
+    setOut(receptacleOut, `Enter valid wall length.
+
+Examples:
+- 12'
+- 12' 0"
+- 144"`);
+    return;
+  }
+
+  const wallFt = wallIn / 12;
+
+  if (wallFt < 2) {
+    setOut(receptacleOut, `RECEPTACLE SPACING
+
+INPUT PARSED
+- Wall length: ${formatInchesAsFeetInches(wallIn)}
+- Decimal feet: ${wallFt.toFixed(2)} ft
+
+RESULT
+- Wall segment is under 2 ft.
+- Receptacle usually not required for this segment.
+
+VERIFY
+- Check NEC/local code and actual wall conditions.`);
+    return;
+  }
+
+  const required = Math.max(1, Math.ceil(wallFt / 12));
+  const additional = Math.max(0, required - existing);
+  const suggestedSpacing = wallFt / required;
+
+  setOut(receptacleOut, `RECEPTACLE SPACING
+
+INPUT PARSED
+- Wall length: ${formatInchesAsFeetInches(wallIn)}
+- Decimal feet: ${wallFt.toFixed(2)} ft
+- Existing receptacles: ${existing}
+
+FIELD RULE
+- No point more than 6 ft from a receptacle
+- Max spacing between receptacles: 12 ft
+- Wall spaces 2 ft or wider usually count
+
+RESULT
+- Minimum receptacles required: ${required}
+- Additional receptacles needed: ${additional}
+- Suggested even spacing: about ${suggestedSpacing.toFixed(2)} ft apart
+
+PLACEMENT NOTE
+- First receptacle should be within 6 ft of wall start.
+- Next receptacles should be no more than 12 ft apart.
+- Last receptacle should leave no more than 6 ft to wall end.
+
+VERIFY
+- Field calculator only. Confirm NEC/local code.`);
+});
+
+$("btnClearReceptacles")?.addEventListener("click", () => {
+  if (recWallLen) recWallLen.value = "";
+  if (recExisting) recExisting.value = 0;
+  setOut(receptacleOut, "Enter wall length to estimate receptacle spacing.");
+});
 })();
