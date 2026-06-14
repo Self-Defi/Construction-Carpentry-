@@ -104,6 +104,18 @@ Pick type, enter dimensions, waste, and rounding.
 <strong>Wire Planner</strong><br/>
 Estimate total cable based on runs, slack, and waste.
 `,
+    "eft-wire-size": `
+<strong>Wire Size Selector</strong><br/>
+Quick field reference for common conductor sizes.<br/><br/>
+
+<ul>
+  <li>Select breaker/load amps.</li>
+  <li>Select copper or aluminum.</li>
+  <li>Optional distance gives a voltage drop warning.</li>
+</ul>
+
+Always verify NEC ampacity tables, conductor insulation, temperature rating, terminals, local code, and equipment requirements.
+`,
     "electrical-ohms": `
 <strong>Ohm's Law Calculator</strong><br/>
 Enter any two known values.
@@ -1140,4 +1152,98 @@ $("btnClearReceptacles")?.addEventListener("click", () => {
   if (recExisting) recExisting.value = 0;
   setOut(receptacleOut, "Enter wall length to estimate receptacle spacing.");
 });
+
+// =========================================================
+// EFT — WIRE SIZE SELECTOR
+// =========================================================
+const wsAmps = $("wsAmps");
+const wsMaterial = $("wsMaterial");
+const wsVoltage = $("wsVoltage");
+const wsDistance = $("wsDistance");
+const wireSizeOut = $("wireSizeOut");
+
+$("btnCalcWireSize")?.addEventListener("click", () => {
+  const amps = Number(wsAmps?.value || 20);
+  const material = wsMaterial?.value || "copper";
+  const voltage = Number(wsVoltage?.value || 120);
+  const distance = Number(wsDistance?.value || 0);
+
+  const copperMap = {
+    15: "14 AWG",
+    20: "12 AWG",
+    30: "10 AWG",
+    40: "8 AWG",
+    50: "6 AWG",
+    60: "6 AWG",
+    70: "4 AWG",
+    100: "3 AWG"
+  };
+
+  const aluminumMap = {
+    15: "12 AWG",
+    20: "10 AWG",
+    30: "8 AWG",
+    40: "6 AWG",
+    50: "4 AWG",
+    60: "4 AWG",
+    70: "2 AWG",
+    100: "1 AWG"
+  };
+
+  const wire = material === "aluminum" ? aluminumMap[amps] : copperMap[amps];
+
+  let vdNote = "Distance not entered.";
+  if (distance > 0) {
+    if (distance >= 100 && voltage === 120) {
+      vdNote = "Long 120V run — check voltage drop. Upsizing may be needed.";
+    } else if (distance >= 150 && voltage === 240) {
+      vdNote = "Long 240V run — check voltage drop. Upsizing may be needed.";
+    } else {
+      vdNote = "Distance entered. Still verify voltage drop if load is continuous or sensitive.";
+    }
+  }
+
+  setOut(wireSizeOut, `WIRE SIZE SELECTOR
+
+INPUTS
+- Load / Breaker: ${amps}A
+- Material: ${material.toUpperCase()}
+- Voltage: ${voltage}V
+- One-way distance: ${distance > 0 ? distance + " ft" : "Not entered"}
+
+RESULT
+- Estimated minimum conductor: ${wire}
+
+COMMON FIELD REFERENCE
+Copper:
+- 15A → 14 AWG
+- 20A → 12 AWG
+- 30A → 10 AWG
+- 40A → 8 AWG
+- 50A/60A → 6 AWG
+
+Aluminum:
+- 20A → 10 AWG
+- 30A → 8 AWG
+- 40A → 6 AWG
+- 50A/60A → 4 AWG
+
+VOLTAGE DROP NOTE
+- ${vdNote}
+
+VERIFY
+- Confirm NEC/local code.
+- Check conductor insulation rating.
+- Check terminal temperature rating.
+- Check equipment nameplate requirements.
+- Voltage drop may require larger wire.`);
+});
+
+$("btnClearWireSize")?.addEventListener("click", () => {
+  if (wsAmps) wsAmps.value = "20";
+  if (wsMaterial) wsMaterial.value = "copper";
+  if (wsVoltage) wsVoltage.value = "120";
+  if (wsDistance) wsDistance.value = "";
+  setOut(wireSizeOut, "Select amperage and material to estimate wire size.");
+});   
 })();
