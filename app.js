@@ -127,6 +127,16 @@ VD = (2 × K × I × D) ÷ CM
 <strong>Ampacity Reference</strong><br/>
 Quick copper reference only. Verify NEC + local code.
 `,
+     "eft-receptacles": `
+<strong>Receptacle Spacing Calculator</strong><br/>
+Common dwelling wall rule:<br/><br/>
+<ul>
+  <li>No point along the wall line should be more than 6 ft from a receptacle.</li>
+  <li>Typical maximum spacing between receptacles is 12 ft.</li>
+  <li>Wall spaces 2 ft or wider usually count.</li>
+</ul>
+Use separate wall segments when broken by doors, fireplaces, large openings, or fixed cabinets.
+`,
   };
 
   Array.from(document.querySelectorAll("[data-steps]")).forEach((btn) => {
