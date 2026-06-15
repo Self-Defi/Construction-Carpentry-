@@ -77,6 +77,18 @@ body{
   box-shadow: 0 10px 30px rgba(31,111,255,.10);
 }
 
+/* Electrical Tabs */
+.tabBtn.elecTab{
+  color:#ffd54a;
+}
+
+.tabBtn.elecTab.isActive{
+  color:#ffd54a;
+  border-color:rgba(255,213,74,.75);
+  background:rgba(255,213,74,.10);
+  box-shadow:0 10px 30px rgba(255,213,74,.10);
+}
+
 .appMain{padding:18px}
 .stack{display:flex; flex-direction:column; gap:16px}
 
