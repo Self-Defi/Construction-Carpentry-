@@ -76,8 +76,6 @@ body{
   background: rgba(31,111,255,.18);
   box-shadow: 0 10px 30px rgba(31,111,255,.10);
 }
-
-/* Electrical Tabs */
 .tabBtn.elecTab{
   color:#ffd54a;
 }
