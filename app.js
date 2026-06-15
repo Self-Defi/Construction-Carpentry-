@@ -191,6 +191,19 @@ Common multipliers:<br/>
 
 Always verify with the actual bender markings and field conditions.
 `,
+     "eft-conduit-fill": `
+<strong>Conduit Fill Calculator</strong><br/>
+Estimates EMT conduit fill using common THHN conductor areas.<br/><br/>
+
+General maximum fill rule:<br/>
+<ul>
+  <li>1 conductor = 53%</li>
+  <li>2 conductors = 31%</li>
+  <li>3 or more conductors = 40%</li>
+</ul>
+
+This calculator is intended for quick field estimating. Always verify NEC Chapter 9 tables, conductor type, insulation, raceway type, and local code.
+`,
   };
 
   Array.from(document.querySelectorAll("[data-steps]")).forEach((btn) => {
@@ -1541,5 +1554,124 @@ $("btnClearBoxFill")?.addEventListener("click", () => {
   if (bfClamps) bfClamps.value = "no";
   if (bfBoxVolume) bfBoxVolume.value = "";
   setOut(boxFillOut, "Enter box fill details to calculate required cubic inches.");
+});
+
+   // =========================================================
+// EFT — CONDUIT FILL CALCULATOR
+// =========================================================
+const cfType = $("cfType");
+const cfSize = $("cfSize");
+const cf14 = $("cf14");
+const cf12 = $("cf12");
+const cf10 = $("cf10");
+const cf8 = $("cf8");
+const conduitFillOut = $("conduitFillOut");
+
+$("btnCalcConduitFill")?.addEventListener("click", () => {
+  const type = cfType?.value || "emt";
+  const size = cfSize?.value || "0.75";
+
+  const count14 = Math.max(0, Math.floor(Number(cf14?.value || 0)));
+  const count12 = Math.max(0, Math.floor(Number(cf12?.value || 0)));
+  const count10 = Math.max(0, Math.floor(Number(cf10?.value || 0)));
+  const count8 = Math.max(0, Math.floor(Number(cf8?.value || 0)));
+
+  const totalConductors = count14 + count12 + count10 + count8;
+
+  if (totalConductors <= 0) {
+    setOut(conduitFillOut, "Enter at least one conductor.");
+    return;
+  }
+
+  const emtAreaMap = {
+    "0.5": 0.304,
+    "0.75": 0.533,
+    "1": 0.864,
+    "1.25": 1.496,
+    "1.5": 2.036,
+    "2": 3.356
+  };
+
+  const emtLabelMap = {
+    "0.5": '1/2" EMT',
+    "0.75": '3/4" EMT',
+    "1": '1" EMT',
+    "1.25": '1-1/4" EMT',
+    "1.5": '1-1/2" EMT',
+    "2": '2" EMT'
+  };
+
+  const thhnAreaMap = {
+    "14": 0.0097,
+    "12": 0.0133,
+    "10": 0.0211,
+    "8": 0.0366
+  };
+
+  const conduitArea = emtAreaMap[size] || 0.533;
+  const conduitLabel = emtLabelMap[size] || "EMT";
+
+  const area14 = count14 * thhnAreaMap["14"];
+  const area12 = count12 * thhnAreaMap["12"];
+  const area10 = count10 * thhnAreaMap["10"];
+  const area8 = count8 * thhnAreaMap["8"];
+
+  const totalWireArea = area14 + area12 + area10 + area8;
+  const fillPct = (totalWireArea / conduitArea) * 100;
+
+  let maxFillPct = 40;
+  if (totalConductors === 1) maxFillPct = 53;
+  if (totalConductors === 2) maxFillPct = 31;
+
+  const maxAllowedArea = conduitArea * (maxFillPct / 100);
+  const remainingArea = maxAllowedArea - totalWireArea;
+
+  let status = "OK";
+  if (fillPct > maxFillPct) status = "OVERFILL — use larger conduit or fewer conductors.";
+
+  setOut(conduitFillOut, `CONDUIT FILL CALCULATOR
+
+INPUTS
+- Conduit type: ${type.toUpperCase()}
+- Conduit size: ${conduitLabel}
+- Total conductors: ${totalConductors}
+
+CONDUCTORS
+- #14 THHN: ${count14} × ${thhnAreaMap["14"].toFixed(4)} = ${area14.toFixed(4)} sq in
+- #12 THHN: ${count12} × ${thhnAreaMap["12"].toFixed(4)} = ${area12.toFixed(4)} sq in
+- #10 THHN: ${count10} × ${thhnAreaMap["10"].toFixed(4)} = ${area10.toFixed(4)} sq in
+- #8 THHN:  ${count8} × ${thhnAreaMap["8"].toFixed(4)} = ${area8.toFixed(4)} sq in
+
+CONDUIT
+- Internal area: ${conduitArea.toFixed(3)} sq in
+- Max fill allowed: ${maxFillPct}%
+- Max allowed wire area: ${maxAllowedArea.toFixed(4)} sq in
+
+RESULT
+- Total wire area: ${totalWireArea.toFixed(4)} sq in
+- Actual fill: ${fillPct.toFixed(2)}%
+- Remaining allowed area: ${remainingArea >= 0 ? remainingArea.toFixed(4) : "0.0000"} sq in
+- Status: ${status}
+
+FIELD NOTE
+- 1 conductor: 53% max fill.
+- 2 conductors: 31% max fill.
+- 3 or more conductors: 40% max fill.
+- Equipment grounding conductors count for conduit fill.
+
+VERIFY
+- Field calculator only.
+- Confirm NEC Chapter 9 tables.
+- Confirm conductor insulation type and raceway type.`);
+});
+
+$("btnClearConduitFill")?.addEventListener("click", () => {
+  if (cfType) cfType.value = "emt";
+  if (cfSize) cfSize.value = "0.75";
+  if (cf14) cf14.value = 0;
+  if (cf12) cf12.value = 0;
+  if (cf10) cf10.value = 0;
+  if (cf8) cf8.value = 0;
+  setOut(conduitFillOut, "Enter conduit and conductor details to calculate fill.");
 });
 })();
