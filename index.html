@@ -902,11 +902,63 @@ Note:
   <pre class="out" id="boxFillOut">Enter box fill details to calculate required cubic inches.</pre>
 </div>
 
-    <!-- Conduit Fill Calculator Card -->
+    <div class="card">
+  <div class="cardTop">
+    <div>
+      <h2>Conduit Fill Calculator</h2>
+      <p class="muted">Estimate EMT conduit fill using common THHN conductor sizes.</p>
+    </div>
+    <button class="pill" data-steps="eft-conduit-fill" type="button">Steps</button>
+  </div>
 
-    <!-- Lighting Circuit Planner Card -->
+  <div class="formGrid">
+    <label class="field">
+      <span class="label">Conduit Type</span>
+      <select id="cfType">
+        <option value="emt" selected>EMT</option>
+      </select>
+    </label>
 
-    <!-- NEC Quick Reference Card -->
+    <label class="field">
+      <span class="label">Conduit Size</span>
+      <select id="cfSize">
+        <option value="0.5">1/2&quot; EMT</option>
+        <option value="0.75" selected>3/4&quot; EMT</option>
+        <option value="1">1&quot; EMT</option>
+        <option value="1.25">1-1/4&quot; EMT</option>
+        <option value="1.5">1-1/2&quot; EMT</option>
+        <option value="2">2&quot; EMT</option>
+      </select>
+    </label>
+
+    <label class="field">
+      <span class="label">#14 THHN Conductors</span>
+      <input id="cf14" type="number" min="0" step="1" value="0" />
+    </label>
+
+    <label class="field">
+      <span class="label">#12 THHN Conductors</span>
+      <input id="cf12" type="number" min="0" step="1" value="0" />
+    </label>
+
+    <label class="field">
+      <span class="label">#10 THHN Conductors</span>
+      <input id="cf10" type="number" min="0" step="1" value="0" />
+    </label>
+
+    <label class="field">
+      <span class="label">#8 THHN Conductors</span>
+      <input id="cf8" type="number" min="0" step="1" value="0" />
+    </label>
+  </div>
+
+  <div class="btnRow">
+    <button class="btn" id="btnCalcConduitFill" type="button">Calculate Conduit Fill</button>
+    <button class="btnGhost" id="btnClearConduitFill" type="button">Clear</button>
+  </div>
+
+  <pre class="out" id="conduitFillOut">Enter conduit and conductor details to calculate fill.</pre>
+</div>
 
   </div>
 </section> 
